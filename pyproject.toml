@@ -15,9 +15,18 @@ llvmlite = "0.41.0"
 numba = "0.58.0"
 rumps = "^0.4.0"
 pynput = "^1.7.6"
+# PyTorch z obsługą MPS dla M1
+torch = "^2.0.0"
+torchvision = "^0.15.0"
+torchaudio = "^2.0.0"
 
 [tool.poetry.scripts]
 whisper = "whisper-dictation:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+librosa = "^0.11.0"
+psutil = "^7.0.0"
 
 [build-system]
 requires = ["poetry-core"]

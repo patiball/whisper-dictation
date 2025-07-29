@@ -1,0 +1,8 @@
+{
+  "test_key": "polish_5s",
+  "expected_text": "To jest test polskiego języka. Liczby jeden, dwa, trzy, cztery, pięć.",
+  "filename": "test_polish_5s_20250630_094037.wav",
+  "duration": 5,
+  "sample_rate": 16000,
+  "recorded_at": "2025-06-30T09:40:45.562282"
+}

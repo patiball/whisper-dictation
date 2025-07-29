@@ -69,3 +69,36 @@ To have the app run automatically when your computer starts, follow these steps:
  2. Go to Users & Groups.
  3. Click on your username, then select the Login Items tab.
  4. Click the + button and add the `run.sh` script from the whisper-dictation folder.
+
+## Test Files
+
+The repository contains test audio files for debugging and performance testing:
+
+- `test_polish_*.wav` - Polish language test recordings
+- `test_english_*.wav` - English language test recordings (if available)
+
+### Test Results
+
+**Latest Performance Test (Polish):**
+- File: `test_polish_20250630_083944.wav`
+- Content: "1, 2, 3, 4, 5. To jest test aplikacji Whisper z językiem polskim."
+- Language Detection: 2.13s (Polish detected correctly)
+- Transcription: 2.95s
+- Total Processing: 5.08s
+- GPU: Metal Performance Shaders on M1 (✅ Working)
+- Model: medium (1.5GB)
+
+**Observations:**
+- Language detection + transcription requires ~5s total
+- GPU acceleration is working (Metal backend detected)
+- Model loads twice (once for detection, once for transcription)
+
+### Running Tests
+
+```bash
+# Advanced recording and performance test
+poetry run python test_recording_advanced.py
+
+# Basic language detection test
+poetry run python test_language_detection.py
+```

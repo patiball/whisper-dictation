@@ -1,0 +1,8 @@
+{
+  "test_key": "english_5s",
+  "expected_text": "This is an English language test. Numbers one, two, three, four, five.",
+  "filename": "test_english_5s_20250630_094048.wav",
+  "duration": 5,
+  "sample_rate": 16000,
+  "recorded_at": "2025-06-30T09:40:56.804009"
+}

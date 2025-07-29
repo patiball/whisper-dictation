@@ -1,5 +1,6 @@
 openai
 openai-whisper
+torch>=2.0.0
 pyaudio
 pynput
 keyboard

@@ -7,14 +7,52 @@ import rumps
 from pynput import keyboard
 from whisper import load_model
 import platform
+import subprocess
+import os
+import torch
 
 class SpeechTranscriber:
-    def __init__(self, model):
+    def __init__(self, model, allowed_languages=None):
         self.model = model
         self.pykeyboard = keyboard.Controller()
+        self.allowed_languages = allowed_languages
+        
+        # Sprawdź dostępność GPU na M1
+        self.device = "cpu"
+        if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+            self.device = "mps"
+            print(f"Używam Metal Performance Shaders (GPU) na M1: {self.device}")
+        else:
+            print(f"Używam CPU: {self.device}")
 
     def transcribe(self, audio_data, language=None):
-        result = self.model.transcribe(audio_data, language=language)
+        # Dodatkowe opcje dla wydajności
+        options = {
+            "fp16": self.device == "mps",  # Użyj half precision na GPU
+            "language": language,
+            "task": "transcribe",
+            "no_speech_threshold": 0.6,  # Zwiększ próg dla lepszej wydajności
+            "logprob_threshold": -1.0,
+            "compression_ratio_threshold": 2.4
+        }
+        
+        # If we have allowed languages and no specific language is set, detect and constrain
+        if self.allowed_languages and language is None:
+            # First, detect the language without constraining
+            result = self.model.transcribe(audio_data, **{k: v for k, v in options.items() if k != "language"})
+            detected_lang = result.get('language', 'en')
+            
+            # If detected language is not in allowed list, use the first allowed language
+            if detected_lang not in self.allowed_languages:
+                options["language"] = self.allowed_languages[0]
+            else:
+                options["language"] = detected_lang
+            
+            # Re-transcribe with the constrained language
+            result = self.model.transcribe(audio_data, **options)
+        else:
+            result = self.model.transcribe(audio_data, **options)
+            
         is_first = True
         for element in result["text"]:
             if is_first and element == " ":
@@ -27,10 +65,36 @@ class SpeechTranscriber:
             except:
                 pass
 
+class SoundPlayer:
+    """Klasa do odtwarzania dźwięków systemowych macOS"""
+    
+    @staticmethod
+    def play_start_sound():
+        """Odtwarza dźwięk rozpoczęcia nagrywania (jak w systemowym rozpoznawaniu mowy)"""
+        if platform.system() == 'Darwin':  # macOS
+            try:
+                # Używamy Tink - krótki, przyjemny dźwięk często używany w systemie
+                subprocess.run(['afplay', '/System/Library/Sounds/Tink.aiff'], 
+                             check=False, capture_output=True)
+            except Exception:
+                pass  # Cicho ignorujemy błędy odtwarzania dźwięku
+    
+    @staticmethod
+    def play_stop_sound():
+        """Odtwarza dźwięk zakończenia nagrywania"""
+        if platform.system() == 'Darwin':  # macOS
+            try:
+                # Używamy Pop - krótki dźwięk sygnalizujący zakończenie
+                subprocess.run(['afplay', '/System/Library/Sounds/Pop.aiff'], 
+                             check=False, capture_output=True)
+            except Exception:
+                pass  # Cicho ignorujemy błędy odtwarzania dźwięku
+
 class Recorder:
     def __init__(self, transcriber):
         self.recording = False
         self.transcriber = transcriber
+        self.sound_player = SoundPlayer()
 
     def start(self, language=None):
         thread = threading.Thread(target=self._record_impl, args=(language,))
@@ -42,6 +106,10 @@ class Recorder:
 
     def _record_impl(self, language):
         self.recording = True
+        
+        # Odtwórz dźwięk rozpoczęcia nagrywania
+        self.sound_player.play_start_sound()
+        
         frames_per_buffer = 1024
         p = pyaudio.PyAudio()
         stream = p.open(format=pyaudio.paInt16,
@@ -58,6 +126,9 @@ class Recorder:
         stream.stop_stream()
         stream.close()
         p.terminate()
+        
+        # Odtwórz dźwięk zakończenia nagrywania
+        self.sound_player.play_stop_sound()
 
         audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
         audio_data_fp32 = audio_data.astype(np.float32) / 32768.0
@@ -95,7 +166,7 @@ class GlobalKeyListener:
 class DoubleCommandKeyListener:
     def __init__(self, app):
         self.app = app
-        self.key = keyboard.Key.cmd_r
+        self.key = keyboard.Key.cmd_l
         self.pressed = 0
         self.last_press_time = 0
 
@@ -212,6 +283,9 @@ def parse_args():
                         help='Specify the two-letter language code (e.g., "en" for English) to improve recognition accuracy. '
                         'This can be especially helpful for smaller model sizes.  To see the full list of supported languages, '
                         'check out the official list [here](https://github.com/openai/whisper/blob/main/whisper/tokenizer.py).')
+    parser.add_argument('--allowed_languages', type=str, default=None,
+                        help='Comma-separated list of allowed languages (e.g., "en,pl"). '
+                        'If specified, language detection will be constrained to these languages only.')
     parser.add_argument('-t', '--max_time', type=float, default=30,
                         help='Specify the maximum recording time in seconds. The app will automatically stop recording after this duration. '
                         'Default: 30 seconds.')
@@ -230,12 +304,37 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
+    # Określ urządzenie dla modelu
+    device = "cpu"
+    if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+        device = "mps"
+        print(f"Próbuję użyć Metal Performance Shaders (GPU) na M1: {device}")
+    else:
+        print(f"Używam CPU: {device}")
+
     print("Loading model...")
     model_name = args.model_name
-    model = load_model(model_name)
-    print(f"{model_name} model loaded")
     
-    transcriber = SpeechTranscriber(model)
+    try:
+        model = load_model(model_name, device=device)
+        print(f"{model_name} model loaded on {device}")
+    except Exception as e:
+        if device == "mps":
+            print(f"Błąd z MPS: {str(e)[:100]}...")
+            print("Przełączam na CPU jako fallback")
+            device = "cpu"
+            model = load_model(model_name, device=device)
+            print(f"{model_name} model loaded on {device}")
+        else:
+            raise e
+    
+    # Parse allowed languages if specified
+    allowed_languages = None
+    if args.allowed_languages:
+        allowed_languages = [lang.strip() for lang in args.allowed_languages.split(',')]
+        print(f"Language detection constrained to: {allowed_languages}")
+    
+    transcriber = SpeechTranscriber(model, allowed_languages)
     recorder = Recorder(transcriber)
     
     app = StatusBarApp(recorder, args.language, args.max_time)

@@ -1,0 +1,8 @@
+{
+  "test_key": "mixed_5s",
+  "expected_text": "Hello, jak się masz? I am testing mixed language recognition.",
+  "filename": "test_mixed_5s_20250630_094059.wav",
+  "duration": 5,
+  "sample_rate": 16000,
+  "recorded_at": "2025-06-30T09:41:08.071811"
+}

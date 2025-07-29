@@ -1,0 +1,8 @@
+{
+  "test_key": "polish_10s",
+  "expected_text": "To jest dłuższy test polskiego języka. Będę mówić przez około dziesięć sekund. Liczby: jeden, dwa, trzy, cztery, pięć, sześć, siedem, osiem, dziewięć, dziesięć.",
+  "filename": "test_polish_10s_20250630_094120.wav",
+  "duration": 10,
+  "sample_rate": 16000,
+  "recorded_at": "2025-06-30T09:41:33.568226"
+}
