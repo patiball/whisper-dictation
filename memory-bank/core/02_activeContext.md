@@ -1,28 +1,30 @@
 # Active Context
 
-**Current Focus:** 🔍 **WHISPER.CPP DISCOVERY & ISSUES** - Znaleziono prawdziwe wsparcie M1 GPU, ale z problemami
+**Current Focus:** 🎯 **ROOT CAUSE IDENTIFIED** - Whisper.cpp ma identyczne problemy co wcześniej naprawiliśmy!
 
-**MAJOR DISCOVERY - Dual Whisper Implementation:**
-- **Python Version** (`whisper-dictation.py`): OpenAI Whisper + PyTorch - tylko CPU (MPS incompatible)
-- **C++ Version** (`whisper-dictation-fast.py`): whisper.cpp - prawdziwe wsparcie M1 GPU! 
-- **Status**: whisper.cpp ma problemy z jakością transkrypcji
+**BREAKTHROUGH DISCOVERY:**
+- **Źródło problemów**: whisper.cpp powtarza **dokładnie te same błędy** co Python version przed naprawami
+- **Audio Cutting**: Dźwięki odtwarzane podczas nagrania (identyczne z specs/20250730_sound_and_shortcut_fix.md)
+- **Translation Issue**: Brak explicit transcription mode flag w whisper-cli
+- **Language Detection**: Wymuszanie pierwszego allowed_language zamiast auto-detection
 
-**CRITICAL ISSUES IDENTIFIED:**
-- **Audio Cutting**: whisper.cpp obcina część audio podczas nagrywania
-- **Translation Instead of Transcription**: zamiast transkrypcji robi tłumaczenie na angielski
-- **Quality Degradation**: gorsza jakość rozpoznawania vs Python version
+**CRITICAL INSIGHT:**
+Problemy whisper.cpp to **te same architekturalne błędy** które już naprawiliśmy w Python version:
+1. **Sound interference** podczas recording pipeline
+2. **Language forcing** zamiast proper detection  
+3. **Missing transcription mode** configuration
 
 **Recent Completed Tasks:**
+- ✅ **Root Cause Analysis - Whisper.cpp Issues (2025-01-30):** Zidentyfikowano źródło problemów
+  - **Audio Cutting**: `play_start_sound()` podczas nagrania zakłóca audio (linia 137)
+  - **Translation Mode**: Brak `--task transcribe` flag w whisper-cli command
+  - **Language Forcing**: `self.allowed_languages[0]` wymusza język zamiast auto-detection (linia 58)
+  - **Specification Created**: specs/20250130_whisper_cpp_quality_fix.md
 - ✅ **Whisper.cpp Discovery (2025-01-30):** Znaleziono istniejącą implementację C++ z prawdziwym wsparciem M1 GPU
   - Lokalizacja: `whisper-dictation-fast.py` i `whisper-dictation-optimized.py`
   - Instalacja: `brew install whisper-cpp` (już zainstalowany)
-  - Komenda: `poetry run python whisper-dictation-fast.py --k_double_cmd`
   - GPU Support: Domyślnie włączony (`--no-gpu [false]`)
 - ✅ **M1 Support Fix - Complete Implementation (2025-01-30):** All 4 phases successfully deployed for Python version
-  - Phase 1: Dependencies upgraded (PyTorch 2.1.2, Whisper 20231117)
-  - Phase 2: DeviceManager with intelligent fallback
-  - Phase 3: Enhanced error handling with Polish messages
-  - Phase 4: M1-specific optimizations and settings
 - ✅ **Przywrócenie odtwarzania dźwięków i naprawa skrótów klawiszowych (2025-07-30):** Dźwięki są odtwarzane w osobnym wątku, a skróty klawiszowe działają poprawnie.
 - ✅ **Naprawa ucinania początku nagrania (2025-07-30):** Tymczasowo wyłączono odtwarzanie dźwięków, co rozwiązało problem.
 - ✅ **Optymalizacja wydajności transkrypcji (2025-07-30):** Usunięto podwójne przetwarzanie audio w `transcriber.py`.
@@ -30,21 +32,22 @@
 
 **Immediate Priorities:**
 
-1. **🚨 Fix whisper.cpp Issues (CRITICAL)**:
-   - Resolve audio cutting problem during recording
-   - Fix translation vs transcription mode (force transcription)
-   - Improve quality to match Python version
+1. **🎯 Apply Known Fixes to Whisper.cpp (HIGH CONFIDENCE)**:
+   - **Audio Pipeline Fix**: Delay dźwięków jak w Python version (proven solution)
+   - **Transcription Mode Fix**: Dodać `--task transcribe` flag do whisper-cli
+   - **Language Detection Fix**: Auto-detection zamiast wymuszania allowed_languages[0]
    
-2. **Documentation Update**: 
-   - Add whisper.cpp usage instructions to README
-   - Document dual implementation (Python vs C++)
-   - Performance comparison guide
+2. **Implementation Strategy**:
+   - **Phase 1**: Fix audio cutting (delay sounds by 0.1s)
+   - **Phase 2**: Research whisper-cli transcription flags  
+   - **Phase 3**: Implement proper language detection
    
-3. **Quality Assurance**:
-   - Compare transcription accuracy: Python vs C++
-   - Test multilingual support in both versions
-   - Benchmark real M1 GPU performance gains
+3. **Validation & Testing**:
+   - Test identical audio: Python vs Fixed C++ versions
+   - Verify M1 GPU utilization via Activity Monitor
+   - Measure performance improvement (target: 2-3x faster)
 
-4. **User Choice Implementation**:
-   - Allow user to choose between Python (accurate) vs C++ (fast) versions
-   - Provide clear trade-offs documentation
+4. **Expected Outcome**: 
+   - Production-ready whisper.cpp with M1 GPU acceleration
+   - Quality matching Python version
+   - True M1 performance benefits realized
