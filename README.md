@@ -40,17 +40,37 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-Run the application:
 
+### 🔄 **Two Whisper Implementations Available**
+
+This project includes **two different Whisper implementations** with different trade-offs:
+
+#### 1. **Python Version (Recommended for Accuracy)**
 ```bash
-python whisper-dictation.py
+# High accuracy, CPU only (M1 GPU not supported due to PyTorch MPS incompatibility)
+poetry run python whisper-dictation.py --k_double_cmd
 ```
 
-By default, the app uses the "base" Whisper ASR model and the key combination to toggle dictation is cmd+option on macOS and ctrl+alt on other platforms. You can change the model and the key combination using command-line arguments.  Note that models other than `tiny` and `base` can be slow to transcribe and are not recommended unless you're using a powerful computer, ideally one with a CUDA-enabled GPU. For example:
-
-
+#### 2. **C++ Version (Experimental - M1 GPU Support)**
 ```bash
-python whisper-dictation.py -m large -k cmd_r+shift -l en
+# M1 GPU acceleration, but with current quality issues
+poetry run python whisper-dictation-fast.py --k_double_cmd
+```
+
+**⚠️ Known Issues with C++ Version:**
+- Audio cutting during recording
+- Translation instead of transcription (converts to English)
+- Lower transcription quality compared to Python version
+
+### **Prerequisites for C++ Version**
+```bash
+# Install whisper.cpp (if not already installed)
+brew install whisper-cpp
+```
+
+### **Standard Usage (Python Version)**
+```bash
+poetry run python whisper-dictation.py -m large -k cmd_r+shift -l en
 ```
 
 The models are multilingual, and you can specify a two-letter language code (e.g., "no" for Norwegian) with the `-l` or `--language` option. Specifying the language can improve recognition accuracy, especially for smaller model sizes.
@@ -85,13 +105,21 @@ The repository contains test audio files for debugging and performance testing:
 - Language Detection: 2.13s (Polish detected correctly)
 - Transcription: 2.95s
 - Total Processing: 5.08s
-- GPU: Metal Performance Shaders on M1 (✅ Working)
-- Model: medium (1.5GB)
+- **Note**: This test was with Python version (CPU only)
 
-**Observations:**
-- Language detection + transcription requires ~5s total
-- GPU acceleration is working (Metal backend detected)
-- Model loads twice (once for detection, once for transcription)
+**M1 GPU Support Status:**
+- **Python Version**: ❌ MPS backend incompatible with OpenAI Whisper (SparseMPS errors)
+- **C++ Version**: ✅ Native M1 GPU support via whisper.cpp, but with quality issues
+- **Current Recommendation**: Use Python version for accuracy, C++ version experimental
+
+**Implementation Comparison:**
+| Feature | Python Version | C++ Version |
+|---------|---------------|-------------|
+| M1 GPU Support | ❌ CPU only | ✅ Native GPU |
+| Transcription Quality | ✅ High | ⚠️ Issues detected |
+| Audio Processing | ✅ Complete | ❌ Cutting issues |
+| Language Support | ✅ Multilingual | ❌ Forces English |
+| Stability | ✅ Production ready | ⚠️ Experimental |
 
 ### Running Tests
 
