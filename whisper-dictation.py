@@ -108,7 +108,7 @@ class Recorder:
         self.recording = True
         
         # Odtwórz dźwięk rozpoczęcia nagrywania
-        self.sound_player.play_start_sound()
+        #self.sound_player.play_start_sound()
         
         frames_per_buffer = 1024
         p = pyaudio.PyAudio()
@@ -128,7 +128,7 @@ class Recorder:
         p.terminate()
         
         # Odtwórz dźwięk zakończenia nagrywania
-        self.sound_player.play_stop_sound()
+        #self.sound_player.play_stop_sound()
 
         audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
         audio_data_fp32 = audio_data.astype(np.float32) / 32768.0
