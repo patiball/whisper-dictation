@@ -12,29 +12,36 @@ import os
 import torch
 
 class SpeechTranscriber:
-    def __init__(self, model, allowed_languages=None):
+    def __init__(self, model, allowed_languages=None, device_manager=None):
         self.model = model
         self.pykeyboard = keyboard.Controller()
         self.allowed_languages = allowed_languages
+        self.device_manager = device_manager
         
-        # Sprawdź dostępność GPU na M1
-        self.device = "cpu"
-        if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-            self.device = "mps"
-            print(f"Używam Metal Performance Shaders (GPU) na M1: {self.device}")
+        # Get device from model if device_manager not provided
+        if hasattr(model, 'device'):
+            self.device = str(model.device)
         else:
-            print(f"Używam CPU: {self.device}")
+            self.device = "cpu"
+        
+        print(f"SpeechTranscriber: Używam urządzenia {self.device}")
 
     def transcribe(self, audio_data, language=None):
-        # Dodatkowe opcje dla wydajności
-        options = {
-            "fp16": self.device == "mps",  # Użyj half precision na GPU
-            "language": language,
-            "task": "transcribe",
-            "no_speech_threshold": 0.6,  # Zwiększ próg dla lepszej wydajności
-            "logprob_threshold": -1.0,
-            "compression_ratio_threshold": 2.4
-        }
+        # Get optimized options from device manager if available
+        if self.device_manager:
+            options = self.device_manager.get_optimized_settings(self.device, "base")  # Default to base model
+            if language:
+                options["language"] = language
+        else:
+            # Fallback to original options
+            options = {
+                "fp16": self.device == "mps",  # Użyj half precision na GPU
+                "language": language,
+                "task": "transcribe",
+                "no_speech_threshold": 0.6,  # Zwiększ próg dla lepszej wydajności
+                "logprob_threshold": -1.0,
+                "compression_ratio_threshold": 2.4
+            }
         
         # If we have allowed languages and no specific language is set, detect and constrain
         if self.allowed_languages and language is None:
@@ -303,27 +310,45 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    # Określ urządzenie dla modelu
-    device = "cpu"
-    if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-        device = "mps"
-        print(f"Próbuję użyć Metal Performance Shaders (GPU) na M1: {device}")
-    else:
-        print(f"Używam CPU: {device}")
+    # Import DeviceManager for intelligent device handling
+    from device_manager import DeviceManager, OperationType
+    from mps_optimizer import EnhancedDeviceManager
+    
+    # Initialize Enhanced DeviceManager
+    device_manager = EnhancedDeviceManager()
+    
+    # Get optimal device for model loading
+    device = device_manager.get_device_for_operation(OperationType.MODEL_LOADING, args.model_name)
+    print(f"DeviceManager: Wybrałem {device} dla modelu {args.model_name}")
 
     print("Loading model...")
     model_name = args.model_name
     
     try:
         model = load_model(model_name, device=device)
-        print(f"{model_name} model loaded on {device}")
+        print(f"✅ {model_name} model loaded successfully on {device}")
+        
+        # Apply device optimizations
+        device_manager.optimize_model(model, device)
+        
+        # Register successful loading
+        device_manager.base_manager.register_operation_success(device, OperationType.MODEL_LOADING)
+        
     except Exception as e:
-        if device == "mps":
-            print(f"Błąd z MPS: {str(e)[:100]}...")
-            print("Przełączam na CPU jako fallback")
-            device = "cpu"
+        if device_manager.base_manager.should_retry_with_fallback(e):
+            fallback_device, user_message = device_manager.handle_device_error_enhanced(
+                e, OperationType.MODEL_LOADING, device
+            )
+            print(f"🔄 {user_message}")
+            print(f"Szczegóły: Przełączam z {device} na {fallback_device}")
+            
+            device = fallback_device
             model = load_model(model_name, device=device)
-            print(f"{model_name} model loaded on {device}")
+            device_manager.optimize_model(model, device)
+            print(f"✅ {model_name} model loaded successfully on fallback device: {device}")
+            
+            # Register successful fallback
+            device_manager.base_manager.register_operation_success(device, OperationType.MODEL_LOADING)
         else:
             raise e
     
@@ -333,7 +358,7 @@ if __name__ == "__main__":
         allowed_languages = [lang.strip() for lang in args.allowed_languages.split(',')]
         print(f"Language detection constrained to: {allowed_languages}")
     
-    transcriber = SpeechTranscriber(model, allowed_languages)
+    transcriber = SpeechTranscriber(model, allowed_languages, device_manager)
     recorder = Recorder(transcriber)
     
     app = StatusBarApp(recorder, args.language, args.max_time)
