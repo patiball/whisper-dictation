@@ -10,15 +10,16 @@ python = ">=3.10,<3.13"
 pyaudio = "^0.2.13"
 openai = "^0.28.1"
 # without this, poetry will attempt to install `triton` which is not available for macos
-openai-whisper = { git = "https://github.com/openai/whisper.git", rev = "0a60fcaa9b86748389a656aa013c416030287d47" }
+# Updated to latest stable version for better M1 compatibility
+openai-whisper = { git = "https://github.com/openai/whisper.git", rev = "v20231117" }
 llvmlite = "0.41.0"
 numba = "0.58.0"
 rumps = "^0.4.0"
 pynput = "^1.7.6"
-# PyTorch z obsługą MPS dla M1
-torch = "^2.0.0"
-torchvision = "^0.15.0"
-torchaudio = "^2.0.0"
+# PyTorch z obsługą MPS dla M1 - upgraded for better MPS compatibility
+torch = "^2.1.0"
+torchvision = "^0.16.0"
+torchaudio = "^2.1.0"
 
 [tool.poetry.scripts]
 whisper = "whisper-dictation:main"

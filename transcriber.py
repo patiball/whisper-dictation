@@ -8,6 +8,7 @@ import torch
 import whisper
 import numpy as np
 from pathlib import Path
+from device_manager import DeviceManager, OperationType
 
 class TranscriptionResult:
     """Result object for transcription with language detection."""
@@ -38,14 +39,14 @@ class SpeechTranscriber:
         self.model_size = model_size
         self.allowed_languages = allowed_languages or []
         
-        # Auto-detect device if not specified
+        # Initialize DeviceManager for intelligent device handling
+        self.device_manager = DeviceManager()
+        
+        # Get optimal device for model loading
         if device is None:
-            if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-                self.device = "mps"
-            elif torch.cuda.is_available():
-                self.device = "cuda"
-            else:
-                self.device = "cpu"
+            self.device = self.device_manager.get_device_for_operation(
+                OperationType.MODEL_LOADING, model_size
+            )
         else:
             self.device = device
         
@@ -68,13 +69,26 @@ class SpeechTranscriber:
             self.model = whisper.load_model(model_size, device=self.device)
             self.model_state = f"{model_size}_{self.device}_{time.time()}"
             print(f"Model loaded successfully on {self.device}")
+            
+            # Register successful model loading
+            self.device_manager.register_operation_success(self.device, OperationType.MODEL_LOADING)
+            
         except Exception as e:
-            # Fallback to CPU if GPU fails
-            if self.device != "cpu":
-                print(f"Failed to load on {self.device}, falling back to CPU: {e}")
-                self.device = "cpu"
+            # Use DeviceManager for intelligent fallback
+            if self.device_manager.should_retry_with_fallback(e):
+                fallback_device = self.device_manager.handle_device_error(
+                    e, OperationType.MODEL_LOADING, self.device
+                )
+                print(f"DeviceManager: Failed to load on {self.device}, falling back to {fallback_device}")
+                print(f"Error details: {str(e)[:100]}...")
+                
+                self.device = fallback_device
                 self.model = whisper.load_model(model_size, device=self.device)
                 self.model_state = f"{model_size}_{self.device}_{time.time()}"
+                print(f"Model loaded successfully on fallback device: {self.device}")
+                
+                # Register successful fallback
+                self.device_manager.register_operation_success(self.device, OperationType.MODEL_LOADING)
             else:
                 raise e
     
@@ -119,8 +133,33 @@ class SpeechTranscriber:
             options["language"] = language
             self.model_state = f"{self.model_size}_{self.device}_{language}_{time.time()}"
 
-        # Perform transcription once
-        result = self.model.transcribe(str(audio_file_path), **options)
+        # Get optimal device for transcription (may differ from model loading device)
+        transcription_device = self.device_manager.get_device_for_operation(OperationType.TRANSCRIPTION)
+        
+        # Perform transcription with device management
+        try:
+            result = self.model.transcribe(str(audio_file_path), **options)
+            # Register successful transcription
+            self.device_manager.register_operation_success(transcription_device, OperationType.TRANSCRIPTION)
+        except Exception as e:
+            if self.device_manager.should_retry_with_fallback(e):
+                fallback_device = self.device_manager.handle_device_error(
+                    e, OperationType.TRANSCRIPTION, transcription_device
+                )
+                print(f"DeviceManager: Transcription failed on {transcription_device}, retrying on {fallback_device}")
+                print(f"Error details: {str(e)[:100]}...")
+                
+                # Move model to fallback device if needed
+                if fallback_device != self.device:
+                    print(f"Moving model from {self.device} to {fallback_device}")
+                    self.model = self.model.to(fallback_device)
+                    self.device = fallback_device
+                
+                # Retry transcription
+                result = self.model.transcribe(str(audio_file_path), **options)
+                self.device_manager.register_operation_success(fallback_device, OperationType.TRANSCRIPTION)
+            else:
+                raise e
         
         detected_lang = result.get('language', 'en')
 
@@ -178,8 +217,29 @@ class SpeechTranscriber:
             "temperature": 0.0
         }
         
-        # Transcribe
-        result = self.model.transcribe(audio_data, **options)
+        # Get optimal device for transcription
+        transcription_device = self.device_manager.get_device_for_operation(OperationType.TRANSCRIPTION)
+        
+        # Transcribe with device management
+        try:
+            result = self.model.transcribe(audio_data, **options)
+            self.device_manager.register_operation_success(transcription_device, OperationType.TRANSCRIPTION)
+        except Exception as e:
+            if self.device_manager.should_retry_with_fallback(e):
+                fallback_device = self.device_manager.handle_device_error(
+                    e, OperationType.TRANSCRIPTION, transcription_device
+                )
+                print(f"DeviceManager: Audio transcription failed on {transcription_device}, retrying on {fallback_device}")
+                
+                # Move model to fallback device if needed
+                if fallback_device != self.device:
+                    self.model = self.model.to(fallback_device)
+                    self.device = fallback_device
+                
+                result = self.model.transcribe(audio_data, **options)
+                self.device_manager.register_operation_success(fallback_device, OperationType.TRANSCRIPTION)
+            else:
+                raise e
         
         transcription_time = time.time() - start_time
         
