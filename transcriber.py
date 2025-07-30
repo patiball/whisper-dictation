@@ -9,6 +9,7 @@ import whisper
 import numpy as np
 from pathlib import Path
 from device_manager import DeviceManager, OperationType
+from mps_optimizer import EnhancedDeviceManager
 
 class TranscriptionResult:
     """Result object for transcription with language detection."""
@@ -39,8 +40,8 @@ class SpeechTranscriber:
         self.model_size = model_size
         self.allowed_languages = allowed_languages or []
         
-        # Initialize DeviceManager for intelligent device handling
-        self.device_manager = DeviceManager()
+        # Initialize Enhanced DeviceManager for intelligent device handling with M1 optimizations
+        self.device_manager = EnhancedDeviceManager()
         
         # Get optimal device for model loading
         if device is None:
@@ -70,25 +71,31 @@ class SpeechTranscriber:
             self.model_state = f"{model_size}_{self.device}_{time.time()}"
             print(f"Model loaded successfully on {self.device}")
             
+            # Apply device-specific optimizations
+            self.device_manager.optimize_model(self.model, self.device)
+            
             # Register successful model loading
-            self.device_manager.register_operation_success(self.device, OperationType.MODEL_LOADING)
+            self.device_manager.base_manager.register_operation_success(self.device, OperationType.MODEL_LOADING)
             
         except Exception as e:
-            # Use DeviceManager for intelligent fallback
-            if self.device_manager.should_retry_with_fallback(e):
-                fallback_device = self.device_manager.handle_device_error(
+            # Use Enhanced DeviceManager for intelligent fallback with user-friendly messages
+            if self.device_manager.base_manager.should_retry_with_fallback(e):
+                fallback_device, user_message = self.device_manager.handle_device_error_enhanced(
                     e, OperationType.MODEL_LOADING, self.device
                 )
-                print(f"DeviceManager: Failed to load on {self.device}, falling back to {fallback_device}")
-                print(f"Error details: {str(e)[:100]}...")
+                print(f"🔄 {user_message}")
+                print(f"Szczegóły: Przełączam z {self.device} na {fallback_device}")
                 
                 self.device = fallback_device
                 self.model = whisper.load_model(model_size, device=self.device)
                 self.model_state = f"{model_size}_{self.device}_{time.time()}"
-                print(f"Model loaded successfully on fallback device: {self.device}")
+                
+                # Apply optimizations to fallback device
+                self.device_manager.optimize_model(self.model, self.device)
+                print(f"✅ Model załadowany pomyślnie na urządzeniu: {self.device}")
                 
                 # Register successful fallback
-                self.device_manager.register_operation_success(self.device, OperationType.MODEL_LOADING)
+                self.device_manager.base_manager.register_operation_success(self.device, OperationType.MODEL_LOADING)
             else:
                 raise e
     
@@ -115,15 +122,8 @@ class SpeechTranscriber:
             if not audio_path.exists():
                 raise FileNotFoundError(f"Audio file not found: {audio_file_path}")
         
-        # Transcription options optimized for performance
-        options = {
-            "fp16": self.device == "mps" or self.device == "cuda",  # Use half precision on GPU
-            "task": "transcribe",
-            "no_speech_threshold": 0.6,
-            "logprob_threshold": -1.0,
-            "compression_ratio_threshold": 2.4,
-            "temperature": 0.0  # Deterministic results
-        }
+        # Get optimized transcription options for current device
+        options = self.device_manager.get_optimized_settings(self.device, self.model_size)
         
         detection_time = 0
         transcription_start = time.time()
@@ -136,28 +136,35 @@ class SpeechTranscriber:
         # Get optimal device for transcription (may differ from model loading device)
         transcription_device = self.device_manager.get_device_for_operation(OperationType.TRANSCRIPTION)
         
-        # Perform transcription with device management
+        # Perform transcription with enhanced device management
         try:
             result = self.model.transcribe(str(audio_file_path), **options)
             # Register successful transcription
-            self.device_manager.register_operation_success(transcription_device, OperationType.TRANSCRIPTION)
+            self.device_manager.base_manager.register_operation_success(transcription_device, OperationType.TRANSCRIPTION)
         except Exception as e:
-            if self.device_manager.should_retry_with_fallback(e):
-                fallback_device = self.device_manager.handle_device_error(
+            if self.device_manager.base_manager.should_retry_with_fallback(e):
+                fallback_device, user_message = self.device_manager.handle_device_error_enhanced(
                     e, OperationType.TRANSCRIPTION, transcription_device
                 )
-                print(f"DeviceManager: Transcription failed on {transcription_device}, retrying on {fallback_device}")
-                print(f"Error details: {str(e)[:100]}...")
+                print(f"🔄 {user_message}")
+                print(f"Szczegóły: Ponawiam transkrypcję na {fallback_device}")
                 
                 # Move model to fallback device if needed
                 if fallback_device != self.device:
-                    print(f"Moving model from {self.device} to {fallback_device}")
+                    print(f"Przenoszę model z {self.device} na {fallback_device}")
                     self.model = self.model.to(fallback_device)
                     self.device = fallback_device
+                    self.device_manager.optimize_model(self.model, self.device)
                 
-                # Retry transcription
-                result = self.model.transcribe(str(audio_file_path), **options)
-                self.device_manager.register_operation_success(fallback_device, OperationType.TRANSCRIPTION)
+                # Get optimized settings for fallback device
+                fallback_options = self.device_manager.get_optimized_settings(fallback_device, self.model_size)
+                if language:
+                    fallback_options["language"] = language
+                
+                # Retry transcription with optimized settings
+                result = self.model.transcribe(str(audio_file_path), **fallback_options)
+                self.device_manager.base_manager.register_operation_success(fallback_device, OperationType.TRANSCRIPTION)
+                print(f"✅ Transkrypcja zakończona pomyślnie na {fallback_device}")
             else:
                 raise e
         
@@ -209,35 +216,37 @@ class SpeechTranscriber:
             if np.max(np.abs(audio_data)) > 1.0:
                 audio_data = audio_data / np.max(np.abs(audio_data))
         
-        # Transcription options
-        options = {
-            "fp16": self.device == "mps" or self.device == "cuda",
-            "task": "transcribe",
-            "no_speech_threshold": 0.6,
-            "temperature": 0.0
-        }
+        # Get optimized transcription options for current device
+        options = self.device_manager.get_optimized_settings(self.device, self.model_size)
         
         # Get optimal device for transcription
         transcription_device = self.device_manager.get_device_for_operation(OperationType.TRANSCRIPTION)
         
-        # Transcribe with device management
+        # Transcribe with enhanced device management
         try:
             result = self.model.transcribe(audio_data, **options)
-            self.device_manager.register_operation_success(transcription_device, OperationType.TRANSCRIPTION)
+            self.device_manager.base_manager.register_operation_success(transcription_device, OperationType.TRANSCRIPTION)
         except Exception as e:
-            if self.device_manager.should_retry_with_fallback(e):
-                fallback_device = self.device_manager.handle_device_error(
+            if self.device_manager.base_manager.should_retry_with_fallback(e):
+                fallback_device, user_message = self.device_manager.handle_device_error_enhanced(
                     e, OperationType.TRANSCRIPTION, transcription_device
                 )
-                print(f"DeviceManager: Audio transcription failed on {transcription_device}, retrying on {fallback_device}")
+                print(f"🔄 {user_message}")
+                print(f"Szczegóły: Ponawiam transkrypcję audio na {fallback_device}")
                 
                 # Move model to fallback device if needed
                 if fallback_device != self.device:
+                    print(f"Przenoszę model z {self.device} na {fallback_device}")
                     self.model = self.model.to(fallback_device)
                     self.device = fallback_device
+                    self.device_manager.optimize_model(self.model, self.device)
                 
-                result = self.model.transcribe(audio_data, **options)
-                self.device_manager.register_operation_success(fallback_device, OperationType.TRANSCRIPTION)
+                # Get optimized settings for fallback device
+                fallback_options = self.device_manager.get_optimized_settings(fallback_device, self.model_size)
+                
+                result = self.model.transcribe(audio_data, **fallback_options)
+                self.device_manager.base_manager.register_operation_success(fallback_device, OperationType.TRANSCRIPTION)
+                print(f"✅ Transkrypcja audio zakończona pomyślnie na {fallback_device}")
             else:
                 raise e
         
