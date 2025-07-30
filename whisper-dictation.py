@@ -67,28 +67,27 @@ class SpeechTranscriber:
 
 class SoundPlayer:
     """Klasa do odtwarzania dźwięków systemowych macOS"""
-    
+
+    @staticmethod
+    def _play_sound(sound_path):
+        try:
+            subprocess.run(['afplay', sound_path], check=False, capture_output=True)
+        except Exception:
+            pass  # Cicho ignorujemy błędy odtwarzania dźwięku
+
     @staticmethod
     def play_start_sound():
         """Odtwarza dźwięk rozpoczęcia nagrywania (jak w systemowym rozpoznawaniu mowy)"""
         if platform.system() == 'Darwin':  # macOS
-            try:
-                # Używamy Tink - krótki, przyjemny dźwięk często używany w systemie
-                subprocess.run(['afplay', '/System/Library/Sounds/Tink.aiff'], 
-                             check=False, capture_output=True)
-            except Exception:
-                pass  # Cicho ignorujemy błędy odtwarzania dźwięku
-    
+            sound_path = '/System/Library/Sounds/Tink.aiff'
+            threading.Thread(target=SoundPlayer._play_sound, args=(sound_path,)).start()
+
     @staticmethod
     def play_stop_sound():
         """Odtwarza dźwięk zakończenia nagrywania"""
         if platform.system() == 'Darwin':  # macOS
-            try:
-                # Używamy Pop - krótki dźwięk sygnalizujący zakończenie
-                subprocess.run(['afplay', '/System/Library/Sounds/Pop.aiff'], 
-                             check=False, capture_output=True)
-            except Exception:
-                pass  # Cicho ignorujemy błędy odtwarzania dźwięku
+            sound_path = '/System/Library/Sounds/Pop.aiff'
+            threading.Thread(target=SoundPlayer._play_sound, args=(sound_path,)).start()
 
 class Recorder:
     def __init__(self, transcriber):
@@ -108,7 +107,7 @@ class Recorder:
         self.recording = True
         
         # Odtwórz dźwięk rozpoczęcia nagrywania
-        #self.sound_player.play_start_sound()
+        self.sound_player.play_start_sound()
         
         frames_per_buffer = 1024
         p = pyaudio.PyAudio()
@@ -128,7 +127,7 @@ class Recorder:
         p.terminate()
         
         # Odtwórz dźwięk zakończenia nagrywania
-        #self.sound_player.play_stop_sound()
+        self.sound_player.play_stop_sound()
 
         audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
         audio_data_fp32 = audio_data.astype(np.float32) / 32768.0
