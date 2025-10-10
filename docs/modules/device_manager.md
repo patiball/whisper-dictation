@@ -4,6 +4,43 @@
 
 Moduł `device_manager` zapewnia scentralizowane zarządzanie urządzeniami (CPU, MPS, CUDA) z inteligentnym wyborem urządzenia, testowaniem zdolności, obsługą błędów i optymalizacją dla chipów Apple M1/M2. Jest kluczowy dla stabilności i wydajności aplikacji na różnych platformach.
 
+## Struktura Klas
+
+```mermaid
+classDiagram
+    class DeviceManager {
+        +get_device_for_operation(operation, model_size)
+        +handle_device_error(error, operation, device)
+        +register_operation_success(device, operation)
+        +should_retry_with_fallback(error)
+        +get_device_status_report()
+    }
+    
+    class EnhancedDeviceManager {
+        +handle_device_error_enhanced(error, operation, device)
+        +get_optimized_settings(device, model_size)
+        +optimize_model(model, device)
+        +get_comprehensive_status()
+    }
+    
+    class MPSErrorHandler {
+        +categorize_error(error)
+        +should_retry_with_cpu(error)
+        +get_user_friendly_message(error)
+        +get_error_statistics()
+    }
+    
+    class MPSOptimizer {
+        +get_optimal_whisper_settings(device, model_size)
+        +optimize_model_for_m1(model, device)
+        +get_memory_usage_info(device)
+    }
+    
+    EnhancedDeviceManager --> DeviceManager
+    EnhancedDeviceManager --> MPSErrorHandler
+    EnhancedDeviceManager --> MPSOptimizer
+```
+
 ## Publiczne API
 
 ### Klasa: `DeviceManager`
@@ -43,6 +80,20 @@ Wybiera najlepsze urządzenie dla danej operacji.
 - Fallback na kolejne urządzenia w razie problemów
 - Ostateczny fallback: CPU
 
+```mermaid
+flowchart TD
+    A[get_device_for_operation] --> B{Sprawdź historię}
+    B -->|Sukces > 80%| C[Wybierz urządzenie]
+    B -->|Brak historii| D[Użyj preferencji]
+    C --> E[Zwróć urządzenie]
+    D --> E
+    B -->|Błędy| F[Fallback: kolejne urządzenie]
+    F --> G{Dostępne inne?}
+    G -->|Tak| B
+    G -->|Nie| H[Fallback: CPU]
+    H --> E
+```
+
 ##### `handle_device_error(error: Exception, operation: OperationType, current_device: str) -> str`
 
 Obsługuje błędy urządzenia i zwraca urządzenie zastępcze.
@@ -59,6 +110,17 @@ Obsługuje błędy urządzenia i zwraca urządzenie zastępcze.
 - Rozpoznaje znane problemy MPS (SparseMPS, memory_format)
 - Wyłącza problematyczne urządzenie dla danej operacji
 - Wybiera następne dostępne urządzenie
+
+```mermaid
+flowchart TD
+    A[handle_device_error] --> B[Zarejestruj błąd]
+    B --> C{Znany błąd MPS?}
+    C -->|Tak| D[Wyłącz MPS dla operacji]
+    C -->|Nie| E[Zarejestruj w historii]
+    D --> F[Wybierz fallback device]
+    E --> F
+    F --> G[Zwróć fallback]
+```
 
 ##### `register_operation_success(device: str, operation: OperationType)`
 

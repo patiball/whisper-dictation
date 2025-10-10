@@ -4,6 +4,25 @@
 
 Moduł `recorder` odpowiada za nagrywanie audio z mikrofonu użytkownika. Zapewnia wrapper kompatybilny z TDD wokół funkcjonalności nagrywania, umożliwiając precyzyjne śledzenie czasu rozpoczęcia nagrywania oraz nagrywanie o określonym czasie trwania.
 
+## Struktura Klasy
+
+```mermaid
+classDiagram
+    class Recorder {
+        -sample_rate: int
+        -channels: int
+        -format: int
+        -chunk_size: int
+        +start_recording_with_timestamp()
+        +stop_recording()
+        +record_duration(duration_seconds)
+        +start(language)
+        +stop()
+        +save_recording(audio_data, filename)
+        +get_recording_delay()
+    }
+```
+
 ## Publiczne API
 
 ### Klasa: `Recorder`
@@ -75,6 +94,20 @@ recorder = Recorder()
 audio = recorder.record_duration(5.0)  # Nagraj 5 sekund
 ```
 
+### Przepływ Nagrywania
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Otwórz strumień audio]
+    B --> C[Zapisz timestamp rozpoczęcia]
+    C --> D[Zbieraj chunki audio]
+    D --> E{Koniec nagrania?}
+    E -->|Nie| D
+    E -->|Tak| F[Zamknij strumień]
+    F --> G[Normalizuj dane do float32]
+    G --> H[Zwróć audio data]
+```
+
 ##### `start(language=None)`
 
 Rozpoczyna nagrywanie w tle (wątek).
@@ -88,6 +121,21 @@ recorder = Recorder(transcriber=my_transcriber)
 recorder.start(language='pl')
 # ... nagrywanie w tle ...
 recorder.stop()
+```
+
+### Nagrywanie z Transkrypcją
+
+```mermaid
+flowchart TD
+    A[start z transcriber] --> B[Uruchom wątek nagrywania]
+    B --> C[Nagraj audio w tle]
+    C --> D[stop]
+    D --> E[Zatrzymaj wątek]
+    E --> F{Transcriber?}
+    F -->|Tak| G[Automatyczna transkrypcja]
+    F -->|Nie| H[Kończ]
+    G --> I[Wyświetl tekst]
+    I --> H
 ```
 
 ##### `stop()`

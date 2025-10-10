@@ -4,6 +4,24 @@
 
 Moduł `transcriber` (klasa `SpeechTranscriber`) odpowiada za transkrypcję mowy na tekst przy użyciu modeli Whisper. Zapewnia kompatybilność z TDD oraz obsługuje detekcję języka, wybór i optymalizację urządzenia (CPU/MPS/CUDA) oraz bezpieczne mechanizmy fallback w przypadku problemów z M1/M2.
 
+## Struktura Klasy
+
+```mermaid
+classDiagram
+    class SpeechTranscriber {
+        -model: WhisperModel
+        -device_manager: EnhancedDeviceManager
+        -allowed_languages: list
+        +get_model_state()
+        +transcribe(audio_file_path, language)
+        +transcribe_audio_data(audio_data)
+        +list_available_models()
+        +check_model_available(model_name)
+    }
+    
+    SpeechTranscriber --> EnhancedDeviceManager
+```
+
 ## Publiczne API
 
 ### Klasa: `SpeechTranscriber`
@@ -25,6 +43,23 @@ def __init__(self, model_size="base", device=None, allowed_languages=None)
 - W razie braku modelu prosi użytkownika o zgodę na pobranie
 - Ładuje model na optymalnym urządzeniu i stosuje optymalizacje
 
+### Inicjalizacja i Wybor Urządzenia
+
+```mermaid
+flowchart TD
+    A[__init__] --> B[Utwórz EnhancedDeviceManager]
+    B --> C{Model lokalnie?}
+    C -->|Nie| D[Pytaj użytkownika o pobranie]
+    C -->|Tak| E[Wybór urządzenia]
+    D --> F{Zgoda?}
+    F -->|Tak| G[Pobierz model]
+    F -->|Nie| H[Błąd: brak modelu]
+    G --> E
+    E --> I[Ładuj model na urządzeniu]
+    I --> J[Stosuj optymalizacje]
+    J --> K[Gotowy do transkrypcji]
+```
+
 #### Metody
 
 ##### `get_model_state() -> str`
@@ -42,6 +77,26 @@ Zachowanie:
 - Uwzględnia `allowed_languages` (jeśli wykryty język nie jest na liście, ustawia pierwszy dozwolony jako finalny)
 
 Zwraca: `TranscriptionResult` z polami: `text`, `language`, `detection_time`, `transcription_time`.
+
+### Przepływ Transkrypcji
+
+```mermaid
+flowchart TD
+    A[transcribe] --> B[Pobierz optymalne ustawienia]
+    B --> C[Wybór urządzenia przez DeviceManager]
+    C --> D{Model załadowany?}
+    D -->|Nie| E[Ładuj model]
+    D -->|Tak| F[Uruchom transkrypcję]
+    E --> F
+    F --> G{Błąd urządzenia?}
+    G -->|Tak| H[Fallback na CPU]
+    G -->|Nie| I[Sprawdź język]
+    H --> F
+    I --> J{Język dozwolony?}
+    J -->|Nie| K[Użyj pierwszego dozwolonego]
+    J -->|Tak| L[Zwróć wynik]
+    K --> L
+```
 
 ##### `transcribe_audio_data(audio_data: np.ndarray) -> TranscriptionResult`
 Transkrybuje surowe dane audio (np. z recordera w czasie rzeczywistym). Obsługuje normalizację i fallback na inne urządzenia.
