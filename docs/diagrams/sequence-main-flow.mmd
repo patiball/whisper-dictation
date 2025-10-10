@@ -1,0 +1,145 @@
+sequenceDiagram
+    autonumber
+    
+    participant User as 👤 Użytkownik
+    participant Kbd as 🎹 KeyboardListener
+    participant App as 📱 StatusBarApp
+    participant Rec as 🎙️ Recorder
+    participant PyA as 🔊 PyAudio
+    participant Buf as 💾 Audio Buffer
+    participant Snd as 🔔 SoundPlayer
+    participant Trans as 🤖 Transcriber
+    participant DM as ⚙️ DeviceManager
+    participant Whisper as 🧠 Whisper Model
+    participant Out as ⌨️ Keyboard Output
+    
+    Note over User,Out: INICJALIZACJA (startup)
+    
+    activate App
+    App->>DM: get_device_for_operation(MODEL_LOADING)
+    activate DM
+    DM-->>App: "mps" (M1/M2) lub "cpu"
+    deactivate DM
+    
+    App->>Whisper: load_model(model_name, device="mps")
+    activate Whisper
+    Note right of Whisper: Cache: ~/.cache/whisper/<br/>Ładowanie z dysku<br/>lub pobieranie z internetu
+    Whisper-->>App: model loaded
+    deactivate Whisper
+    
+    App->>DM: optimize_model(model, device)
+    activate DM
+    Note right of DM: FP16 dla MPS<br/>torch.set_grad_enabled(False)
+    DM-->>App: model zoptymalizowany
+    deactivate DM
+    
+    App->>Kbd: Listener.start()
+    activate Kbd
+    Note over App,Kbd: Aplikacja gotowa ⏯
+    
+    rect rgb(200, 230, 255)
+        Note over User,Out: HAPPY PATH - Prawidłowy przepływ
+        
+        User->>Kbd: Naciśnięcie Cmd+Option
+        Note right of User: Trzyma przycisk<br/>podczas mówienia
+        
+        Kbd->>App: on_key_press() → toggle()
+        App->>App: started = True
+        App->>Rec: start(language="pl")
+        
+        activate Rec
+        Rec->>Snd: play_start_sound()
+        activate Snd
+        Snd-->>Rec: ♪ Tink.aiff (async)
+        deactivate Snd
+        
+        Rec->>PyA: open stream (16kHz, mono, paInt16)
+        activate PyA
+        PyA-->>Rec: stream opened
+        
+        App->>App: update_title() → "🔴 (00:01)"
+        Note right of App: Timer liczy czas<br/>nagrywania
+        
+        loop Podczas nagrywania (recording=True)
+            PyA->>Buf: read(1024 samples) → bytes
+            activate Buf
+            Note right of Buf: Chunk ~64ms audio<br/>Format: 16-bit PCM
+            Buf->>Buf: frames.append(data)
+        end
+        
+        User->>Kbd: Zwolnienie Cmd+Option
+        Note right of User: Koniec mówienia
+        
+        Kbd->>App: on_key_release() → toggle()
+        App->>App: started = False
+        App->>Rec: stop()
+        
+        Rec->>Rec: recording = False
+        Note right of Rec: Przerywa pętlę<br/>nagrywania
+        
+        Rec->>PyA: stream.stop_stream()
+        Rec->>PyA: stream.close()
+        PyA-->>Rec: stream closed
+        deactivate PyA
+        
+        Rec->>Snd: play_stop_sound()
+        activate Snd
+        Snd-->>Rec: ♪ Pop.aiff (async)
+        deactivate Snd
+        
+        Rec->>Buf: b''.join(frames)
+        Buf-->>Rec: audio_bytes (bytes)
+        deactivate Buf
+        
+        Rec->>Rec: np.frombuffer(audio_bytes, dtype=int16)
+        Note right of Rec: Konwersja:<br/>bytes → np.int16
+        
+        Rec->>Rec: audio.astype(float32) / 32768.0
+        Note right of Rec: Normalizacja:<br/>int16 → float32 [-1.0, 1.0]
+        
+        Rec->>Trans: transcribe(audio_data_fp32, language="pl")
+        deactivate Rec
+        
+        activate Trans
+        App->>App: title = "⏯" (processing)
+        Note right of App: Print: "Transcribing..."
+        
+        Trans->>DM: get_optimized_settings(device, model_size)
+        activate DM
+        DM-->>Trans: options {fp16: True, language: "pl", ...}
+        deactivate DM
+        
+        Trans->>Whisper: model.transcribe(audio_data, **options)
+        activate Whisper
+        Note right of Whisper: Detekcja języka (jeśli None)<br/>ASR processing<br/>Generowanie transkrypcji
+        Whisper-->>Trans: result {"text": "Witaj świecie", "language": "pl"}
+        deactivate Whisper
+        
+        Trans->>DM: register_operation_success(device, TRANSCRIPTION)
+        activate DM
+        Note right of DM: Tracking:<br/>Sukces transkrypcji<br/>na MPS
+        deactivate DM
+        
+        Trans->>Out: Iteracja przez result["text"]
+        activate Out
+        
+        loop Każdy znak w tekście (pomijając pierwszą spację)
+            Trans->>Out: pykeyboard.type(char)
+            Note right of Out: Symulacja<br/>wpisywania znaku
+            Trans->>Trans: time.sleep(0.0025)
+            Note right of Trans: Opóźnienie 2.5ms<br/>między znakami
+        end
+        
+        Out-->>User: Tekst wklejony do aktywnej aplikacji
+        deactivate Out
+        deactivate Trans
+        
+        App->>App: title = "⏯" (idle)
+        Note right of App: Print: "Done."<br/>Menu: "Start Recording" ✓
+        
+    end
+    
+    Note over User,Out: Aplikacja gotowa do kolejnego nagrania
+    
+    deactivate Kbd
+    deactivate App
