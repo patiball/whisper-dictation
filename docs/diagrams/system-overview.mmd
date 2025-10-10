@@ -1,3 +1,24 @@
-flowchart TD
-  A[UI] --> B[Whisper Engine]
-  B --> C[Transkrypcja]
+graph TB
+    User[👤 Użytkownik] --> Keyboard[⌨️ Skróty klawiszowe]
+    Keyboard --> StatusBar[📱 StatusBarApp]
+    StatusBar --> Recorder[🎙️ Recorder]
+    Recorder --> AudioBuffer[💾 Audio Buffer]
+    AudioBuffer --> Transcriber[🤖 Transcriber]
+    Transcriber --> DeviceManager[⚙️ Device Manager]
+    DeviceManager --> Whisper[🧠 Whisper Model]
+    Whisper --> Output[✍️ Keyboard Output]
+    Output --> User
+    
+    %% Integracje zewnętrzne
+    Recorder -.-> PyAudio[PyAudio]
+    Whisper -.-> PyTorch[PyTorch]
+    Output -.-> macOS[macOS APIs]
+    
+    %% Style
+    classDef userStyle fill:#e1f5ff,stroke:#01579b
+    classDef coreStyle fill:#f3e5f5,stroke:#4a148c
+    classDef externalStyle fill:#fce4ec,stroke:#880e4f
+    
+    class User,Output userStyle
+    class StatusBar,Recorder,Transcriber,DeviceManager,Whisper coreStyle
+    class PyAudio,PyTorch,macOS externalStyle

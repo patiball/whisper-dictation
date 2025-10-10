@@ -10,9 +10,11 @@ Aplikacja whisper-dictation jest zbudowana modularnie, gdzie każdy komponent od
 
 | Moduł | Odpowiedzialność | Dokumentacja |
 |-------|------------------|--------------|
+| whisper-dictation | Główna aplikacja - punkt wejścia, StatusBarApp, pętla zdarzeń | *W przygotowaniu* |
 | recorder | Nagrywanie audio z mikrofonu | [recorder.md](./modules/recorder.md) |
 | transcriber | Transkrypcja audio przy użyciu Whisper | [transcriber.md](./modules/transcriber.md) |
 | device_manager | Zarządzanie GPU/CPU i optymalizacja dla M1/M2 | [device_manager.md](./modules/device_manager.md) |
+| mps_optimizer | Optymalizacje M1/M2 GPU i obsługa błędów MPS | *Zintegrowane z device_manager.md* |
 
 ## 3. Graf Zależności
 
