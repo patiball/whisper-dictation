@@ -6,4 +6,6 @@ __pycache__/
 WhisperDictation.app/
 dist/
 build/
-*.egg-info/
+*.egg-info/docs/.temp/
+docs/*_log_*.md
+.warp-cli.profile_id
