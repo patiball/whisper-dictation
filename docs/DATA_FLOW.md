@@ -217,7 +217,7 @@ except:
 
 ### 4.2. Strategia odzyskiwania (Recovery Strategy)
 
-#### Device Fallback Chain:
+#### 4.2.1. Device Fallback Chain
 ```
 MPS (M1/M2 GPU) → CUDA (NVIDIA GPU) → CPU
 ```
@@ -227,7 +227,7 @@ MPS (M1/M2 GPU) → CUDA (NVIDIA GPU) → CPU
 - Licznik sukcesów dla operacji (MODEL_LOADING, TRANSCRIPTION)
 - Automatyczny wybór urządzenia na podstawie kontekstu
 
-#### Enhanced Error Messages:
+#### 4.2.2. Enhanced Error Messages
 DeviceManager dostarcza przyjazne komunikaty po polsku:
 - "🔄 Wykryto problem z MPS. Przełączam na CPU dla stabilności."
 - "✅ Model załadowany pomyślnie na urządzeniu: cpu"

@@ -343,53 +343,37 @@ performance:
 - Zaawansowana redukcja szumów
 - System aktualizacji automatycznych
 - Rozszerzona konfiguracja UI
+- Poprawa jakości wersji C++ (GPU M1)
+- Wsparcie dla większej liczby języków
 
 ### Planowane usprawnienia 📋
 
+#### v1.x (2025)
 - Wsparcie dla komend głosowych (formatowanie, poprawki)
 - Integracja z popularnymi aplikacjami (Slack, Discord, etc.)
 - Profile użytkownika (praca, osobiste, kodowanie)
 - Historia transkrypcji z możliwością wyszukiwania
-- Eksport do różnych formatów
+- Eksport transkrypcji do pliku
 - Wsparcie dla macros i snippets
 - Synchronizacja ustawień przez iCloud
+- Custom vocabulary/słownik
+- Plugin system
 
-### Znane ograniczenia ⚠️
+#### v2.0 (Q3 2025)
+- Realtime transcription (streaming)
+- Linux support
+- Windows support (WSL)
+- Web interface (opcjonalnie)
 
-- Implementacja whisper.cpp wymaga dalszej optymalizacji
-- Większe modele wymagają znacznych zasobów RAM
-- Czas transkrypcji rośnie liniowo z długością audio
-- Brak wsparcia dla systemów innych niż macOS
-- Jakość zależy od jakości mikrofonu i środowiska akustycznego
+## Znane ograniczenia ⚠️
 
-## Znane ograniczenia
-
-- **M1/M2 GPU**: Wersja C++ (whisper.cpp) ma problemy z jakością - zalecana wersja Python (CPU)
-- **Czas ładowania**: Duże modele (medium/large) mogą ładować się do 30 sekund
-- **Brak realtime**: Transkrypcja rozpoczyna się po zakończeniu nagrywania
-- **macOS tylko**: Brak wsparcia dla Windows/Linux
-- **Słabsza jakość audio**: Przy złych warunkach akustycznych lub odległym mikrofonie
+- **Implementacja whisper.cpp**: Wersja C++ (GPU M1) wymaga dalszej optymalizacji i ma problemy z jakością - zalecana wersja Python (CPU)
+- **Wymagania zasobów**: Większe modele (medium/large) wymagają znacznych zasobów RAM i mogą ładować się do 30 sekund
+- **Czas transkrypcji**: Rośnie liniowo z długością audio, brak wsparcia dla realtime (transkrypcja rozpoczyna się po zakończeniu nagrywania)
+- **Wsparcie platform**: Brak wsparcia dla systemów innych niż macOS (Windows/Linux)
+- **Jakość audio**: Zależna od jakości mikrofonu i środowiska akustycznego - słabsza przy złych warunkach lub odległym mikrofonie
 
 Szczegółowa lista w [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md).
-
-## Roadmap
-
-### v1.1 (Q1 2025)
-- [ ] Poprawa jakości wersji C++ (GPU M1)
-- [ ] Wsparcie dla większej liczby języków
-- [ ] Eksport transkrypcji do pliku
-
-### v1.2 (Q2 2025)
-- [ ] Realtime transcription (streaming)
-- [ ] Custom vocabulary/słownik
-- [ ] Plugin system
-
-### v2.0 (Q3 2025)
-- [ ] Linux support
-- [ ] Windows support (WSL)
-- [ ] Web interface (opcjonalnie)
-
-Szczegóły w [REFACTORING_PLAN](./TECHNICAL_DEBT.md#roadmap).
 
 ## Powiązane dokumenty
 
