@@ -18,43 +18,117 @@ Aplikacja whisper-dictation jest zbudowana modularnie, gdzie każdy komponent od
 
 ## 3. Graf Zależności
 
+### Struktura Modułów
+
+```mermaid
+graph TD
+    subgraph "whisper-dictation"
+        A[whisper-dictation.py<br/>Główna aplikacja]
+        
+        subgraph "Moduły Audio"
+            B[recorder.py<br/>Nagrywanie audio]
+        end
+        
+        subgraph "Moduły Transkrypcji"
+            C[transcriber.py<br/>Transkrypcja Whisper]
+        end
+        
+        subgraph "Moduły Zarządzania Urządzeniami"
+            D[device_manager.py<br/>Zarządzanie GPU/CPU]
+            E[mps_optimizer.py<br/>Optymalizacje M1/M2]
+        end
+    end
+    
+    A --> B
+    A --> C
+    C --> D
+    D --> E
+    B -.->|audio data| C
 ```
-┌─────────────────┐
-│  whisper-       │
-│  dictation.py   │  (Główna aplikacja)
-└────────┬────────┘
-         │
-         ├─────────────┐
-         │             │
-    ┌────▼────┐   ┌────▼──────────┐
-    │ recorder│   │ transcriber   │
-    └────┬────┘   └────┬──────────┘
-         │             │
-         │        ┌────▼──────────────┐
-         │        │ device_manager    │
-         │        │ (DeviceManager)   │
-         │        └────┬──────────────┘
-         │             │
-         │        ┌────▼──────────────┐
-         │        │ mps_optimizer     │
-         │        │ (Enhanced Manager)│
-         │        └───────────────────┘
-         │
-         └──────────► (audio data) ─────────┘
+
+### Zależności Między Modułami
+
+```mermaid
+graph LR
+    A[whisper-dictation] --> B[recorder]
+    A --> C[transcriber]
+    C --> D[device_manager]
+    D --> E[mps_optimizer]
+    B -.->|dane audio| C
+    
+    style A fill:#e1f5ff
+    style B fill:#ffe1e1
+    style C fill:#e1ffe1
+    style D fill:#fff5e1
+    style E fill:#f5e1ff
 ```
 
-### Przepływ danych:
+### Przepływ Danych
 
-1. **recorder** nagrywa audio z mikrofonu i przekazuje surowe dane audio
-2. **transcriber** otrzymuje dane audio i wykorzystuje Whisper do transkrypcji
-3. **device_manager** zarządza wyborem urządzenia (MPS/CUDA/CPU) i optymalizacjami
-4. **mps_optimizer** dostarcza zaawansowane optymalizacje dla chipów Apple M1/M2
+```mermaid
+sequenceDiagram
+    participant U as Użytkownik
+    participant A as whisper-dictation
+    participant R as recorder
+    participant T as transcriber
+    participant D as device_manager
+    
+    U->>A: Start nagrywania
+    A->>R: Rozpocznij nagrywanie
+    R->>R: Przechwytuje audio z mikrofonu
+    R-->>A: Dane audio (raw)
+    A->>T: Transkrybuj audio
+    T->>D: Pobierz optymalne urządzenie
+    D-->>T: MPS/CUDA/CPU
+    T->>T: Whisper transkrypcja
+    T-->>A: Tekst
+    A-->>U: Wyświetl transkrypcję
+```
 
-### Kluczowe zależności:
+### Odpowiedzialności Modułów
 
-- **transcriber** → **device_manager**: Transkryber używa DeviceManager do wyboru optymalnego urządzenia
-- **transcriber** → **mps_optimizer**: Transkryber używa EnhancedDeviceManager dla zaawansowanej obsługi błędów
-- **recorder** → **transcriber** (opcjonalnie): Recorder może przyjąć instancję transkrybera do automatycznej transkrypcji
+```mermaid
+graph TD
+    A[Recorder Module]
+    B[Transcriber Module]
+    C[Device Manager Module]
+    D[MPS Optimizer Module]
+    
+    A -.->|Odpowiedzialności| A1["📼 Nagrywanie Audio<br/>- Przechwytywanie z mikrofonu<br/>- Buforowanie strumienia<br/>- Zarządzanie sesją nagrywania"]
+    
+    B -.->|Odpowiedzialności| B1["🎯 Transkrypcja<br/>- Ładowanie modelu Whisper<br/>- Konwersja mowy na tekst<br/>- Obsługa języków"]
+    
+    C -.->|Odpowiedzialności| C1["⚙️ Zarządzanie Urządzeniami<br/>- Wykrywanie GPU/CPU<br/>- Optymalizacja wydajności<br/>- Wybór urządzenia"]
+    
+    D -.->|Odpowiedzialności| D1["🍎 Optymalizacje Apple<br/>- Wsparcie M1/M2 MPS<br/>- Obsługa błędów MPS<br/>- Fallback do CPU"]
+    
+    style A fill:#ffe1e1
+    style B fill:#e1ffe1
+    style C fill:#fff5e1
+    style D fill:#f5e1ff
+```
+
+### Kluczowe Zależności
+
+```mermaid
+graph TB
+    T[transcriber] -->|używa| D[device_manager]
+    D -->|rozszerza| M[mps_optimizer]
+    R[recorder] -.->|przekazuje dane| T
+    
+    T1["Transkryber używa DeviceManager<br/>do wyboru optymalnego urządzenia"]
+    D1["DeviceManager wykorzystuje<br/>EnhancedDeviceManager dla M1/M2"]
+    R1["Recorder może przyjąć instancję<br/>transkrybera do automatycznej transkrypcji"]
+    
+    T -.-> T1
+    D -.-> D1
+    R -.-> R1
+    
+    style T fill:#e1ffe1
+    style D fill:#fff5e1
+    style M fill:#f5e1ff
+    style R fill:#ffe1e1
+```
 
 ## 4. Powiązane Dokumenty
 

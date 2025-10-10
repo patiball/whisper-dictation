@@ -83,66 +83,31 @@ Ten dokument opisuje szczegółowo przepływy danych w aplikacji Whisper Dictati
 
 ### 2.2. Schemat przepływu danych
 
+```mermaid
+flowchart TD
+    User[👤 Użytkownik] -->|Naciśnięcie skrótu<br/>Cmd+Option| KL[KeyboardListener]
+    KL -->|on_key_press<br/>toggle| SBA[StatusBarApp<br/>start_app]
+    SBA -->|recorder.start<br/>language| REC[Recorder<br/>_record_impl]
+    REC -->|PyAudio<br/>stream.read| Sound1[🔊 Dźwięk: Tink.aiff]
+    Sound1 --> AB[(Audio Buffer<br/>frames bytes)]
+    AB -->|Zwolnienie skrótu| Sound2[🔊 Dźwięk: Pop.aiff]
+    Sound2 --> CONV[Konwersja Audio<br/>bytes → np.float32]
+    CONV -->|audio_data_fp32| ST[SpeechTranscriber<br/>transcribe]
+    ST -->|model.transcribe<br/>audio, **options| WM[🤖 Whisper Model<br/>base/tiny/small]
+    WM -->|result text| KO[Keyboard Output<br/>pykeyboard.type]
+    KO -->|Symulacja<br/>wpisywania| AA[💻 Aktywna Aplikacja<br/>tekst wklejony]
+    
+    style User fill:#e1f5ff
+    style AB fill:#fff4e1
+    style WM fill:#f0e1ff
+    style AA fill:#e1ffe1
 ```
-┌─────────────┐
-│  Użytkownik │
-└──────┬──────┘
-       │ Naciśnięcie skrótu (Cmd+Option)
-       ▼
-┌─────────────────────┐
-│  KeyboardListener   │
-└──────┬──────────────┘
-       │ on_key_press() → toggle()
-       ▼
-┌─────────────────────┐
-│   StatusBarApp      │
-│  start_app()        │
-└──────┬──────────────┘
-       │ recorder.start(language)
-       ▼
-┌─────────────────────┐
-│     Recorder        │
-│  _record_impl()     │
-└──────┬──────────────┘
-       │ PyAudio stream.read()
-       │ [Dźwięk: Tink.aiff]
-       ▼
-┌─────────────────────┐
-│   Audio Buffer      │
-│   frames[] (bytes)  │
-└──────┬──────────────┘
-       │ Zwolnienie skrótu
-       │ [Dźwięk: Pop.aiff]
-       ▼
-┌─────────────────────┐
-│  Konwersja Audio    │
-│  bytes → np.float32 │
-└──────┬──────────────┘
-       │ audio_data_fp32
-       ▼
-┌─────────────────────┐
-│ SpeechTranscriber   │
-│  transcribe()       │
-└──────┬──────────────┘
-       │ model.transcribe(audio, **options)
-       ▼
-┌─────────────────────┐
-│   Whisper Model     │
-│  (base/tiny/small)  │
-└──────┬──────────────┘
-       │ result["text"]
-       ▼
-┌─────────────────────┐
-│  Keyboard Output    │
-│  pykeyboard.type()  │
-└──────┬──────────────┘
-       │
-       ▼
-┌─────────────────────┐
-│  Aktywna Aplikacja  │
-│  (tekst wklejony)   │
-└─────────────────────┘
-```
+
+**Kluczowe punkty przepływu:**
+- **Capture**: Nagrywanie audio jako 16-bit PCM przy 16kHz
+- **Transform**: Normalizacja do float32 w zakresie [-1.0, 1.0]
+- **Process**: Model Whisper przetwarza audio z optymalizacjami (FP16 na MPS/CUDA)
+- **Output**: Symulacja wpisywania z opóźnieniem 2.5ms między znakami
 
 ---
 

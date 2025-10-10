@@ -16,31 +16,46 @@ System wykorzystuje warstwową architekturę, gdzie każda warstwa ma jasno okre
 
 Aplikacja została zorganizowana w pięć głównych warstw, z wyraźnym rozdzieleniem odpowiedzialności:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Warstwa Prezentacji                      │
-│              (Rumps, StatusBarApp, ikony)                   │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│                     Warstwa Kontroli                        │
-│        (KeyListeners, SoundPlayer, główna pętla)            │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    Warstwa Biznesowa                        │
-│     (Recorder, SpeechTranscriber, DeviceManager)            │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│                     Warstwa Danych                          │
-│         (numpy buffers, model cache, audio data)            │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   Warstwa Integracji                        │
-│      (PyAudio, PyTorch, Whisper, Pynput, macOS APIs)        │
-└─────────────────────────────────────────────────────────────┘
+**Diagram warstw systemu:**
+
+```mermaid
+flowchart TD
+    subgraph L1["Warstwa Prezentacji"]
+        P1["Rumps"]
+        P2["StatusBarApp"]
+        P3["Ikony statusu"]
+    end
+    
+    subgraph L2["Warstwa Kontroli"]
+        C1["KeyListeners"]
+        C2["SoundPlayer"]
+        C3["Główna pętla"]
+    end
+    
+    subgraph L3["Warstwa Biznesowa"]
+        B1["Recorder"]
+        B2["SpeechTranscriber"]
+        B3["DeviceManager"]
+    end
+    
+    subgraph L4["Warstwa Danych"]
+        D1["numpy buffers"]
+        D2["model cache"]
+        D3["audio data"]
+    end
+    
+    subgraph L5["Warstwa Integracji"]
+        I1["PyAudio"]
+        I2["PyTorch"]
+        I3["Whisper"]
+        I4["Pynput"]
+        I5["macOS APIs"]
+    end
+    
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+    L4 --> L5
 ```
 
 ### 2.1. Warstwa Prezentacji
@@ -93,16 +108,16 @@ Aplikacja została zorganizowana w pięć głównych warstw, z wyraźnym rozdzie
 - Konwersja formatów audio (int16 → float32)
 - Wsparcie dla testów TDD (timestamp, duration)
 
-**Kluczowe metody**:
-```python
-def start_recording_with_timestamp(self) -> float:
-    """Rozpoczyna nagrywanie i zwraca dokładny timestamp"""
+**Kluczowe metody:**
 
-def stop_recording(self) -> np.ndarray:
-    """Zatrzymuje nagrywanie i zwraca dane audio"""
-
-def record_duration(self, duration_seconds: float) -> np.ndarray:
-    """Nagrywa przez określony czas (do testów)"""
+```mermaid
+classDiagram
+    class Recorder {
+        +start_recording_with_timestamp() float
+        +stop_recording() ndarray
+        +record_duration(duration_seconds: float) ndarray
+    }
+    note for Recorder "start_recording_with_timestamp: Rozpoczyna nagrywanie\nstop_recording: Zatrzymuje i zwraca dane audio\nrecord_duration: Nagrywa przez określony czas (testy)"
 ```
 
 #### SpeechTranscriber
@@ -111,16 +126,16 @@ def record_duration(self, duration_seconds: float) -> np.ndarray:
 - Optymalizacja ustawień transkrypcji dla różnych urządzeń
 - Automatyczna konwersja transkrypcji na wpisywany tekst
 
-**Kluczowe metody**:
-```python
-def transcribe(self, audio_file_path: str, language: str = None) -> TranscriptionResult:
-    """Transkrybuje plik audio z detekcją języka"""
+**Kluczowe metody:**
 
-def transcribe_audio_data(self, audio_data: np.ndarray) -> TranscriptionResult:
-    """Transkrybuje surowe dane audio (real-time)"""
-
-def get_model_state(self) -> str:
-    """Zwraca identyfikator stanu modelu (do testów)"""
+```mermaid
+classDiagram
+    class SpeechTranscriber {
+        +transcribe(audio_file_path: str, language: str) TranscriptionResult
+        +transcribe_audio_data(audio_data: ndarray) TranscriptionResult
+        +get_model_state() str
+    }
+    note for SpeechTranscriber "transcribe: Transkrybuje plik audio\ntranscribe_audio_data: Real-time transkrypcja\nget_model_state: Zwraca stan modelu"
 ```
 
 #### DeviceManager
@@ -129,16 +144,16 @@ def get_model_state(self) -> str:
 - Historia operacji dla inteligentnego wyboru urządzenia
 - Automatyczny fallback przy błędach
 
-**Kluczowe metody**:
-```python
-def get_device_for_operation(self, operation: OperationType, model_size: str = None) -> str:
-    """Wybiera optymalne urządzenie dla operacji"""
+**Kluczowe metody:**
 
-def handle_device_error(self, error: Exception, operation: OperationType, current_device: str) -> str:
-    """Obsługuje błąd urządzenia i zwraca fallback"""
-
-def register_operation_success(self, device: str, operation: OperationType):
-    """Rejestruje udaną operację dla przyszłych decyzji"""
+```mermaid
+classDiagram
+    class DeviceManager {
+        +get_device_for_operation(operation: OperationType, model_size: str) str
+        +handle_device_error(error: Exception, operation: OperationType, current_device: str) str
+        +register_operation_success(device: str, operation: OperationType) void
+    }
+    note for DeviceManager "get_device_for_operation: Wybiera optymalne urządzenie\nhandle_device_error: Obsługuje błąd i zwraca fallback\nregister_operation_success: Rejestruje sukces operacji"
 ```
 
 #### MPSOptimizer & EnhancedDeviceManager

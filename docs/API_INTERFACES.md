@@ -43,41 +43,39 @@ Ten dokument opisuje publiczne interfejsy API głównych modułów aplikacji Whi
 
 ### Konstruktor
 
-```python
-def __init__(self, transcriber=None):
-    """
-    Inicjalizuje recorder.
-    
-    Args:
-        transcriber: Opcjonalna instancja SpeechTranscriber
-    """
+```mermaid
+classDiagram
+    class Recorder {
+        <<interface>>
+        +__init__(transcriber=None)
+        +sample_rate: int = 16000
+        +channels: int = 1
+        +format: paInt16
+        +chunk_size: int = 1024
+    }
+    note for Recorder "Manages audio recording from microphone\nwith support for different modes and timestamps"
 ```
 
-**Parametry**:
+**Parametry inicjalizacji**:
 - `transcriber` (SpeechTranscriber, opcjonalny): Instancja transkrybera do automatycznej transkrypcji
-
-**Właściwości**:
-- `sample_rate` (int): 16000 Hz - częstotliwość próbkowania
-- `channels` (int): 1 - liczba kanałów (mono)
-- `format` (pyaudio.paInt16): Format audio (16-bit PCM)
-- `chunk_size` (int): 1024 - rozmiar bufora
 
 ### Metody publiczne
 
-#### start_recording_with_timestamp()
-
-```python
-def start_recording_with_timestamp(self) -> float:
-    """
-    Rozpoczyna nagrywanie i zwraca timestamp startu.
-    
-    Returns:
-        float: Timestamp (Unix epoch) gdy nagrywanie faktycznie rozpoczęło się
-        
-    Raises:
-        RuntimeError: Gdy nie udało się uruchomić nagrywania
-    """
+```mermaid
+classDiagram
+    class Recorder {
+        +start_recording_with_timestamp() float
+        +stop_recording() Optional~ndarray~
+        +record_duration(duration_seconds) ndarray
+        +start(language=None)
+        +stop()
+        +save_recording(audio_data, filename)
+        +get_recording_delay() float
+    }
+    note for Recorder "Public API methods for audio recording\nAll methods handle exceptions gracefully"
 ```
+
+#### start_recording_with_timestamp()
 
 **Opis**: Rozpoczyna nagrywanie i zwraca precyzyjny timestamp początku. Przydatne do synchronizacji z innymi zdarzeniami.
 
@@ -279,22 +277,18 @@ print(f"Średnie opóźnienie startu: {delay*1000:.2f}ms")
 
 ### Konstruktor
 
-```python
-def __init__(self, model_size: str = "base", 
-             device: Optional[str] = None, 
-             allowed_languages: Optional[List[str]] = None):
-    """
-    Inicjalizuje transkryber.
-    
-    Args:
-        model_size (str): Rozmiar modelu Whisper ('tiny', 'base', 'small', 'medium', 'large')
-        device (str, opcjonalny): Urządzenie ('cpu', 'cuda', 'mps'). Auto-detekcja jeśli None
-        allowed_languages (list, opcjonalny): Lista dozwolonych kodów języków (np. ['en', 'pl'])
-        
-    Raises:
-        FileNotFoundError: Gdy model nie jest dostępny lokalnie i pobieranie zostało odrzucone
-        Exception: Gdy nie udało się załadować modelu na żadnym urządzeniu
-    """
+```mermaid
+classDiagram
+    class SpeechTranscriber {
+        <<interface>>
+        +__init__(model_size="base", device=None, allowed_languages=None)
+        +model: Whisper
+        +device: str
+        +device_manager: EnhancedDeviceManager
+        +model_size: str
+        +model_state: str
+    }
+    note for SpeechTranscriber "Manages audio-to-text transcription\nusing Whisper models with device optimization"
 ```
 
 **Parametry**:
@@ -334,26 +328,22 @@ transcriber = SpeechTranscriber(
 
 ### Metody publiczne
 
-#### transcribe()
-
-```python
-def transcribe(self, audio_file_path: str, 
-               language: Optional[str] = None) -> TranscriptionResult:
-    """
-    Transkrybuje plik audio z detekcją języka.
-    
-    Args:
-        audio_file_path (str): Ścieżka do pliku audio
-        language (str, opcjonalny): Kod języka do wymuszenia (np. 'en', 'pl')
-        
-    Returns:
-        TranscriptionResult: Obiekt z tekstem, językiem i metrykami czasowymi
-        
-    Raises:
-        FileNotFoundError: Gdy plik audio nie istnieje
-        Exception: Gdy transkrypcja nie powiodła się na żadnym urządzeniu
-    """
+```mermaid
+classDiagram
+    class SpeechTranscriber {
+        +transcribe(audio_file_path, language=None) TranscriptionResult
+        +transcribe_audio_data(audio_data) TranscriptionResult
+        +get_model_state() str
+    }
+    class SpeechTranscriberStatic {
+        <<static>>
+        +list_available_models() List~Tuple~
+        +check_model_available(model_name) bool
+    }
+    note for SpeechTranscriber "Main transcription methods\nHandles files and raw audio data"
 ```
+
+#### transcribe()
 
 **Opis**: Główna metoda transkrypcji z pliku audio.
 
