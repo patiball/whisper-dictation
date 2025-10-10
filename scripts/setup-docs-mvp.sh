@@ -7,32 +7,37 @@ cd "$REPO_ROOT"
 # Ensure dirs
 mkdir -p docs/diagrams docs/context
 
-# Short prompt for high-level audit
-read -r -d '' PROMPT << 'PROMPT_EOF'
-Przeanalizuj aktualny kod tego repozytorium (wysoki poziom) i wygeneruj tylko dwa artefakty:
-1) docs/PROJECT_OVERVIEW.md – zawiera:
-   - Cel aplikacji i główne funkcjonalności
-   - Stos technologiczny (języki, frameworki, zależności) wykryte z kodu
-   - Uproszczoną strukturę folderów (tylko główne katalogi i entry points)
-   - Sekcję "[TO INVESTIGATE]" dla elementów niejednoznacznych
-   - Sekcję "Powiązane dokumenty" z linkami do: docs/README.md i docs/diagrams/system-overview.mmd
-   - Krótką sekcję "Następne kroki" (co rozszerzyć w pełnej dokumentacji)
+ABS_OVERVIEW="$REPO_ROOT/docs/PROJECT_OVERVIEW.md"
+ABS_DIAGRAM="$REPO_ROOT/docs/diagrams/system-overview.mmd"
 
-2) docs/diagrams/system-overview.mmd – Mermaid diagram high-level głównych komponentów i relacji.
+# Short prompt for high-level audit with absolute paths to avoid agent cwd issues
+read -r -d '' PROMPT << PROMPT_EOF
+Pracuj w kontekście projektu pod ścieżką: $REPO_ROOT
+Utwórz DOKŁADNIE dwa artefakty pod poniższymi ŚCIEŻKAMI BEZWZGLĘDNYMI (nie używaj innej lokalizacji):
+1) $ABS_OVERVIEW – plik Markdown o treści:
+# Przegląd (MVP)
+To jest test wygenerowany przez Warp CLI w trybie MVP. 
+Dodaj sekcje: Cel aplikacji (2-3 zdania), Stos technologiczny (wypunktowanie, high-level), Struktura folderów (główne katalogi).
+Na końcu dodaj sekcję "Powiązane dokumenty" z linkami względnymi do: ./README.md oraz ./diagrams/system-overview.mmd
+
+2) $ABS_DIAGRAM – plik Mermaid z prostym diagramem high-level np.:
+flowchart TD
+  A[UI] --> B[Whisper Engine]
+  B --> C[Transkrypcja]
 
 WAŻNE:
-- Nie twórz innych plików poza wymienionymi.
-- Opisy w języku polskim, bazuj na faktycznym kodzie repo (nie wymyślaj).
-- Zapewnij spójność linków (coherent docs) – używaj ścieżek względnych.
+- Zapisz pliki dokładnie pod powyższymi ścieżkami bezwzględnymi.
+- Nie twórz innych plików ani katalogów.
+- Opisy po polsku, tylko high-level (MVP), bez nadmiarowych sekcji.
 PROMPT_EOF
 
-# Run warp agent via wrapper
+# Run warp agent via wrapper (include explicit --cwd)
 "$SCRIPT_DIR/warp-run.sh" --cwd "$REPO_ROOT" --prompt "$PROMPT" || {
   echo "warp agent run failed" >&2
   exit 1
 }
 
-# Post-process: ensure basic related-docs footer exists
+# Post-process: ensure basic related-docs footer exists (idempotent)
 ensure_footer() {
   local file="$1"
   local footer="\n---\nPowiązane dokumenty:\n- [README](./README.md)\n- [Diagram systemowy](./diagrams/system-overview.mmd)\n"
@@ -56,5 +61,7 @@ if [ ${#missing[@]} -gt 0 ]; then
   printf ' - %s\n' "${missing[@]}" >&2
   exit 2
 fi
+
+python3 "$SCRIPT_DIR/check-links.py" || true
 
 echo "MVP documentation generated successfully."
