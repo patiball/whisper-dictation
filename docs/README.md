@@ -9,6 +9,7 @@ Kompleksowa dokumentacja techniczna aplikacji do wielojęzycznego dyktowania opa
 - **[Plan dokumentacji](./DOCUMENTATION_PLAN.md)** - Strategia i struktura dokumentacji
 
 ### 🏗️ Architektura i przepływy
+- **[Diagram integracji systemu](./SYSTEM_INTEGRATION.md)** - Kompletny przegląd wszystkich komponentów współpracujących ze sobą
 - **[Architektura systemu](./ARCHITECTURE.md)** *(40KB)* - Warstwy, komponenty, wzorce projektowe, decyzje architektoniczne
 - **[Przepływy danych](./DATA_FLOW.md)** *(23KB)* - Główne przepływy, scenariusze, obsługa błędów
 
