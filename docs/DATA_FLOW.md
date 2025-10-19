@@ -29,57 +29,9 @@ Ten dokument opisuje szczegółowo przepływy danych w aplikacji Whisper Dictati
 
 ### 2.1. Przegląd kroku po kroku
 
-1. **Inicjalizacja aplikacji**
-   - Ładowanie modelu Whisper (tiny/base/small/medium/large)
-   - Wybór optymalnego urządzenia (CPU/MPS/CUDA) przez DeviceManager
-   - Optymalizacja modelu dla wybranego urządzenia
-   - Rejestracja listenera klawiatury
+Szczegółowy opis kroków realizacji głównego przepływu (Happy Path) znajduje się w dedykowanym dokumencie:
 
-2. **Użytkownik naciska skrót klawiszowy**
-   - Domyślnie: `Cmd+Option` (macOS) lub `Ctrl+Alt` (inne)
-   - Alternatywnie: podwójne naciśnięcie `Right Command` (--k_double_cmd)
-
-3. **Rozpoczęcie nagrywania**
-   - StatusBarApp wywołuje `recorder.start(language)`
-   - Odtwarzanie dźwięku "Tink.aiff" (start recording)
-   - Timer rozpoczyna odliczanie w ikonie paska menu (🔴)
-   - Opcjonalny limit czasu (domyślnie 30s)
-
-4. **Nagrywanie audio**
-   - Otwiercie strumienia PyAudio:
-     - Format: 16-bit PCM (paInt16)
-     - Kanały: 1 (mono)
-     - Częstotliwość: 16000 Hz
-     - Bufor: 1024 próbki na ramkę
-   - Ciągłe zapisywanie ramek audio do listy `frames[]`
-
-5. **Użytkownik zatrzymuje nagrywanie**
-   - Zwolnienie skrótu klawiszowego lub upływ max_time
-   - StatusBarApp wywołuje `recorder.stop()`
-
-6. **Przetwarzanie audio**
-   - Zamknięcie strumienia PyAudio
-   - Odtwarzanie dźwięku "Pop.aiff" (stop recording)
-   - Konwersja: `bytes` → `np.int16` → `np.float32` (normalizacja przez 32768.0)
-
-7. **Transkrypcja**
-   - Wywołanie `transcriber.transcribe(audio_data, language)`
-   - Detekcja języka (jeśli nie określono)
-   - Walidacja języka względem `allowed_languages` (jeśli ustawione)
-   - Model Whisper przetwarza audio z optymalizacjami:
-     - FP16 na MPS/CUDA
-     - Progi: `no_speech_threshold=0.6`, `logprob_threshold=-1.0`
-     - Obsługa błędów z automatycznym fallback (MPS→CPU)
-
-8. **Wklejanie tekstu**
-   - Iteracja przez każdy znak w `result["text"]`
-   - Pomijanie pierwszej spacji
-   - Symulacja wpisywania przez `pykeyboard.type(element)`
-   - Opóźnienie 2.5ms między znakami (`time.sleep(0.0025)`)
-
-9. **Powrót do stanu gotowości**
-   - Ikona w pasku menu wraca do "⏯"
-   - Menu "Start Recording" aktywne ponownie
+- **[Główny Przepływ - Kroki Realizacji](./processes/main_flow_steps.md)**
 
 ### 2.2. Schemat przepływu danych
 
@@ -129,65 +81,9 @@ Diagram przedstawia szczegółową sekwencję interakcji między komponentami po
 
 ## 3. Obsługa Błędów
 
-### 4.1. Typy błędów
+Szczegółowy opis typów błędów, ich obsługi oraz strategii odzyskiwania znajduje się w dedykowanym dokumencie:
 
-#### 4.1.1. Błędy inicjalizacji
-
-| Błąd                   | Przyczyna                               | Obsługa                       |
-|------------------------|-----------------------------------------|-------------------------------|
-| **Model nie załadowany** | Brak pliku w cache, błąd pobierania     | Komunikat + pytanie o pobranie |
-| **Urządzenie niedostępne** | MPS/CUDA nie działa                     | Automatyczny fallback na CPU  |
-| **Brak pamięci**       | Model za duży dla urządzenia            | Fallback + komunikat          |
-
-**Kod obsługi**: W `whisper-dictation.py` (linie 337-353) zaimplementowano obsługę błędów inicjalizacji modelu z automatycznym fallbackiem na CPU w przypadku problemów z urządzeniem.
-
-#### 4.1.2. Błędy nagrywania
-
-| Błąd                 | Przyczyna                               | Obsługa                       |
-|----------------------|-----------------------------------------|-------------------------------|
-| **Brak mikrofonu**   | Mikrofon odłączony/zajęty               | PyAudio exception → komunikat |
-| **Stream overflow**  | Bufor przepełniony                      | `exception_on_overflow=False` |
-| **Brak uprawnień**   | System nie zezwala na dostęp            | Komunikat systemowy macOS     |
-**Kod obsługi**: W `recorder.py` (linie 147-152) błędy nagrywania są przechwytywane, a w przypadku przepełnienia bufora (`exception_on_overflow=False`) nagrywanie jest kontynuowane.
-
-#### 4.1.3. Błędy transkrypcji
-
-| Błąd                  | Przyczyna                               | Obsługa                       |
-|-----------------------|-----------------------------------------|-------------------------------|
-| **OOM (Out of Memory)** | Audio za długie dla urządzenia          | Fallback CPU + retry          |
-| **Timeout**           | Model zawiesił się                      | Timeout nie zaimplementowany (TODO) |
-| **Invalid audio**     | Pusta/nieprawidłowa próbka              | Cichy błąd (brak wyjścia)     |
-| **Language mismatch** | Język poza `allowed_languages`          | Wymuszenie pierwszego z allowed |
-
-**Kod obsługi detekcji języka**: W `whisper-dictation.py` (linie 47-59) zaimplementowano logikę nadpisywania wykrytego języka, jeśli nie znajduje się on na liście `allowed_languages`.
-
-**Kod obsługi fallback**: W `transcriber.py` (linie 145-169) zaimplementowano mechanizm automatycznego fallbacku urządzenia w przypadku błędów transkrypcji, z możliwością ponowienia próby na innym urządzeniu.
-
-#### 4.1.4. Błędy wklejania tekstu
-
-| Błąd                   | Przyczyna                               | Obsługa                       |
-|------------------------|-----------------------------------------|-------------------------------|
-| **Keyboard input blocked** | Brak uprawnień accessibility            | `try-except pass` - cichy błąd |
-| **Special characters** | Znaki niedostępne na klawiaturze        | `try-except pass`             |
-
-**Kod obsługi**: W `whisper-dictation.py` (linie 69-73) błędy wklejania tekstu są cicho ignorowane (`try-except pass`), aby nie przerywać działania aplikacji.
-
-### 4.2. Strategia odzyskiwania (Recovery Strategy)
-
-#### 4.2.1. Device Fallback Chain
-```
-MPS (M1/M2 GPU) → CUDA (NVIDIA GPU) → CPU
-```
-
-**DeviceManager** śledzi:
-- Historię błędów dla każdego urządzenia
-- Licznik sukcesów dla operacji (MODEL_LOADING, TRANSCRIPTION)
-- Automatyczny wybór urządzenia na podstawie kontekstu
-
-#### 4.2.2. Enhanced Error Messages
-DeviceManager dostarcza przyjazne komunikaty po polsku:
-- "🔄 Wykryto problem z MPS. Przełączam na CPU dla stabilności."
-- "✅ Model załadowany pomyślnie na urządzeniu: cpu"
+- **[Obsługa Błędów - Szczegóły](./processes/error_handling_details.md)**
 
 ---
 
