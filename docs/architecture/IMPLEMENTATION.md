@@ -111,13 +111,13 @@ classDiagram
 ```mermaid
 flowchart TD
     A[Recorder.start] --> B[_record_impl]
-    B --> C[sound_player.play_start_sound()]
+    B --> C[sound_player.play_start_sound]
     C[sound_player.play_start_sound] --> D[Główny algorytm nagrywania]
-    D --> E[sound_player.play_stop_sound()]
-    E --> F[transcriber.transcribe(audio_data)]
+    D --> E[sound_player.play_stop_sound]
+    E --> F[transcriber.transcribe_audio_data]
     F --> G[Koniec]
 
-    subgraph _record_impl()
+    subgraph _record_impl
         C -- Hook 1 --> D
         E -- Hook 2 --> F
         F -- Hook 3 --> G
