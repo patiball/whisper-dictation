@@ -11,6 +11,9 @@ Kompleksowa dokumentacja techniczna aplikacji do wielojęzycznego dyktowania opa
 ### Architektura i przepływy
 - **[Diagram integracji systemu](./SYSTEM_INTEGRATION.md)** - Kompletny przegląd wszystkich komponentów współpracujących ze sobą
 - **[Architektura systemu](./ARCHITECTURE.md)** *(40KB)* - Warstwy, komponenty, wzorce projektowe, decyzje architektoniczne
+- **[Szczegóły Implementacji Architektury](./architecture/IMPLEMENTATION.md)** - Szczegółowe przykłady wzorców projektowych i implementacji
+- **[Analiza Ryzyk Architektury](./architecture/RISKS.md)** - Szczegółowa analiza ryzyk i mitygacji
+- **[Indeks Decyzji Architektonicznych (ADR)](./architecture/ADR/README.md)** - Lista wszystkich decyzji architektonicznych
 - **[Przepływy danych](./DATA_FLOW.md)** *(23KB)* - Główne przepływy, scenariusze, obsługa błędów
 
 ### API i moduły
@@ -39,9 +42,12 @@ Kompleksowa dokumentacja techniczna aplikacji do wielojęzycznego dyktowania opa
 
 ### Dla deweloperów
 1. **Architektura**: [ARCHITECTURE.md](./ARCHITECTURE.md) - Zrozum strukturę systemu
-2. **Przepływy**: [DATA_FLOW.md](./DATA_FLOW.md) - Zobacz jak działa aplikacja
-3. **API**: [API_INTERFACES.md](./API_INTERFACES.md) - Poznaj interfejsy modułów
-4. **Moduły**: [MODULES.md](./MODULES.md) + [modules/](./modules/) - Szczegóły implementacji
+2. **Implementacja**: [Szczegóły Implementacji Architektury](./architecture/IMPLEMENTATION.md) - Poznaj wzorce projektowe i implementacje
+3. **Ryzyka**: [Analiza Ryzyk Architektury](./architecture/RISKS.md) - Zidentyfikuj potencjalne problemy
+4. **Decyzje Architektoniczne**: [Indeks Decyzji Architektonicznych (ADR)](./architecture/ADR/README.md) - Przejrzyj kluczowe decyzje
+5. **Przepływy**: [DATA_FLOW.md](./DATA_FLOW.md) - Zobacz jak działa aplikacja
+6. **API**: [API_INTERFACES.md](./API_INTERFACES.md) - Poznaj interfejsy modułów
+7. **Moduły**: [MODULES.md](./MODULES.md) + [modules/](./modules/) - Szczegóły implementacji
 
 ### Dla maintainerów
 1. **Dług techniczny**: [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md) - Co wymaga poprawy

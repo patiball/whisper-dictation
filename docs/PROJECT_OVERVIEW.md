@@ -56,25 +56,16 @@ Wielojęzyczna aplikacja dyktowania oparta na potężnym modelu OpenAI Whisper A
 
 ## Struktura folderów
 
-```
-whisper-dictation/
-├── docs/                    # Dokumentacja projektu
-│   ├── diagrams/           # Diagramy systemowe
-│   └── context/            # Pliki kontekstowe
-├── memory-bank/            # Bank pamięci agenta AI
-│   ├── core/              # Podstawowe pliki dokumentacji
-│   └── specs/             # Specyfikacje szczegółowe
-├── scripts/                # Skrypty automatyzacji i setup
-├── specs/                  # Specyfikacje funkcjonalne
-├── tests/                  # Testy jednostkowe i integracyjne
-│   └── audio/             # Próbki audio do testów
-├── whisper-dictation.py           # Główna implementacja (Python)
-├── whisper-dictation-fast.py     # Implementacja C++ (eksperymentalna)
-├── recorder.py             # Moduł nagrywania audio
-├── transcriber.py          # Moduł transkrypcji
-├── device_manager.py       # Zarządzanie urządzeniami M1/M2
-└── pyproject.toml          # Konfiguracja projektu (Poetry)
-```
+Projekt `whisper-dictation` jest zorganizowany w logiczne katalogi, które odzwierciedlają jego modułową architekturę. Główne katalogi to:
+
+- `docs/`: Zawiera całą dokumentację projektu, w tym diagramy, kontekst i specyfikacje.
+- `memory-bank/`: Przechowuje bank pamięci agenta AI, z podstawowymi plikami dokumentacji i specyfikacjami.
+- `scripts/`: Skrypty pomocnicze do automatyzacji i konfiguracji.
+- `specs/`: Specyfikacje funkcjonalne i techniczne.
+- `tests/`: Testy jednostkowe i integracyjne, wraz z próbkami audio.
+- Główne pliki źródłowe, takie jak `whisper-dictation.py`, `recorder.py`, `transcriber.py`, `device_manager.py`.
+
+Szczegółowy inwentarz plików i ich przeznaczenie znajduje się w dokumencie [FILE_INVENTORY.md](./FILE_INVENTORY.md).
 
 ## Architektura wysokopoziomowa
 
@@ -96,22 +87,16 @@ Szczegółowe diagramy w [DATA_FLOW.md](./DATA_FLOW.md).
 
 ## Kluczowe funkcjonalności
 
-### Podstawowe możliwości
+Aplikacja oferuje szereg kluczowych funkcjonalności, które zapewniają wydajne i prywatne dyktowanie:
 
-- **Wielojęzyczne rozpoznawanie mowy** - wsparcie dla wielu języków dzięki modelowi Whisper
-  - Automatyczna detekcja języka lub wybór manualny
-  - Wysokiej jakości transkrypcja w czasie rzeczywistym
-  - Wsparcie dla języków z różnymi systemami pisma
+- **Wielojęzyczne rozpoznawanie mowy**: Wykorzystuje model OpenAI Whisper do dokładnej transkrypcji w wielu językach, z automatyczną detekcją języka.
+- **Działanie w tle i integracja z macOS**: Aplikacja działa jako demon systemowy, dostępny przez konfigurowalne skróty klawiszowe i zintegrowany z paskiem menu macOS.
+- **Całkowicie offline**: Wszystkie operacje przetwarzania mowy na tekst odbywają się lokalnie, gwarantując pełną prywatność i brak wysyłania danych.
+- **Optymalizacja dla Apple Silicon (M1/M2)**: Inteligentne zarządzanie urządzeniami (CPU/GPU) zapewnia optymalną wydajność na procesorach Apple Silicon.
+- **System wstawiania tekstu**: Transkrybowany tekst jest automatycznie wklejany do aktywnej aplikacji, z inteligentną obsługą formatowania.
 
-- **Działanie w tle** - aplikacja działa nieprzerwanie z globalnym dostępem przez skróty klawiszowe
-  - Minimalne zużycie zasobów w trybie czuwania
-  - Natychmiastowa reakcja na wywołanie skrótu
-  - Integracja z paskiem menu macOS dla łatwego dostępu
-
-- **Całkowicie offline** - brak wysyłania danych, pełna prywatność
-  - Wszystkie operacje wykonywane lokalnie
-  - Żadne dane nie opuszczają komputera użytkownika
-  - Brak wymagań dotyczących połączenia internetowego
+Szczegółowe informacje na temat dostępnych modeli Whisper i ich charakterystyki znajdują się w sekcji [Dostępne modele Whisper](#dostępne-modele-whisper) oraz w dokumentacji modułu [SpeechTranscriber](../docs/modules/transcriber.md).
+Więcej o integracji z systemem macOS i personalizacji skrótów znajdziesz w [MODULES.md](../MODULES.md) oraz [API_INTERFACES.md](./API_INTERFACES.md).
 
 ## Dostępne modele Whisper
 
@@ -127,88 +112,39 @@ Szczegółowe diagramy w [DATA_FLOW.md](./DATA_FLOW.md).
 
 ### Opcje modeli i implementacji
 
-- **Wybór modeli Whisper** - możliwość wyboru spośród tiny, base, small, medium, large
-  - Tiny: najszybszy, podstawowa dokładność (~75MB)
-  - Base: zrównoważony wybór dla większości przypadków (~140MB)
-  - Small: lepsza dokładność przy umiarkowanym czasie (~470MB)
-  - Medium: wysoka dokładność dla profesjonalnego użytku (~1.5GB)
-  - Large: najwyższa jakość transkrypcji (~3GB)
+Aplikacja wspiera wybór różnych modeli Whisper oraz oferuje dwie implementacje:
 
+- **Wybór modeli Whisper**: Możliwość wyboru spośród modeli `tiny`, `base`, `small`, `medium`, `large`, z różnymi kompromisami między szybkością a dokładnością.
 - **Dwie implementacje**:
-  - Python: dokładna transkrypcja, CPU, stabilna i przetestowana
-  - C++ (whisper.cpp): eksperymentalne wsparcie GPU M1, w trakcie optymalizacji
+  - **Python**: Stabilna i przetestowana implementacja, wykorzystująca CPU.
+  - **C++ (whisper.cpp)**: Eksperymentalna implementacja z akceleracją GPU M1, w trakcie optymalizacji.
+
+Szczegóły dotyczące konfiguracji modeli i implementacji znajdują się w [transcriber.md](../docs/modules/transcriber.md) oraz [API_INTERFACES.md](./API_INTERFACES.md).
 
 ### Integracja i personalizacja
 
-- **Integracja z systemem macOS**
-  - Ikona w menu bar z menu kontekstowym
-  - Dźwięki systemowe jako feedback dla użytkownika
-  - Automatyczne uruchamianie przy starcie systemu (opcjonalnie)
+Aplikacja integruje się z systemem macOS i oferuje szerokie możliwości personalizacji:
 
-- **Automatyczne wykrywanie języka** - inteligentne rozpoznawanie języka mówionego
-  - Bez potrzeby ręcznego przełączania między językami
-  - Wspiera wielojęzyczne dyktowanie w jednej sesji
+- **Integracja z systemem macOS**: Ikona w menu bar z menu kontekstowym, dźwięki systemowe jako feedback.
+- **Automatyczne wykrywanie języka**: Inteligentne rozpoznawanie języka mówionego, wspierające wielojęzyczne dyktowanie.
+- **Zarządzanie urządzeniami**: Optymalizacja dla Apple Silicon (M1/M2) z automatycznym wykrywaniem akceleratorów.
+- **Konfigurowalne skróty**: Możliwość dostosowania klawiszy aktywacji dla elastycznego użytkowania.
 
-- **Zarządzanie urządzeniami** - optymalizacja dla Apple Silicon (M1/M2)
-  - Automatyczne wykrywanie dostępnych akceleratorów
-  - Efektywne wykorzystanie Neural Engine
-
-- **Konfigurowalne skróty** - możliwość dostosowania klawiszy aktywacji
-  - Elastyczne przypisywanie skrótów klawiszowych
-  - Wsparcie dla różnych kombinacji modyfikatorów
+Więcej informacji o integracji i personalizacji znajdziesz w [MODULES.md](../docs/MODULES.md) oraz [API_INTERFACES.md](./API_INTERFACES.md).
 
 ### System wstawiania tekstu
 
-- **Automatyczne wklejanie** - transkrybowany tekst automatycznie pojawia się w aktywnej aplikacji
-- **Zachowanie formatowania** - inteligentna obsługa znaków interpunkcyjnych i spacji
-- **Kontrola jakości** - filtrowanie niepewnych wyników przed wstawieniem
+Transkrybowany tekst jest automatycznie wklejany do aktywnej aplikacji, z inteligentną obsługą formatowania i kontrolą jakości. Szczegóły implementacji znajdują się w [DATA_FLOW.md](./DATA_FLOW.md).
 
 ## Architektura techniczna
 
-### Przepływ danych audio
+Architektura techniczna aplikacji opiera się na modułowej strukturze, która zapewnia elastyczność, skalowalność i łatwość utrzymania. Kluczowe aspekty to:
 
-```
-1. Mikrofon → PyAudio/PortAudio (przechwytywanie)
-2. Buffer audio → Preprocessor (normalizacja, redukcja szumów)
-3. Preprocessed audio → Whisper Model (transkrypcja)
-4. Raw transcription → Post-processor (czyszczenie, formatowanie)
-5. Formatted text → System clipboard/Keyboard emulation
-6. Finalized text → Aktywna aplikacja
-```
+- **Przepływ danych audio**: Od mikrofonu, przez przetwarzanie, transkrypcję, aż po wstawienie tekstu do aktywnej aplikacji.
+- **Komponenty systemu**: Główne moduły takie jak `recorder.py`, `transcriber.py`, `device_manager.py` oraz główna aplikacja, każdy z jasno zdefiniowaną odpowiedzialnością.
+- **Kluczowe technologie**: Wykorzystanie OpenAI Whisper, PyTorch, PyAudio, Pynput i Rumps do realizacji funkcjonalności.
 
-### Komponenty systemu
-
-**recorder.py** - Moduł nagrywania
-- Konfiguracja urządzeń audio
-- Zarządzanie buforem nagrywania
-- Detekcja aktywności głosowej (VAD)
-- Kontrola jakości sygnału
-
-**transcriber.py** - Silnik transkrypcji
-- Ładowanie i zarządzanie modelami Whisper
-- Optymalizacja parametrów transkrypcji
-- Cache wyników dla poprawy wydajności
-- Obsługa błędów i retry logic
-
-**device_manager.py** - Zarządzanie sprzętem
-- Wykrywanie Apple Silicon
-- Konfiguracja akceleracji sprzętowej
-- Monitoring zasobów systemowych
-- Fallback do CPU przy problemach z GPU
-
-**Main Application** - Orkiestracja
-- Obsługa skrótów klawiszowych globalnych
-- Zarządzanie stanem aplikacji
-- Interfejs menu bar
-- Koordynacja między komponentami
-
-### Kluczowe technologie
-
-- **OpenAI Whisper**: State-of-the-art model ASR z wysoką dokładnością
-- **PyTorch**: Backend dla modeli deep learning
-- **PyAudio**: Cross-platform audio I/O
-- **Pynput**: Globalne przechwytywanie i emulacja klawiatury
-- **Rumps**: Framework dla aplikacji menu bar w macOS
+Szczegółowy opis architektury, przepływu danych i komponentów systemu znajduje się w [ARCHITECTURE.md](./ARCHITECTURE.md) oraz [DATA_FLOW.md](./DATA_FLOW.md).
 
 ## Charakterystyka wydajnościowa
 
