@@ -379,3 +379,13 @@ Szczegółowa lista w [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md).
 
 - [README](../README.md) - szczegółowa dokumentacja projektu, instalacja i użycie
 - [Diagram systemowy](./diagrams/system-overview.mmd) - architektura systemu
+
+---
+
+## Metadata
+
+**Wersja dokumentu**: 1.0  
+**Data utworzenia**: 2025-10-10  
+**Ostatnia aktualizacja**: 2025-10-19  
+**Autor**: AI Agent  
+**Status**: ✅ Ukończone  

@@ -456,4 +456,18 @@ stateDiagram-v2
 
 ---
 
+## Metadata
+
+**Wersja dokumentu**: 1.1  
+**Data utworzenia**: 2025-10-10  
+**Ostatnia aktualizacja**: 2025-10-19  
+**Autor**: AI Agent  
+**Status**: ✅ Ukończone  
+
+**Changelog**:
+- 2025-10-19: Zrestrukturyzowano sekcje, poprawiono numerację i formatowanie tabel, dodano diagramy Mermaid.
+- 2025-10-10: Utworzenie dokumentu na podstawie kodu.
+
+---
+
 **Koniec dokumentu DATA_FLOW.md**

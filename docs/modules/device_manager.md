@@ -352,3 +352,17 @@ Brak znanych TODO/FIXME w kodzie device_manager.
 - [transcriber.md](./transcriber.md) - Moduł transkrypcji (główny konsument)
 - [ARCHITECTURE.md](../ARCHITECTURE.md) - Architektura systemu
 - [DATA_FLOW.md](../DATA_FLOW.md) - Przepływ danych
+
+---
+
+## Metadata
+
+**Wersja dokumentu**: 1.1  
+**Data utworzenia**: 2025-10-10  
+**Ostatnia aktualizacja**: 2025-10-19  
+**Autor**: AI Agent  
+**Status**: ✅ Ukończone  
+
+**Changelog**:
+- 2025-10-19: Konwersja bloków kodu Python na diagramy Mermaid, poprawa czytelności i spójności.
+- 2025-10-10: Utworzenie dokumentu na podstawie kodu.

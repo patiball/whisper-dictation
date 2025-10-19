@@ -277,3 +277,17 @@ Brak znanych TODO/FIXME w kodzie modułu recorder.
 - [transcriber.md](./transcriber.md) - Moduł transkrypcji
 - [ARCHITECTURE.md](../ARCHITECTURE.md) - Architektura systemu
 - [API_INTERFACES.md](../API_INTERFACES.md) - Szczegóły API
+
+---
+
+## Metadata
+
+**Wersja dokumentu**: 1.1  
+**Data utworzenia**: 2025-10-10  
+**Ostatnia aktualizacja**: 2025-10-19  
+**Autor**: AI Agent  
+**Status**: ✅ Ukończone  
+
+**Changelog**:
+- 2025-10-19: Konwersja bloków kodu Python na diagramy Mermaid, poprawa czytelności i spójności.
+- 2025-10-10: Utworzenie dokumentu na podstawie kodu.

@@ -159,3 +159,17 @@ Przy dodawaniu nowych modułów:
 - Zaktualizuj ten plik (MODULES.md) dodając wpis w tabeli
 - Zaktualizuj graf zależności
 - Dodaj testy jednostkowe dla nowego modułu
+
+---
+
+## Metadata
+
+**Wersja dokumentu**: 1.1  
+**Data utworzenia**: 2025-10-10  
+**Ostatnia aktualizacja**: 2025-10-19  
+**Autor**: AI Agent  
+**Status**: ✅ Ukończone  
+
+**Changelog**:
+- 2025-10-19: Dodano diagramy Mermaid dla struktury, zależności i przepływu danych modułów.
+- 2025-10-10: Utworzenie dokumentu na podstawie kodu.

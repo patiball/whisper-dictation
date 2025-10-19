@@ -166,3 +166,17 @@ sequenceDiagram
 - [device_manager.md](./device_manager.md)
 - [ARCHITECTURE.md](../ARCHITECTURE.md)
 - [DATA_FLOW.md](../DATA_FLOW.md)
+
+---
+
+## Metadata
+
+**Wersja dokumentu**: 1.1  
+**Data utworzenia**: 2025-10-10  
+**Ostatnia aktualizacja**: 2025-10-19  
+**Autor**: AI Agent  
+**Status**: ✅ Ukończone  
+
+**Changelog**:
+- 2025-10-19: Konwersja bloków kodu Python na diagramy Mermaid, poprawa czytelności i spójności.
+- 2025-10-10: Utworzenie dokumentu na podstawie kodu.
