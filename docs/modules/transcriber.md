@@ -124,25 +124,29 @@ Sprawdza, czy konkretny model jest dostępny lokalnie.
 
 ### Transkrypcja pliku audio
 
-```python
-from transcriber import SpeechTranscriber
-
-transcriber = SpeechTranscriber(model_size="base", allowed_languages=["pl", "en"])
-result = transcriber.transcribe("./samples/example.wav")
-print(result.text)
-print(result.language)
+```mermaid
+sequenceDiagram
+    participant App
+    participant T as SpeechTranscriber
+    
+    App->>T: transcriber = SpeechTranscriber(model_size="base", allowed_languages=["pl", "en"])
+    App->>T: result = transcriber.transcribe("./samples/example.wav")
+    T-->>App: result (text, language)
+    App->>App: print(result.text)
+    App->>App: print(result.language)
 ```
 
 ### Transkrypcja danych audio z pamięci
 
-```python
-from transcriber import SpeechTranscriber
-import numpy as np
-
-transcriber = SpeechTranscriber(model_size="tiny")
-# audio_data: np.ndarray float32 w zakresie [-1, 1]
-result = transcriber.transcribe_audio_data(audio_data)
-print(result.text)
+```mermaid
+sequenceDiagram
+    participant App
+    participant T as SpeechTranscriber
+    
+    App->>T: transcriber = SpeechTranscriber(model_size="tiny")
+    App->>T: result = transcriber.transcribe_audio_data(audio_data)
+    T-->>App: result (text, language)
+    App->>App: print(result.text)
 ```
 
 ## Detale i Optymalizacje
