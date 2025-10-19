@@ -1,5 +1,5 @@
 # Feature: Zautomatyzowane testy dla implementacji C++ (whisper-cli)
-**Status**: Draft
+**Status**: Implemented
 **Priority**: Critical
 **Complexity**: Medium
 **Last Updated**: 2025-10-19

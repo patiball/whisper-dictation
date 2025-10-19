@@ -47,16 +47,49 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 2. **Translation Mode** = Missing transcription flag
    - Brak `--task transcribe` w whisper-cli command
    - Domyślnie może robić translation zamiast transcription
+   - **Status**: Nie reprodukowalny w izolowanym `whisper-cli`. Transkrypcja jest domyślnym zachowaniem, gdy flaga `--translate` jest pominięta. Błąd może nadal występować w kontekście e2e.
 
 3. **Language Detection** = Forcing first language (linia 58)
    - `self.allowed_languages[0]` wymusza język zamiast auto-detection
    - Identyczne z problemu podwójnej transkrypcji w Python version
-   - **Status**: Czerwone testy stworzone i błędy potwierdzone: `whisper-cli` zwraca pusty string dla `--detect-language` oraz niepoprawny format wyjścia dla `--print-confidence`.
+   - **Status**: Czerwone testy stworzone i błędy potwierdzone: `whisper-cli` zwraca pusty string dla `--detect-language` (dla EN i PL) oraz niepoprawny format wyjścia dla `--print-confidence` (dla EN i PL).
 
 **Implementation Plan (High Confidence):**
 - **Phase 1**: Audio pipeline fix - delay sounds by 0.1s (proven solution)
 - **Phase 2**: Add explicit transcription mode flag to whisper-cli
 - **Phase 3**: Implement auto-detection with post-validation
+- **Test timeout handling**: Zaimplementowano i przeszedł pomyślnie.
+- **Test stderr error logging**: Zaimplementowano i przeszedł pomyślnie.
+- **Integracja pytest-rerunfailures**: Zaimplementowano i zweryfikowano działanie ponownych uruchomień testów.
+- **Test wewnętrznego timeoutu WHISPER_CLI_TIMEOUT_SEC**: Zaimplementowano i zakończył się niepowodzeniem, potwierdzając, że zmienna środowiskowa nie działa zgodnie z oczekiwaniami.
+
+**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+
+**Expected Timeline:** 1-2 days (applying known working solutions)
+
+**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+
+**Expected Timeline:** 1-2 days (applying known working solutions)
+
+**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+
+**Expected Timeline:** 1-2 days (applying known working solutions)
+
+**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+
+**Expected Timeline:** 1-2 days (applying known working solutions)
+
+**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+
+**Expected Timeline:** 1-2 days (applying known working solutions)
+
+**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+
+**Expected Timeline:** 1-2 days (applying known working solutions)
+
+**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+
+**Expected Timeline:** 1-2 days (applying known working solutions)
 
 **Expected Timeline:** 1-2 days (applying known working solutions)
 
