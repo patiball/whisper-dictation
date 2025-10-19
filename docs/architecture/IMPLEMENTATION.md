@@ -164,7 +164,7 @@ flowchart TD
     C --> D{Device Capable?}
     D -->|Yes| E[Return Device]
     D -->|No| C
-    C --> F[Return Fallback Device (CPU)]
+    C --> F[Return Fallback Device CPU]
 ```
 
 **Uzasadnienie**: Graceful degradation - jeśli MPS zawiedzie, próbuj CUDA, potem CPU.
