@@ -50,7 +50,8 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 
 3. **Language Detection** = Forcing first language (linia 58)
    - `self.allowed_languages[0]` wymusza język zamiast auto-detection
-   - Identyczne z problemem podwójnej transkrypcji w Python version
+   - Identyczne z problemu podwójnej transkrypcji w Python version
+   - **Status**: Czerwone testy stworzone i błędy potwierdzone: `whisper-cli` zwraca pusty string dla `--detect-language` oraz niepoprawny format wyjścia dla `--print-confidence`.
 
 **Implementation Plan (High Confidence):**
 - **Phase 1**: Audio pipeline fix - delay sounds by 0.1s (proven solution)

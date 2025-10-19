@@ -10,8 +10,12 @@ Celem jest stworzenie zestawu zautomatyzowanych testów w `pytest` dla zewnętrz
 ## Acceptance Criteria
 - [ ] Istnieje test, który sprawdza, czy transkrypcja audio nie jest ucinana na początku ani na końcu; weryfikacja przez obecność „kotwic” z początku i końca nagrania w oknach ~20% długości (min 0.3 s, max 0.8 s). Test powinien zakończyć się niepowodzeniem na obecnej, wadliwej wersji `whisper-cli`.
 - [ ] Test „transkrypcja ≠ tłumaczenie” (PL): przy autodetekcji 'pl' i bez ustawiania trybu tłumaczenia, wynik ma być po polsku; weryfikacja heurystyczna (przewaga polskich tokenów/diakrytyków, brak treści w pełni przetłumaczonej na angielski). Test powinien obecnie zawodzić (regresja).
+
+<!-- UWAGA (Heurystyka języka): Implementacja będzie musiała określić konkretną metodę weryfikacji "przewagi polskich tokenów", np. poprzez zliczenie wystąpień znaków [ąćęłńóśźż] w stosunku do całej treści. -->
 - [ ] Detekcja języka (PL): kod 'pl' z confidence ≥ 0.90 (jeśli CLI raportuje confidence) dla próbki polskiej.
 - [ ] Detekcja języka (EN): kod 'en' z confidence ≥ 0.90 (jeśli CLI raportuje confidence) dla próbki angielskiej.
+
+<!-- UWAGA (Confidence Level): Należy zweryfikować podczas implementacji, czy `whisper-cli` faktycznie zwraca metrykę 'confidence'. Jeśli nie, kryterium będzie musiało zostać uproszczone do samej weryfikacji kodu języka. -->
 - [ ] Wszystkie nowe testy są zintegrowane z `pytest` i uruchamiają się razem z istniejącymi testami dla wersji pythonowej.
 - [ ] Testy wykorzystują próbki audio z katalogu `tests/audio/`, wybierane dynamicznie wg charakterystyk (bez twardych nazw); możliwe nadpisanie przez zmienne środowiskowe.
 - [ ] Integracja z pytest: markery np. `@pytest.mark.whisper_cpp` i możliwość selektywnego uruchamiania.
