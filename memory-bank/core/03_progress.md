@@ -58,3 +58,7 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 - **Phase 3**: Implement auto-detection with post-validation
 
 **Expected Timeline:** 1-2 days (applying known working solutions)
+
+## Backlog
+
+- **Dokumentacja**: Stworzenie angielskiej wersji językowej dla całej dokumentacji w folderze `/docs`. Obecna wersja jest po polsku.

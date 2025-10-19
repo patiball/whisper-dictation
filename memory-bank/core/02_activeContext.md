@@ -51,3 +51,7 @@ Problemy whisper.cpp to **te same architekturalne błędy** które już naprawil
    - Production-ready whisper.cpp with M1 GPU acceleration
    - Quality matching Python version
    - True M1 performance benefits realized
+
+## Housekeeping Tasks
+
+- **Dokumentacja**: Przygotować wersję angielską dokumentacji (obecnie po polsku).
