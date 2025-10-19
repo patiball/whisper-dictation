@@ -139,15 +139,7 @@ Diagram przedstawia szczegółową sekwencję interakcji między komponentami po
 | **Urządzenie niedostępne** | MPS/CUDA nie działa | Automatyczny fallback na CPU |
 | **Brak pamięci** | Model za duży dla urządzenia | Fallback + komunikat |
 
-**Kod obsługi** (whisper-dictation.py:337-353):
-```python
-try:
-    model = load_model(model_name, device=device)
-except Exception as e:
-    if device_manager.base_manager.should_retry_with_fallback(e):
-        fallback_device, user_message = device_manager.handle_device_error_enhanced(...)
-        # Retry z fallback device
-```
+**Kod obsługi**: W `whisper-dictation.py` (linie 337-353) zaimplementowano obsługę błędów inicjalizacji modelu z automatycznym fallbackiem na CPU w przypadku problemów z urządzeniem.
 
 #### 4.1.2. Błędy nagrywania
 
@@ -157,14 +149,7 @@ except Exception as e:
 | **Stream overflow** | Bufor przepełniony | `exception_on_overflow=False` |
 | **Brak uprawnień** | System nie zezwala na dostęp | Komunikat systemowy macOS |
 
-**Kod obsługi** (recorder.py:147-152):
-```python
-try:
-    data = self.stream.read(self.chunk_size, exception_on_overflow=False)
-except Exception as e:
-    print(f"Recording error: {e}")
-    break
-```
+**Kod obsługi**: W `recorder.py` (linie 147-152) błędy nagrywania są przechwytywane, a w przypadku przepełnienia bufora (`exception_on_overflow=False`) nagrywanie jest kontynuowane.
 
 #### 4.1.3. Błędy transkrypcji
 
@@ -175,29 +160,9 @@ except Exception as e:
 | **Invalid audio** | Pusta/nieprawidłowa próbka | Cichy błąd (brak wyjścia) |
 | **Language mismatch** | Język poza `allowed_languages` | Wymuszenie pierwszego z allowed |
 
-**Kod obsługi detekcji języka** (whisper-dictation.py:47-59):
-```python
-if self.allowed_languages and language is None:
-    result = self.model.transcribe(audio_data, ...)
-    detected_lang = result.get('language', 'en')
-    
-    if detected_lang not in self.allowed_languages:
-        options["language"] = self.allowed_languages[0]  # Override
-    
-    result = self.model.transcribe(audio_data, **options)  # Re-transcribe
-```
+**Kod obsługi detekcji języka**: W `whisper-dictation.py` (linie 47-59) zaimplementowano logikę nadpisywania wykrytego języka, jeśli nie znajduje się on na liście `allowed_languages`.
 
-**Kod obsługi fallback** (transcriber.py:145-169):
-```python
-try:
-    result = self.model.transcribe(audio_file, **options)
-except Exception as e:
-    if self.device_manager.base_manager.should_retry_with_fallback(e):
-        fallback_device, user_message = device_manager.handle_device_error_enhanced(...)
-        # Move model to fallback device
-        self.model = self.model.to(fallback_device)
-        # Retry with optimized settings for fallback
-```
+**Kod obsługi fallback**: W `transcriber.py` (linie 145-169) zaimplementowano mechanizm automatycznego fallbacku urządzenia w przypadku błędów transkrypcji, z możliwością ponowienia próby na innym urządzeniu.
 
 #### 4.1.4. Błędy wklejania tekstu
 
@@ -206,14 +171,7 @@ except Exception as e:
 | **Keyboard input blocked** | Brak uprawnień accessibility | `try-except pass` - cichy błąd |
 | **Special characters** | Znaki niedostępne na klawiaturze | `try-except pass` |
 
-**Kod obsługi** (whisper-dictation.py:69-73):
-```python
-try:
-    self.pykeyboard.type(element)
-    time.sleep(0.0025)
-except:
-    pass  # Cicho ignorujemy błędy wpisywania
-```
+**Kod obsługi**: W `whisper-dictation.py` (linie 69-73) błędy wklejania tekstu są cicho ignorowane (`try-except pass`), aby nie przerywać działania aplikacji.
 
 ### 4.2. Strategia odzyskiwania (Recovery Strategy)
 
@@ -254,30 +212,21 @@ Diagram przedstawia różne scenariusze błędów i ich obsługę:
 
 ### 6.1. Audio Pipeline
 
-```
-Mikrofon
-  ↓ PyAudio capture
-bytes[] (paInt16, 16kHz, mono)
-  ↓ np.frombuffer(dtype=np.int16)
-np.ndarray[int16]
-  ↓ .astype(np.float32) / 32768.0
-np.ndarray[float32] ∈ [-1.0, 1.0]
-  ↓ Whisper model
-str (UTF-8)
+```mermaid
+flowchart TD
+    A[Mikrofon] --> B{PyAudio capture}
+    B --> C[bytes[] (paInt16, 16kHz, mono)]
+    C --> D{np.frombuffer(dtype=np.int16)}
+    D --> E[np.ndarray[int16]]
+    E --> F{.astype(np.float32) / 32768.0}
+    F --> G[np.ndarray[float32] ∈ [-1.0, 1.0]]
+    G --> H{Whisper model}
+    H --> I[str (UTF-8)]
 ```
 
 ### 6.2. Konfiguracja transkrypcji
 
-```python
-options = {
-    "fp16": device == "mps",              # Half precision na GPU
-    "language": "pl" | "en" | None,       # Język (auto-detect jeśli None)
-    "task": "transcribe",                 # Zawsze "transcribe" (nie "translate")
-    "no_speech_threshold": 0.6,           # Próg detekcji mowy (wyższy = szybszy)
-    "logprob_threshold": -1.0,            # Próg prawdopodobieństwa logicznego
-    "compression_ratio_threshold": 2.4    # Próg kompresji tekstu
-}
-```
+**Konfiguracja transkrypcji**: Opcje transkrypcji obejmują `fp16` (half precision na GPU), `language` (język transkrypcji), `task` (zawsze "transcribe"), `no_speech_threshold`, `logprob_threshold` i `compression_ratio_threshold`.
 
 **Optymalizacje dla M1/M2 (MPS)**:
 - `fp16=True` - znacząco przyspiesza inferancję
@@ -320,112 +269,36 @@ options = {
 
 ### 7.1. Decyzja o języku transkrypcji
 
-```
-┌─────────────────────────────┐
-│ Rozpoczęcie transkrypcji    │
-└──────────┬──────────────────┘
-           │
-           ▼
-      ┌─────────┐
-      │ language │ Jest ustawiony jawnie?
-      │ != None? │
-      └─┬────┬──┘
-        │NO  │YES
-        │    │
-        │    └──────────────────┐
-        │                       │
-        ▼                       ▼
-┌─────────────────────┐  ┌──────────────────┐
-│ allowed_languages?  │  │ Użyj language    │
-└─┬────────────┬──────┘  │ w options        │
-  │YES         │NO       └──────────────────┘
-  │            │
-  │            └──────────────┐
-  │                           │
-  ▼                           ▼
-┌─────────────────────┐  ┌──────────────────┐
-│ Auto-detect język   │  │ Auto-detect      │
-│ transcribe(no lang) │  │ (bez ograniczeń) │
-└──────┬──────────────┘  └──────────────────┘
-       │
-       ▼
-┌──────────────────────┐
-│ detected_lang in     │
-│ allowed_languages?   │
-└─┬───────────────┬────┘
-  │NO             │YES
-  │               │
-  │               └──────────────┐
-  │                              │
-  ▼                              ▼
-┌─────────────────────┐  ┌──────────────────┐
-│ Override z           │  │ Użyj detected    │
-│ allowed_languages[0] │  │ language         │
-└──────┬──────────────┘  └──────────────────┘
-       │
-       └──────────┬──────────────┘
-                  │
-                  ▼
-        ┌──────────────────┐
-        │ Re-transcribe z  │
-        │ wybranym językiem│
-        └──────────────────┘
+```mermaid
+flowchart TD
+    A[Rozpoczęcie transkrypcji] --> B{language jest ustawiony jawnie?}
+    B -- No --> C{allowed_languages?}
+    B -- Yes --> D[Użyj language w options]
+    C -- Yes --> E[Auto-detect język]
+    C -- No --> F[Auto-detect (bez ograniczeń)]
+    E --> G{detected_lang in allowed_languages?}
+    F --> G
+    G -- No --> H[Override z allowed_languages[0]]
+    G -- Yes --> I[Użyj detected language]
+    H --> J[Re-transcribe z wybranym językiem]
+    I --> J
+    D --> J
 ```
 
 ### 7.2. Fallback urządzenia przy błędzie
 
-```
-┌─────────────────────┐
-│ model.transcribe()  │
-└──────┬──────────────┘
-       │
-       ▼
-┌──────────────────────┐
-│ Wystąpił Exception?  │
-└─┬──────────────────┬─┘
-  │NO                │YES
-  │                  │
-  │                  ▼
-  │      ┌─────────────────────────────┐
-  │      │ should_retry_with_fallback? │
-  │      └─┬─────────────────────────┬─┘
-  │        │YES                      │NO
-  │        │                         │
-  │        ▼                         ▼
-  │  ┌──────────────────────┐  ┌─────────┐
-  │  │ Pobierz fallback     │  │ Rzuć    │
-  │  │ device (MPS→CPU)     │  │ błąd    │
-  │  └──────┬───────────────┘  └─────────┘
-  │         │
-  │         ▼
-  │  ┌──────────────────────┐
-  │  │ Print user_message   │
-  │  │ "🔄 Przełączam..."   │
-  │  └──────┬───────────────┘
-  │         │
-  │         ▼
-  │  ┌──────────────────────┐
-  │  │ model.to(fallback)   │
-  │  │ optimize_model()     │
-  │  └──────┬───────────────┘
-  │         │
-  │         ▼
-  │  ┌──────────────────────┐
-  │  │ Retry transcribe     │
-  │  │ z fallback options   │
-  │  └──────┬───────────────┘
-  │         │
-  │         ▼
-  │  ┌──────────────────────┐
-  │  │ register_success()   │
-  │  └──────────────────────┘
-  │         │
-  └─────────┴─────────────────►
-           │
-           ▼
-    ┌──────────────┐
-    │ Return result│
-    └──────────────┘
+```mermaid
+flowchart TD
+    A[model.transcribe()] --> B{Wystąpił Exception?}
+    B -- No --> C[Return result]
+    B -- Yes --> D{should_retry_with_fallback?}
+    D -- No --> E[Rzuć błąd]
+    D -- Yes --> F[Pobierz fallback device (MPS→CPU)]
+    F --> G[Print user_message "🔄 Przełączam..."]
+    G --> H[model.to(fallback) & optimize_model()]
+    H --> I[Retry transcribe z fallback options]
+    I --> J[register_success()]
+    J --> C
 ```
 
 ---
@@ -473,23 +346,7 @@ options = {
 
 ### 9.2. TranscriptionResult tracking
 
-```python
-class TranscriptionResult:
-    text: str
-    language: str
-    detection_time: float      # Czas detekcji języka
-    transcription_time: float  # Czas transkrypcji
-```
-
-Użycie (transcriber.py:191-195):
-```python
-return TranscriptionResult(
-    text=text,
-    language=detected_language,
-    detection_time=detection_time,
-    transcription_time=transcription_time
-)
-```
+**Użycie**: `TranscriptionResult` jest zwracany przez metody transkrypcji i zawiera `text`, `language`, `detection_time` i `transcription_time`.
 
 ---
 
@@ -497,45 +354,48 @@ return TranscriptionResult(
 
 ### 10.1. StatusBarApp States
 
-```
-┌───────────┐
-│  Idle     │  Icon: "⏯"
-│ (gotowość)│  Menu: "Start Recording" ✓
-└─────┬─────┘        "Stop Recording" ✗
-      │
-      │ start_app()
-      ▼
-┌───────────┐
-│Recording  │  Icon: "(MM:SS) 🔴"
-│ (nagrywa) │  Menu: "Start Recording" ✗
-└─────┬─────┘        "Stop Recording" ✓
-      │          Timer: max_time countdown
-      │
-      │ stop_app()
-      ▼
-┌───────────┐
-│Processing │  Icon: "⏯" (przejściowo)
-│(transkryp)│  Print: "Transcribing..."
-└─────┬─────┘
-      │
-      │ (async transcription)
-      ▼
-┌───────────┐
-│  Idle     │  Icon: "⏯"
-│ (gotowość)│  Print: "Done."
-└───────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Recording: start_app()
+    Recording --> Processing: stop_app()
+    Processing --> Idle: (async transcription)
+
+    state Idle {
+        state "Gotowość" as IdleState
+        IdleState : Icon: "⏯"
+        IdleState : Menu: "Start Recording" ✓
+        IdleState : Menu: "Stop Recording" ✗
+    }
+    state Recording {
+        state "Nagrywa" as RecordingState
+        RecordingState : Icon: "(MM:SS) 🔴"
+        RecordingState : Menu: "Start Recording" ✗
+        RecordingState : Menu: "Stop Recording" ✓
+        RecordingState : Timer: max_time countdown
+    }
+    state Processing {
+        state "Transkrypcja" as ProcessingState
+        ProcessingState : Icon: "⏯" (przejściowo)
+        ProcessingState : Print: "Transcribing..."
+    }
 ```
 
 ### 10.2. Recorder States
 
-```
-recording = False  →  start()  →  recording = True
-                                        ↓
-                                  stream.read()
-                                        ↓
-                      stop()  ←  recording = True
-                        ↓
-               recording = False
+```mermaid
+stateDiagram-v2
+    [*] --> NotRecording
+    NotRecording --> Recording: start()
+    Recording --> NotRecording: stop()
+
+    state NotRecording {
+        NotRecording : recording = False
+    }
+    state Recording {
+        Recording : recording = True
+        Recording : stream.read() in progress
+    }
 ```
 
 ---
@@ -544,37 +404,11 @@ recording = False  →  start()  →  recording = True
 
 ### 11.1. Główne wątki
 
-1. **Main Thread (rumps.App)**
-   - Event loop aplikacji statusbar
-   - Obsługa menu clicks
-   - Aktualizacja ikony (timer)
-
-2. **Keyboard Listener Thread**
-   - `pynput.keyboard.Listener`
-   - Nasłuchiwanie na skróty
-   - Wywołanie `app.toggle()`
-
-3. **Recording Thread**
-   - `threading.Thread(target=_record_impl)`
-   - Capture audio w pętli while
-   - Automatyczne zakończenie przy `recording=False`
-
-4. **Sound Player Threads**
-   - `threading.Thread(target=_play_sound)`
-   - Non-blocking odtwarzanie Tink/Pop
-   - Krótkotrwałe, natychmiastowe zakończenie
-
-5. **Timer Thread (Optional)**
-   - `threading.Timer(max_time, callback)`
-   - Auto-stop po max_time sekund
-   - Cancellable przed upływem czasu
+**Główne wątki**: Aplikacja wykorzystuje model wielowątkowy, gdzie główny wątek obsługuje UI (`rumps.App`), a osobne wątki są dedykowane dla `Keyboard Listener`, `Recording` i `Sound Player`. Opcjonalny wątek `Timer` jest używany do auto-stopu nagrywania.
 
 ### 11.2. Thread Safety
 
-- **Brak shared state**: Większość operacji jest niezależna
-- **recording flag**: Proste boolean (atomic w CPython)
-- **PyAudio stream**: Używany tylko w recording thread
-- **Model Whisper**: Thread-safe (inferancja read-only)
+**Thread Safety**: Większość operacji jest niezależna. `recording flag` jest prostym booleanem. `PyAudio stream` jest używany tylko w wątku nagrywania. `Model Whisper` jest thread-safe (inferancja read-only).
 
 ---
 
