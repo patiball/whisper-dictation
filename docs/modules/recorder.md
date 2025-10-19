@@ -188,71 +188,63 @@ print(f"Średnie opóźnienie startu: {delay:.3f}s")
 
 ### Podstawowe nagrywanie z timestampem
 
-```python
-from recorder import Recorder
-import time
-
-# Utwórz instancję recordera
-recorder = Recorder()
-
-# Rozpocznij nagrywanie ze śledzeniem czasu
-start_time = recorder.start_recording_with_timestamp()
-print(f"Rozpoczęto nagrywanie: {start_time}")
-
-# Nagraj przez 5 sekund
-time.sleep(5)
-
-# Zatrzymaj i pobierz audio
-audio_data = recorder.stop_recording()
-print(f"Nagrano {len(audio_data)} próbek")
-
-# Zapisz do pliku
-recorder.save_recording(audio_data, "my_recording.wav")
+```mermaid
+sequenceDiagram
+    participant App
+    participant R as Recorder
+    
+    App->>R: recorder = Recorder()
+    App->>R: start_time = recorder.start_recording_with_timestamp()
+    R-->>App: start_time
+    App->>App: print(f"Rozpoczęto nagrywanie: {start_time}")
+    App->>App: time.sleep(5)
+    App->>R: audio_data = recorder.stop_recording()
+    R-->>App: audio_data
+    App->>App: print(f"Nagrano {len(audio_data)} próbek")
+    App->>R: recorder.save_recording(audio_data, "my_recording.wav")
 ```
 
 ### Nagrywanie o określonym czasie trwania
 
-```python
-from recorder import Recorder
-
-recorder = Recorder()
-
-# Nagraj dokładnie 3 sekundy
-audio = recorder.record_duration(3.0)
-
-# Zapisz wynik
-recorder.save_recording(audio, "three_seconds.wav")
+```mermaid
+sequenceDiagram
+    participant App
+    participant R as Recorder
+    
+    App->>R: recorder = Recorder()
+    App->>R: audio = recorder.record_duration(3.0)
+    R-->>App: audio
+    App->>R: recorder.save_recording(audio, "three_seconds.wav")
 ```
 
 ### Nagrywanie z automatyczną transkrypcją
 
-```python
-from recorder import Recorder
-from transcriber import SpeechTranscriber
-
-# Utwórz transkryber
-transcriber = SpeechTranscriber(model_size="base")
-
-# Recorder z automatyczną transkrypcją
-recorder = Recorder(transcriber=transcriber)
-
-# Nagraj w tle - zostanie automatycznie przepisane
-recorder.start(language='pl')
-
-# ... użytkownik mówi ...
-
-# Zatrzymaj (transkrypcja zostanie wyświetlona automatycznie)
-recorder.stop()
+```mermaid
+sequenceDiagram
+    participant App
+    participant T as SpeechTranscriber
+    participant R as Recorder
+    
+    App->>T: transcriber = SpeechTranscriber(model_size="base")
+    App->>R: recorder = Recorder(transcriber=transcriber)
+    App->>R: recorder.start(language='pl')
+    App->>App: ... użytkownik mówi ...
+    App->>R: recorder.stop()
+    R-->>T: audio_data
+    T-->>App: Transkrypcja wyświetlona automatycznie
 ```
 
 ### Pomiar opóźnienia startu
 
-```python
-from recorder import Recorder
-
-recorder = Recorder()
-delay = recorder.get_recording_delay()
-print(f"Opóźnienie startu nagrywania: {delay*1000:.1f}ms")
+```mermaid
+sequenceDiagram
+    participant App
+    participant R as Recorder
+    
+    App->>R: recorder = Recorder()
+    App->>R: delay = recorder.get_recording_delay()
+    R-->>App: delay
+    App->>App: print(f"Opóźnienie startu nagrywania: {delay*1000:.1f}ms")
 ```
 
 ## Szczegóły Implementacji
