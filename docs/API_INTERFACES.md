@@ -93,16 +93,7 @@ print(f"Nagrywanie rozpoczęte o: {start_time}")
 
 #### stop_recording()
 
-```python
-def stop_recording(self) -> Optional[np.ndarray]:
-    """
-    Zatrzymuje nagrywanie i zwraca dane audio.
-    
-    Returns:
-        numpy.ndarray: Tablica float32 z normalizowanymi danymi audio (zakres -1.0 do 1.0)
-        None: Jeśli nagrywanie nie było aktywne lub brak danych
-    """
-```
+`stop_recording() -> Optional[np.ndarray]`
 
 **Opis**: Zatrzymuje aktywne nagrywanie i konwertuje nagrane dane do formatu numpy array.
 
@@ -126,21 +117,7 @@ if audio_data is not None:
 
 #### record_duration()
 
-```python
-def record_duration(self, duration_seconds: float) -> np.ndarray:
-    """
-    Nagrywa przez określony czas.
-    
-    Args:
-        duration_seconds (float): Czas nagrywania w sekundach
-        
-    Returns:
-        numpy.ndarray: Nagrane dane audio jako float32 array
-        
-    Raises:
-        RuntimeError: Gdy wystąpił błąd podczas nagrywania
-    """
-```
+`record_duration(duration_seconds: float) -> np.ndarray`
 
 **Opis**: Automatycznie nagrywa przez określony czas i zwraca dane.
 
@@ -159,15 +136,7 @@ print(f"Nagrano {len(audio)/16000:.2f} sekund audio")
 
 #### start()
 
-```python
-def start(self, language: Optional[str] = None):
-    """
-    Rozpoczyna nagrywanie w tle (wątek).
-    
-    Args:
-        language (str, opcjonalny): Kod języka dla transkrypcji (np. 'en', 'pl')
-    """
-```
+`start(language: Optional[str] = None)`
 
 **Opis**: Rozpoczyna nagrywanie w osobnym wątku, umożliwiając asynchroniczne nagrywanie.
 
@@ -188,27 +157,13 @@ recorder.stop()
 
 #### stop()
 
-```python
-def stop():
-    """
-    Zatrzymuje nagrywanie w tle.
-    """
-```
+`stop()`
 
 **Opis**: Zatrzymuje nagrywanie uruchomione przez `start()`.
 
 #### save_recording()
 
-```python
-def save_recording(self, audio_data: np.ndarray, filename: str):
-    """
-    Zapisuje dane audio do pliku WAV.
-    
-    Args:
-        audio_data (numpy.ndarray): Dane audio do zapisania
-        filename (str): Nazwa pliku wyjściowego (z rozszerzeniem .wav)
-    """
-```
+`save_recording(audio_data: np.ndarray, filename: str)`
 
 **Opis**: Eksportuje nagrane audio do pliku WAV.
 
@@ -230,15 +185,7 @@ recorder.save_recording(audio, "recording.wav")
 
 #### get_recording_delay()
 
-```python
-def get_recording_delay(self) -> float:
-    """
-    Mierzy opóźnienie między wywołaniem start a faktycznym rozpoczęciem.
-    
-    Returns:
-        float: Średnie opóźnienie w sekundach (z 3 prób)
-    """
-```
+`get_recording_delay() -> float`
 
 **Opis**: Narzędzie diagnostyczne do pomiaru latencji inicjalizacji nagrywania.
 
@@ -367,21 +314,7 @@ print(f"Czas: {result.transcription_time:.2f}s")
 
 #### transcribe_audio_data()
 
-```python
-def transcribe_audio_data(self, audio_data: np.ndarray) -> TranscriptionResult:
-    """
-    Transkrybuje surowe dane audio.
-    
-    Args:
-        audio_data (numpy.ndarray): Dane audio jako numpy array (float32)
-        
-    Returns:
-        TranscriptionResult: Obiekt z tekstem, językiem i czasem transkrypcji
-        
-    Raises:
-        Exception: Gdy transkrypcja nie powiodła się
-    """
-```
+`transcribe_audio_data(audio_data: np.ndarray) -> TranscriptionResult`
 
 **Opis**: Transkrybuje dane audio bezpośrednio z pamięci (np. z Recordera).
 
@@ -407,15 +340,7 @@ print(result.text)
 
 #### get_model_state()
 
-```python
-def get_model_state(self) -> str:
-    """
-    Zwraca identyfikator stanu modelu.
-    
-    Returns:
-        str: Unikalny identyfikator stanu modelu (dla testowania)
-    """
-```
+`get_model_state() -> str`
 
 **Opis**: Metoda pomocnicza do testowania zmiany stanu modelu.
 
@@ -425,16 +350,7 @@ def get_model_state(self) -> str:
 
 #### list_available_models()
 
-```python
-@staticmethod
-def list_available_models() -> List[Tuple[str, str]]:
-    """
-    Listuje modele dostępne lokalnie.
-    
-    Returns:
-        List[Tuple[str, str]]: Lista krotek (nazwa_modelu, rozmiar_pliku)
-    """
-```
+`list_available_models() -> List[Tuple[str, str]]`
 
 **Opis**: Skanuje lokalny cache w poszukiwaniu pobranych modeli Whisper.
 
@@ -449,19 +365,7 @@ for name, size in models:
 
 #### check_model_available()
 
-```python
-@staticmethod
-def check_model_available(model_name: str) -> bool:
-    """
-    Sprawdza czy określony model jest dostępny lokalnie.
-    
-    Args:
-        model_name (str): Nazwa modelu do sprawdzenia
-        
-    Returns:
-        bool: True jeśli model jest dostępny lokalnie
-    """
-```
+`check_model_available(model_name: str) -> bool`
 
 **Opis**: Sprawdza dostępność modelu bez jego ładowania.
 
@@ -522,15 +426,7 @@ Model Whisper obsługuje 99 języków. Najczęściej używane:
 
 ### Konstruktor
 
-```python
-def __init__(self, enable_logging: bool = True):
-    """
-    Inicjalizuje menedżera urządzeń.
-    
-    Args:
-        enable_logging (bool): Czy włączyć logowanie (domyślnie True)
-    """
-```
+`__init__(self, enable_logging: bool = True)`
 
 **Parametry**:
 - `enable_logging` (bool): Kontrola szczegółowości logów
@@ -550,20 +446,7 @@ device_manager = DeviceManager(enable_logging=True)
 
 #### get_device_for_operation()
 
-```python
-def get_device_for_operation(self, operation: OperationType, 
-                            model_size: Optional[str] = None) -> str:
-    """
-    Zwraca optymalne urządzenie dla typu operacji.
-    
-    Args:
-        operation (OperationType): Typ operacji (MODEL_LOADING, TRANSCRIPTION, BASIC_TENSOR)
-        model_size (str, opcjonalny): Rozmiar modelu dla optymalizacji pamięci
-        
-    Returns:
-        str: Nazwa urządzenia ('cpu', 'mps', 'cuda')
-    """
-```
+`get_device_for_operation(self, operation: OperationType, model_size: Optional[str] = None) -> str`
 
 **Opis**: Inteligentny wybór urządzenia bazujący na historii sukcessów i możliwościach.
 
@@ -593,22 +476,7 @@ print(f"Ładowanie modelu na: {device}")
 
 #### handle_device_error()
 
-```python
-def handle_device_error(self, error: Exception, 
-                       operation: OperationType,
-                       current_device: str) -> str:
-    """
-    Obsługuje błąd urządzenia i zwraca fallback.
-    
-    Args:
-        error (Exception): Wyjątek który wystąpił
-        operation (OperationType): Typ operacji która zawiodła
-        current_device (str): Urządzenie na którym wystąpił błąd
-        
-    Returns:
-        str: Urządzenie fallback do użycia
-    """
-```
+`handle_device_error(self, error: Exception, operation: OperationType, current_device: str) -> str`
 
 **Opis**: Inteligentna obsługa błędów z automatycznym fallbackiem.
 
@@ -642,16 +510,7 @@ except Exception as e:
 
 #### register_operation_success()
 
-```python
-def register_operation_success(self, device: str, operation: OperationType):
-    """
-    Rejestruje sukces operacji dla przyszłych decyzji.
-    
-    Args:
-        device (str): Urządzenie na którym operacja powiodła się
-        operation (OperationType): Typ operacji
-    """
-```
+`register_operation_success(self, device: str, operation: OperationType)`
 
 **Opis**: Buduje historię sukcessów dla inteligentnego wyboru urządzeń.
 
@@ -676,18 +535,7 @@ except Exception as e:
 
 #### should_retry_with_fallback()
 
-```python
-def should_retry_with_fallback(self, error: Exception) -> bool:
-    """
-    Określa czy błąd wymaga automatycznego fallbacku.
-    
-    Args:
-        error (Exception): Wyjątek do analizy
-        
-    Returns:
-        bool: True jeśli należy automatycznie przełączyć urządzenie
-    """
-```
+`should_retry_with_fallback(self, error: Exception) -> bool`
 
 **Opis**: Wykrywa znane problemy wymagające fallbacku.
 
@@ -716,15 +564,7 @@ except Exception as e:
 
 #### get_device_status_report()
 
-```python
-def get_device_status_report(self) -> Dict:
-    """
-    Zwraca raport statusu wszystkich urządzeń.
-    
-    Returns:
-        Dict: Słownik z informacjami o urządzeniach, możliwościach i historii
-    """
-```
+`get_device_status_report(self) -> Dict`
 
 **Opis**: Narzędzie diagnostyczne do debugowania problemów z urządzeniami.
 
@@ -758,35 +598,13 @@ print("Możliwości MPS:", report['capabilities'].get('mps_model'))
 
 #### _test_basic_operations()
 
-```python
-def _test_basic_operations(self, device: str) -> DeviceCapability:
-    """
-    Testuje podstawowe operacje tensorowe.
-    
-    Args:
-        device (str): Urządzenie do przetestowania
-        
-    Returns:
-        DeviceCapability: Wynik testu możliwości
-    """
-```
+`_test_basic_operations(self, device: str) -> DeviceCapability`
 
 **Opis**: Wykonuje proste operacje tensorowe do weryfikacji działania urządzenia.
 
 #### _test_model_loading_capability()
 
-```python
-def _test_model_loading_capability(self, device: str) -> DeviceCapability:
-    """
-    Testuje możliwość ładowania modelu bez pobierania Whisper.
-    
-    Args:
-        device (str): Urządzenie do przetestowania
-        
-    Returns:
-        DeviceCapability: Wynik testu
-    """
-```
+`_test_model_loading_capability(self, device: str) -> DeviceCapability`
 
 **Opis**: Lekki test operacji podobnych do Whisper (konwolucje, linear layers).
 
@@ -806,17 +624,15 @@ def _test_model_loading_capability(self, device: str) -> DeviceCapability:
 
 **Lokalizacja**: `transcriber.py`
 
-```python
-class TranscriptionResult:
-    """Obiekt wyniku transkrypcji z detekcją języka."""
-    
-    def __init__(self, text: str, language: str, 
-                 detection_time: float = 0, 
-                 transcription_time: float = 0):
-        self.text = text
-        self.language = language
-        self.detection_time = detection_time
-        self.transcription_time = transcription_time
+```mermaid
+classDiagram
+    class TranscriptionResult {
+        +text: str
+        +language: str
+        +detection_time: float
+        +transcription_time: float
+    }
+    note for TranscriptionResult "Obiekt wyniku transkrypcji z detekcją języka."
 ```
 
 **Pola**:
@@ -837,20 +653,17 @@ print(f"Czas całkowity: {result.transcription_time:.2f}s")
 
 **Lokalizacja**: `device_manager.py`
 
-```python
-class DeviceCapability:
-    """Wynik oceny możliwości urządzenia."""
-    
-    def __init__(self, device: str, available: bool, 
-                 tested: bool = False,
-                 error: Optional[str] = None, 
-                 performance_score: float = 0.0):
-        self.device = device
-        self.available = available
-        self.tested = tested
-        self.error = error
-        self.performance_score = performance_score
-        self.last_test_time = time.time()
+```mermaid
+classDiagram
+    class DeviceCapability {
+        +device: str
+        +available: bool
+        +tested: bool
+        +error: Optional~str~
+        +performance_score: float
+        +last_test_time: float
+    }
+    note for DeviceCapability "Wynik oceny możliwości urządzenia."
 ```
 
 **Pola**:
@@ -865,12 +678,13 @@ class DeviceCapability:
 
 **Lokalizacja**: `device_manager.py`
 
-```python
-class OperationType(Enum):
-    """Typy operacji wymagających różnych urządzeń."""
-    MODEL_LOADING = "model_loading"
-    TRANSCRIPTION = "transcription"
-    BASIC_TENSOR = "basic_tensor"
+```mermaid
+enum OperationType {
+    MODEL_LOADING
+    TRANSCRIPTION
+    BASIC_TENSOR
+}
+note for OperationType "Typy operacji wymagających różnych urządzeń."
 ```
 
 **Wartości**:
@@ -882,12 +696,13 @@ class OperationType(Enum):
 
 **Lokalizacja**: `device_manager.py`
 
-```python
-class DeviceType(Enum):
-    """Obsługiwane typy urządzeń."""
-    CPU = "cpu"
-    MPS = "mps"
-    CUDA = "cuda"
+```mermaid
+enum DeviceType {
+    CPU
+    MPS
+    CUDA
+}
+note for DeviceType "Obsługiwane typy urządzeń."
 ```
 
 **Wartości**:
@@ -911,16 +726,15 @@ class DeviceType(Enum):
 - Kanały: 1 (mono)
 
 **Przykład przepływu**:
-```python
-# Recorder tworzy dane
-recorder = Recorder()
-audio_data = recorder.record_duration(5.0)
-# dtype: float32, shape: (80000,), range: [-1.0, 1.0]
-
-# Transcriber przetwarza dane
-transcriber = SpeechTranscriber()
-result = transcriber.transcribe_audio_data(audio_data)
-# result.text: str
+```mermaid
+sequenceDiagram
+    participant R as Recorder
+    participant T as Transcriber
+    
+    R->>R: record_duration(5.0)
+    R-->>T: audio_data (np.ndarray, float32, [-1.0, 1.0])
+    T->>T: transcribe_audio_data(audio_data)
+    T-->>T: TranscriptionResult (text: str)
 ```
 
 ### Transcriber → Clipboard/Output
@@ -933,10 +747,13 @@ result = transcriber.transcribe_audio_data(audio_data)
 - Format: Czysty tekst bez formatowania
 
 **Przykład**:
-```python
-result = transcriber.transcribe("audio.wav")
-text = result.text  # UTF-8 string, stripped
-# Gotowe do wklejenia do schowka lub dalszego przetwarzania
+```mermaid
+sequenceDiagram
+    participant T as Transcriber
+    participant C as Clipboard/Output
+    
+    T->>T: transcribe("audio.wav")
+    T-->>C: text (str, UTF-8, stripped)
 ```
 
 ### DeviceManager → Transcriber
@@ -948,49 +765,36 @@ text = result.text  # UTF-8 string, stripped
 - Używany przez PyTorch/Whisper do alokacji tensora
 
 **Przykład przepływu**:
-```python
-# DeviceManager wybiera optymalne urządzenie
-device_manager = DeviceManager()
-device = device_manager.get_device_for_operation(
-    OperationType.MODEL_LOADING, 
-    model_size='base'
-)
-# device: 'mps'
-
-# Transcriber używa wybranego urządzenia
-transcriber = SpeechTranscriber(model_size='base', device=device)
-# Model załadowany na 'mps'
+```mermaid
+sequenceDiagram
+    participant DM as DeviceManager
+    participant T as Transcriber
+    
+    DM->>DM: get_device_for_operation(MODEL_LOADING, 'base')
+    DM-->>T: device ('mps' or 'cpu')
+    T->>T: __init__(model_size='base', device=device)
 ```
 
 ### Pełny przepływ integracji
 
-```python
-# 1. Inicjalizacja komponentów
-device_manager = DeviceManager()
-device = device_manager.get_device_for_operation(OperationType.MODEL_LOADING)
-transcriber = SpeechTranscriber(model_size='base', device=device)
-recorder = Recorder(transcriber=transcriber)
-
-# 2. Nagrywanie
-audio_data = recorder.record_duration(5.0)
-# audio_data: numpy.ndarray, float32, (80000,), [-1.0, 1.0]
-
-# 3. Transkrypcja
-transcription_device = device_manager.get_device_for_operation(
-    OperationType.TRANSCRIPTION
-)
-result = transcriber.transcribe_audio_data(audio_data)
-# result.text: str (UTF-8)
-
-# 4. Rejestracja sukcesu
-device_manager.register_operation_success(
-    transcription_device, 
-    OperationType.TRANSCRIPTION
-)
-
-# 5. Output
-print(f"Transkrypcja: {result.text}")
-# Gotowe do użycia
+```mermaid
+sequenceDiagram
+    participant DM as DeviceManager
+    participant T as Transcriber
+    participant R as Recorder
+    
+    DM->>T: Inicjalizacja (wybór urządzenia)
+    T->>R: Inicjalizacja (z transcriberem)
+    
+    R->>R: Nagrywanie audio
+    R-->>T: audio_data
+    
+    T->>DM: get_device_for_operation(TRANSCRIPTION)
+    DM-->>T: transcription_device
+    T->>T: Transkrypcja audio_data
+    T-->>DM: register_operation_success(transcription_device)
+    
+    T-->>U: Wyświetl tekst
 ```
 
 ---
@@ -999,22 +803,26 @@ print(f"Transkrypcja: {result.text}")
 
 ### Hierarchia wyjątków
 
-```
-Exception
-├── RuntimeError (Recorder)
-│   └── "Failed to start recording: {details}"
-├── FileNotFoundError (Transcriber)
-│   ├── "Audio file not found: {path}"
-│   └── "Model {size} not available locally and download refused"
-└── Exception (ogólne)
-    ├── Problemy z urządzeniami (MPS, CUDA)
-    └── Błędy transkrypcji
+```mermaid
+classDiagram
+    Exception <|-- RuntimeError
+    Exception <|-- FileNotFoundError
+    Exception <|-- GenericException
+    
+    RuntimeError : "Failed to start recording: {details}"
+    FileNotFoundError : "Audio file not found: {path}"
+    FileNotFoundError : "Model {size} not available locally and download refused"
+    GenericException : "Problemy z urządzeniami (MPS, CUDA)"
+    GenericException : "Błędy transkrypcji"
 ```
 
-### Wzorce obsługi błędów
+**Wzorce obsługi błędów**
 
 #### Recorder - Start recording
 
+**Opis**: Obsługa błędu uruchomienia nagrywania.
+
+**Przykład**:
 ```python
 try:
     start_time = recorder.start_recording_with_timestamp()
@@ -1025,6 +833,9 @@ except RuntimeError as e:
 
 #### Transcriber - Model loading
 
+**Opis**: Obsługa błędu ładowania modelu.
+
+**Przykład**:
 ```python
 try:
     transcriber = SpeechTranscriber(model_size='base')
@@ -1035,6 +846,9 @@ except FileNotFoundError as e:
 
 #### Transcriber - Transcription with device fallback
 
+**Opis**: Obsługa błędu transkrypcji z automatycznym fallbackiem urządzenia.
+
+**Przykład**:
 ```python
 device = device_manager.get_device_for_operation(OperationType.TRANSCRIPTION)
 
@@ -1064,12 +878,11 @@ except Exception as e:
 
 #### Problem: MPS SparseMPS error
 
-**Objaw**:
-```
-RuntimeError: SparseMPS not supported for operation
-```
+**Objaw**: `RuntimeError: SparseMPS not supported for operation`
 
-**Rozwiązanie**:
+**Rozwiązanie**: DeviceManager automatycznie wykrywa i przełącza na CPU.
+
+**Przykład**:
 ```python
 # DeviceManager automatycznie wykrywa i przełącza na CPU
 if device_manager.should_retry_with_fallback(error):
@@ -1081,12 +894,11 @@ if device_manager.should_retry_with_fallback(error):
 
 #### Problem: Insufficient memory for large model
 
-**Objaw**:
-```
-RuntimeError: MPS backend out of memory
-```
+**Objaw**: `RuntimeError: MPS backend out of memory`
 
-**Rozwiązanie**:
+**Rozwiązanie**: Użyj mniejszego modelu lub CPU.
+
+**Przykład**:
 ```python
 try:
     transcriber = SpeechTranscriber(model_size='large', device='mps')
@@ -1097,12 +909,11 @@ except RuntimeError as e:
 
 #### Problem: Microphone not accessible
 
-**Objaw**:
-```
-RuntimeError: Failed to start recording: [Errno -9999] Unanticipated host error
-```
+**Objaw**: `RuntimeError: Failed to start recording: [Errno -9999] Unanticipated host error`
 
-**Rozwiązanie**:
+**Rozwiązanie**: Sprawdź uprawnienia mikrofonu, podłączenie i czy inny program nie używa mikrofonu.
+
+**Przykład**:
 ```python
 try:
     recorder.start_recording_with_timestamp()
@@ -1350,66 +1161,41 @@ print(f"Opóźnienie: {(actual_start - call_time)*1000:.2f}ms")
 
 ### Inicjalizacja komponentów
 
-```python
-# ✅ Dobre - wykorzystanie DeviceManager
-device_manager = DeviceManager()
-device = device_manager.get_device_for_operation(OperationType.MODEL_LOADING)
-transcriber = SpeechTranscriber(model_size='base', device=device)
-
-# ❌ Złe - ręczne ustawianie bez fallbacku
-transcriber = SpeechTranscriber(model_size='base', device='mps')
-# Może zawieść bez obsługi błędów
+```mermaid
+flowchart TD
+    A[Inicjalizacja komponentów] --> B{Użycie DeviceManager?}
+    B -->|Tak ✅| C[device = dm.get_device_for_operation()]
+    C --> D[transcriber = SpeechTranscriber(device=device)]
+    B -->|Nie ❌| E[transcriber = SpeechTranscriber(device='mps')]
+    E --> F[Może zawieść bez obsługi błędów]
 ```
 
 ### Obsługa błędów
 
-```python
-# ✅ Dobre - pełna obsługa z fallbackiem
-try:
-    result = transcriber.transcribe(audio)
-    device_manager.register_operation_success(device, operation)
-except Exception as e:
-    if device_manager.should_retry_with_fallback(e):
-        fallback = device_manager.handle_device_error(e, operation, device)
-        result = retry_on_fallback(fallback)
-    else:
-        handle_unknown_error(e)
-
-# ❌ Złe - ignorowanie błędów
-try:
-    result = transcriber.transcribe(audio)
-except:
-    pass  # Cicha porażka
+```mermaid
+flowchart TD
+    A[Obsługa błędów] --> B{Pełna obsługa z fallbackiem ✅}
+    B -->|Tak| C[try-except z dm.should_retry_with_fallback()]
+    C --> D[dm.handle_device_error() i retry]
+    B -->|Nie ❌| E[try-except pass (cicha porażka)]
 ```
 
 ### Zarządzanie zasobami
 
-```python
-# ✅ Dobre - cleanup zasobów
-recorder = Recorder()
-try:
-    audio = recorder.record_duration(5.0)
-finally:
-    del recorder  # Wywołuje __del__ i czyści PyAudio
-
-# ✅ Dobre - context manager (jeśli dostępny)
-with Recorder() as recorder:
-    audio = recorder.record_duration(5.0)
+```mermaid
+flowchart TD
+    A[Zarządzanie zasobami] --> B{Cleanup zasobów ✅}
+    B -->|Tak| C[try-finally lub context manager]
+    B -->|Nie ❌| D[Brak cleanupu (wycieki zasobów)]
 ```
 
 ### Wydajność
 
-```python
-# ✅ Dobre - reużycie instancji
-transcriber = SpeechTranscriber(model_size='base')
-for audio_file in audio_files:
-    result = transcriber.transcribe(audio_file)
-    process(result)
-
-# ❌ Złe - wielokrotne ładowanie modelu
-for audio_file in audio_files:
-    transcriber = SpeechTranscriber(model_size='base')  # Kosztowne!
-    result = transcriber.transcribe(audio_file)
+```mermaid
+flowchart TD
+    A[Wydajność] --> B{Reużycie instancji ✅}
+    B -->|Tak| C[transcriber = SpeechTranscriber(); for audio in audios: transcriber.transcribe(audio)]
+    B -->|Nie ❌| D[transcriber = SpeechTranscriber() w pętli (kosztowne!)]
 ```
 
 ---
