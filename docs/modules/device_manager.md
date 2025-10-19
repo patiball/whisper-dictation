@@ -238,75 +238,73 @@ Optymalizacje M1/M2 dla Whisper.
 
 ### Podstawowe użycie DeviceManager
 
-```python
-from device_manager import DeviceManager, OperationType
-
-manager = DeviceManager()
-
-# Wybierz urządzenie do ładowania modelu
-device = manager.get_device_for_operation(OperationType.MODEL_LOADING, "base")
-print(f"Using device: {device}")
-
-# Zarejestruj sukces
-manager.register_operation_success(device, OperationType.MODEL_LOADING)
+```mermaid
+sequenceDiagram
+    participant App
+    participant DM as DeviceManager
+    
+    App->>DM: manager = DeviceManager()
+    App->>DM: device = manager.get_device_for_operation(MODEL_LOADING, "base")
+    DM-->>App: "mps" or "cpu"
+    App->>App: print(f"Using device: {device}")
+    App->>DM: manager.register_operation_success(device, MODEL_LOADING)
 ```
 
 ### Obsługa błędów z fallbackiem
 
-```python
-from device_manager import DeviceManager, OperationType
-
-manager = DeviceManager()
-device = "mps"
-
-try:
-    # Próba operacji na MPS
-    model.transcribe(audio, device=device)
-except Exception as e:
-    if manager.should_retry_with_fallback(e):
-        fallback_device = manager.handle_device_error(e, OperationType.TRANSCRIPTION, device)
-        print(f"Falling back to: {fallback_device}")
-        model.transcribe(audio, device=fallback_device)
+```mermaid
+sequenceDiagram
+    participant App
+    participant DM as DeviceManager
+    
+    App->>DM: manager = DeviceManager()
+    App->>App: device = "mps"
+    App->>App: try operation on MPS
+    App-->>DM: Exception e
+    DM->>DM: should_retry_with_fallback(e)
+    DM-->>App: True
+    App->>DM: fallback_device = manager.handle_device_error(e, TRANSCRIPTION, device)
+    DM-->>App: "cpu"
+    App->>App: print(f"Falling back to: {fallback_device}")
+    App->>App: retry operation on CPU
 ```
 
 ### Użycie EnhancedDeviceManager
 
-```python
-from mps_optimizer import EnhancedDeviceManager
-from device_manager import OperationType
-
-enhanced = EnhancedDeviceManager()
-
-# Pobierz optymalne ustawienia
-device = enhanced.get_device_for_operation(OperationType.TRANSCRIPTION)
-settings = enhanced.get_optimized_settings(device, "base")
-
-# Załaduj model
-model = whisper.load_model("base", device=device)
-enhanced.optimize_model(model, device)
-
-# Transkrypcja z fallbackiem
-try:
-    result = model.transcribe(audio, **settings)
-except Exception as e:
-    fallback_device, message = enhanced.handle_device_error_enhanced(
-        e, OperationType.TRANSCRIPTION, device
-    )
-    print(f"🔄 {message}")
-    # Retry z fallback
+```mermaid
+sequenceDiagram
+    participant App
+    participant EDM as EnhancedDeviceManager
+    participant WM as WhisperModel
+    
+    App->>EDM: enhanced = EnhancedDeviceManager()
+    App->>EDM: device = enhanced.get_device_for_operation(TRANSCRIPTION)
+    EDM-->>App: "mps"
+    App->>EDM: settings = enhanced.get_optimized_settings(device, "base")
+    EDM-->>App: {fp16: True, ...}
+    App->>WM: model = whisper.load_model("base", device=device)
+    App->>EDM: enhanced.optimize_model(model, device)
+    App->>App: try model.transcribe(audio, **settings)
+    App-->>EDM: Exception e
+    EDM->>EDM: handle_device_error_enhanced(e, TRANSCRIPTION, device)
+    EDM-->>App: (fallback_device, message)
+    App->>App: print(f"🔄 {message}")
+    App->>App: retry with fallback
 ```
 
 ### Raport statusu urządzeń
 
-```python
-from mps_optimizer import EnhancedDeviceManager
-
-enhanced = EnhancedDeviceManager()
-status = enhanced.get_comprehensive_status()
-
-print("Preferred devices:", status["preferred_devices"])
-print("Capabilities:", status["capabilities"])
-print("Error statistics:", status["error_statistics"])
+```mermaid
+sequenceDiagram
+    participant App
+    participant EDM as EnhancedDeviceManager
+    
+    App->>EDM: enhanced = EnhancedDeviceManager()
+    App->>EDM: status = enhanced.get_comprehensive_status()
+    EDM-->>App: {preferred_devices: [...], capabilities: {...}, error_statistics: {...}}
+    App->>App: print("Preferred devices:", status["preferred_devices"])
+    App->>App: print("Capabilities:", status["capabilities"])
+    App->>App: print("Error statistics:", status["error_statistics"])
 ```
 
 ## Szczegóły Implementacji
