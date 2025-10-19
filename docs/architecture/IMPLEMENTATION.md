@@ -46,7 +46,7 @@ classDiagram
 
 ```mermaid
 flowchart TD
-    A[get_device_for_operation()] --> B{Sprawdź historię operacji}
+    A[get_device_for_operation] --> B{Sprawdź historię operacji}
     B -->|Success Rate > 80%| C[Wybierz urządzenie z historią]
     B -->|Brak historii| D[Wybierz urządzenie z preferencji]
     C --> E[Zwróć wybrane urządzenie]
@@ -110,9 +110,9 @@ classDiagram
 
 ```mermaid
 flowchart TD
-    A[Recorder.start()] --> B[_record_impl()]
+    A[Recorder.start] --> B[_record_impl]
     B --> C[sound_player.play_start_sound()]
-    C --> D[Główny algorytm nagrywania]
+    C[sound_player.play_start_sound] --> D[Główny algorytm nagrywania]
     D --> E[sound_player.play_stop_sound()]
     E --> F[transcriber.transcribe(audio_data)]
     F --> G[Koniec]
@@ -159,7 +159,7 @@ classDiagram
 
 ```mermaid
 flowchart TD
-    A[handle_device_error()] --> B{Current Device Failed?}
+    A[handle_device_error] --> B{Current Device Failed?}
     B -->|Yes| C[Try Next Preferred Device]
     C --> D{Device Capable?}
     D -->|Yes| E[Return Device]
