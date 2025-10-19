@@ -28,7 +28,16 @@ whisper = "whisper-dictation:main"
 pytest = "^8.4.1"
 librosa = "^0.11.0"
 psutil = "^7.0.0"
+pytest-cov = "^7.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+norecursedirs = [
+    "temp",
+]

@@ -61,4 +61,7 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 
 ## Backlog
 
+- **Testy C++**: Stworzyć zautomatyzowane testy w `pytest` dla wersji C++ (`whisper-cli`), zastępując stare skrypty manualne.
 - **Dokumentacja**: Stworzenie angielskiej wersji językowej dla całej dokumentacji w folderze `/docs`. Obecna wersja jest po polsku.
+- **Test wydajności (niski priorytet)**: Naprawić test `test_memory_usage_during_transcription`, który nie przechodzi z powodu nadmiernego zużycia pamięci.
+- **Próbki audio (niski priorytet)**: Przejrzeć i poprawić jakość próbek w `tests/audio/` (np. `test_immediate_start`). Należy je nagrać ponownie lub zastąpić lepszymi z otwartych zasobów.

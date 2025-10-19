@@ -15,3 +15,7 @@
 - **Observer Pattern:** The `Recorder` and `SpeechTranscriber` classes work together in a way that resembles the Observer pattern. The `Recorder` records the audio, and then the `SpeechTranscriber` is notified to transcribe it.
 
 - **Strategy Pattern:** The use of different Whisper models (tiny, base, medium, etc.) can be seen as a form of the Strategy pattern. The user can choose which model to use, and the `SpeechTranscriber` will use that model to perform the transcription.
+
+## Cykl życia kodu i porządkowanie
+
+- **Obsolescence:** Stare, manualne skrypty (np. testowe w głównym katalogu) nie powinny być używane. Zamiast usuwać, przenosimy je do folderu `temp/manual_tests`, aby zachować je jako referencję dla przyszłych, zautomatyzowanych testów.
