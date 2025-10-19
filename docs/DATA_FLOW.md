@@ -15,13 +15,13 @@ Ten dokument opisuje szczegółowo przepływy danych w aplikacji Whisper Dictati
 
 ### 1.2. Formaty danych w systemie
 
-| Typ danych | Format | Opis |
-|------------|--------|------|
-| **Audio surowe** | `bytes` (paInt16) | Dane z mikrofonu, 16-bit PCM, mono, 16kHz |
+| Typ danych          | Format      | Opis                                      |
+|---------------------|-------------|-------------------------------------------|
+| **Audio surowe**    | `bytes`     | Dane z mikrofonu, 16-bit PCM, mono, 16kHz |
 | **Audio przetworzone** | `np.float32` | Znormalizowane: wartości w zakresie [-1.0, 1.0] |
-| **Transkrypcja** | `str` (UTF-8) | Wynik z modelu Whisper |
-| **Konfiguracja** | `dict` | Opcje transkrypcji (język, model, próg, FP16) |
-| **Stan urządzenia** | `str` | "cpu", "mps", lub "cuda" |
+| **Transkrypcja**    | `str` (UTF-8) | Wynik z modelu Whisper                    |
+| **Konfiguracja**    | `dict`      | Opcje transkrypcji (język, model, próg, FP16) |
+| **Stan urządzenia** | `str`       | "cpu", "mps", lub "cuda"                |
 
 ---
 
@@ -111,7 +111,7 @@ flowchart TD
 
 ---
 
-## 3. Diagram Sekwencji - Main Flow
+## 2.3. Diagram Sekwencji - Main Flow
 
 **Plik**: [`docs/diagrams/sequence-main-flow.mmd`](./diagrams/sequence-main-flow.mmd)
 
@@ -127,38 +127,37 @@ Diagram przedstawia szczegółową sekwencję interakcji między komponentami po
 
 ---
 
-## 4. Obsługa Błędów
+## 3. Obsługa Błędów
 
 ### 4.1. Typy błędów
 
 #### 4.1.1. Błędy inicjalizacji
 
-| Błąd | Przyczyna | Obsługa |
-|------|-----------|---------|
-| **Model nie załadowany** | Brak pliku w cache, błąd pobierania | Komunikat + pytanie o pobranie |
-| **Urządzenie niedostępne** | MPS/CUDA nie działa | Automatyczny fallback na CPU |
-| **Brak pamięci** | Model za duży dla urządzenia | Fallback + komunikat |
+| Błąd                   | Przyczyna                               | Obsługa                       |
+|------------------------|-----------------------------------------|-------------------------------|
+| **Model nie załadowany** | Brak pliku w cache, błąd pobierania     | Komunikat + pytanie o pobranie |
+| **Urządzenie niedostępne** | MPS/CUDA nie działa                     | Automatyczny fallback na CPU  |
+| **Brak pamięci**       | Model za duży dla urządzenia            | Fallback + komunikat          |
 
 **Kod obsługi**: W `whisper-dictation.py` (linie 337-353) zaimplementowano obsługę błędów inicjalizacji modelu z automatycznym fallbackiem na CPU w przypadku problemów z urządzeniem.
 
 #### 4.1.2. Błędy nagrywania
 
-| Błąd | Przyczyna | Obsługa |
-|------|-----------|---------|
-| **Brak mikrofonu** | Mikrofon odłączony/zajęty | PyAudio exception → komunikat |
-| **Stream overflow** | Bufor przepełniony | `exception_on_overflow=False` |
-| **Brak uprawnień** | System nie zezwala na dostęp | Komunikat systemowy macOS |
-
+| Błąd                 | Przyczyna                               | Obsługa                       |
+|----------------------|-----------------------------------------|-------------------------------|
+| **Brak mikrofonu**   | Mikrofon odłączony/zajęty               | PyAudio exception → komunikat |
+| **Stream overflow**  | Bufor przepełniony                      | `exception_on_overflow=False` |
+| **Brak uprawnień**   | System nie zezwala na dostęp            | Komunikat systemowy macOS     |
 **Kod obsługi**: W `recorder.py` (linie 147-152) błędy nagrywania są przechwytywane, a w przypadku przepełnienia bufora (`exception_on_overflow=False`) nagrywanie jest kontynuowane.
 
 #### 4.1.3. Błędy transkrypcji
 
-| Błąd | Przyczyna | Obsługa |
-|------|-----------|---------|
-| **OOM (Out of Memory)** | Audio za długie dla urządzenia | Fallback CPU + retry |
-| **Timeout** | Model zawiesił się | Timeout nie zaimplementowany (TODO) |
-| **Invalid audio** | Pusta/nieprawidłowa próbka | Cichy błąd (brak wyjścia) |
-| **Language mismatch** | Język poza `allowed_languages` | Wymuszenie pierwszego z allowed |
+| Błąd                  | Przyczyna                               | Obsługa                       |
+|-----------------------|-----------------------------------------|-------------------------------|
+| **OOM (Out of Memory)** | Audio za długie dla urządzenia          | Fallback CPU + retry          |
+| **Timeout**           | Model zawiesił się                      | Timeout nie zaimplementowany (TODO) |
+| **Invalid audio**     | Pusta/nieprawidłowa próbka              | Cichy błąd (brak wyjścia)     |
+| **Language mismatch** | Język poza `allowed_languages`          | Wymuszenie pierwszego z allowed |
 
 **Kod obsługi detekcji języka**: W `whisper-dictation.py` (linie 47-59) zaimplementowano logikę nadpisywania wykrytego języka, jeśli nie znajduje się on na liście `allowed_languages`.
 
@@ -166,10 +165,10 @@ Diagram przedstawia szczegółową sekwencję interakcji między komponentami po
 
 #### 4.1.4. Błędy wklejania tekstu
 
-| Błąd | Przyczyna | Obsługa |
-|------|-----------|---------|
-| **Keyboard input blocked** | Brak uprawnień accessibility | `try-except pass` - cichy błąd |
-| **Special characters** | Znaki niedostępne na klawiaturze | `try-except pass` |
+| Błąd                   | Przyczyna                               | Obsługa                       |
+|------------------------|-----------------------------------------|-------------------------------|
+| **Keyboard input blocked** | Brak uprawnień accessibility            | `try-except pass` - cichy błąd |
+| **Special characters** | Znaki niedostępne na klawiaturze        | `try-except pass`             |
 
 **Kod obsługi**: W `whisper-dictation.py` (linie 69-73) błędy wklejania tekstu są cicho ignorowane (`try-except pass`), aby nie przerywać działania aplikacji.
 
@@ -192,7 +191,7 @@ DeviceManager dostarcza przyjazne komunikaty po polsku:
 
 ---
 
-## 5. Diagram Sekwencji - Error Handling
+## 4. Diagram Sekwencji - Error Handling
 
 **Plik**: [`docs/diagrams/sequence-error-handling.mmd`](./diagrams/sequence-error-handling.mmd)
 
@@ -208,7 +207,7 @@ Diagram przedstawia różne scenariusze błędów i ich obsługę:
 
 ---
 
-## 6. Formaty Danych - Szczegóły Techniczne
+## 5. Formaty Danych - Szczegóły Techniczne
 
 ### 6.1. Audio Pipeline
 
@@ -234,13 +233,13 @@ flowchart TD
 
 ### 6.3. Timing Audio
 
-| Parametr | Wartość | Obliczenie |
-|----------|---------|------------|
-| Sample Rate | 16000 Hz | Standardowa częstotliwość dla ASR |
-| Chunk Size | 1024 próbki | ~64ms audio na chunk |
-| Chunk Frequency | ~15.6 Hz | 16000 / 1024 |
-| Inter-char Delay | 2.5ms | Opóźnienie między znakami przy wpisywaniu |
-| Typical Recording | 5-10s | Użytkownik mówi przez 5-10 sekund |
+| Parametr          | Wartość       | Obliczenie                               |
+|-------------------|---------------|------------------------------------------|
+| Sample Rate       | 16000 Hz      | Standardowa częstotliwość dla ASR        |
+| Chunk Size        | 1024 próbki   | ~64ms audio na chunk                     |
+| Chunk Frequency   | ~15.6 Hz      | 16000 / 1024                             |
+| Inter-char Delay  | 2.5ms         | Opóźnienie między znakami przy wpisywaniu |
+| Typical Recording | 5-10s         | Użytkownik mówi przez 5-10 sekund        |
 
 **Przykład**: 5-sekundowe nagranie
 - Ramki: `5s × 16000 Hz / 1024 = ~78 chunks`
@@ -249,13 +248,13 @@ flowchart TD
 
 ### 6.4. Model Size vs Performance
 
-| Model | Rozmiar | RAM (CPU) | VRAM (MPS) | Prędkość (CPU) | Prędkość (MPS) |
-|-------|---------|-----------|------------|----------------|----------------|
-| tiny | 75 MB | ~400 MB | ~1 GB | ~0.5x realtime | ~3x realtime |
-| base | 145 MB | ~500 MB | ~1.2 GB | ~0.3x realtime | ~2x realtime |
-| small | 483 MB | ~1 GB | ~2 GB | ~0.15x realtime | ~1x realtime |
-| medium | 1.5 GB | ~2.5 GB | ~4 GB | ~0.05x realtime | ~0.5x realtime |
-| large | 3 GB | ~5 GB | ~8 GB | ~0.02x realtime | ~0.3x realtime |
+| Model  | Rozmiar | RAM (CPU) | VRAM (MPS) | Prędkość (CPU) | Prędkość (MPS) |
+|--------|---------|-----------|------------|----------------|----------------|
+| tiny   | 75 MB   | ~400 MB   | ~1 GB      | ~0.5x realtime | ~3x realtime   |
+| base   | 145 MB  | ~500 MB   | ~1.2 GB    | ~0.3x realtime | ~2x realtime   |
+| small  | 483 MB  | ~1 GB     | ~2 GB      | ~0.15x realtime | ~1x realtime   |
+| medium | 1.5 GB  | ~2.5 GB   | ~4 GB      | ~0.05x realtime | ~0.5x realtime |
+| large  | 3 GB    | ~5 GB     | ~8 GB      | ~0.02x realtime | ~0.3x realtime |
 
 **Uwaga**: Prędkości są przybliżone i zależą od:
 - Długości audio
@@ -265,7 +264,7 @@ flowchart TD
 
 ---
 
-## 7. Szczegółowe Przepływy Warunkowe
+## 6. Szczegółowe Przepływy Warunkowe
 
 ### 7.1. Decyzja o języku transkrypcji
 
@@ -303,7 +302,7 @@ flowchart TD
 
 ---
 
-## 8. Integracje Zewnętrzne
+## 7. Integracje Zewnętrzne
 
 ### 8.1. PyAudio ↔ System Audio
 
@@ -333,16 +332,16 @@ flowchart TD
 
 ---
 
-## 9. Performance Monitoring
+## 8. Performance Monitoring
 
 ### 9.1. Kluczowe metryki
 
-| Metryka | Cel | Typowa Wartość |
-|---------|-----|----------------|
-| Model load time | < 5s | 2-3s (base/MPS) |
-| Audio capture latency | < 100ms | ~64ms (chunk size) |
-| Transcription time (5s audio) | < 2s | 1-1.5s (base/MPS) |
-| Character typing speed | ~400 chars/s | 2.5ms/char |
+| Metryka                     | Cel     | Typowa Wartość |
+|-----------------------------|---------|----------------|
+| Model load time             | < 5s    | 2-3s (base/MPS) |
+| Audio capture latency       | < 100ms | ~64ms (chunk size) |
+| Transcription time (5s audio) | < 2s    | 1-1.5s (base/MPS) |
+| Character typing speed      | ~400 chars/s | 2.5ms/char     |
 
 ### 9.2. TranscriptionResult tracking
 
@@ -350,7 +349,7 @@ flowchart TD
 
 ---
 
-## 10. Stan Aplikacji
+## 9. Stan Aplikacji
 
 ### 10.1. StatusBarApp States
 
@@ -400,7 +399,7 @@ stateDiagram-v2
 
 ---
 
-## 11. Threading Model
+## 10. Threading Model
 
 ### 11.1. Główne wątki
 
@@ -412,7 +411,7 @@ stateDiagram-v2
 
 ---
 
-## 12. Powiązane Dokumenty
+## 11. Powiązane Dokumenty
 
 - [**Architektura Systemu**](./ARCHITECTURE.md) - struktura komponentów, diagramy warstw
 - [**Przegląd Projektu**](./PROJECT_OVERVIEW.md) - cel, funkcjonalności, wymagania
@@ -424,15 +423,15 @@ stateDiagram-v2
 
 ---
 
-## 13. Changelog
+## 12. Changelog
 
-| Data | Wersja | Autor | Zmiany |
-|------|--------|-------|--------|
-| 2025-10-10 | 1.0 | Agent | Utworzenie dokumentu na podstawie kodu |
+| Data       | Wersja | Autor | Zmiany                               |
+|------------|--------|-------|--------------------------------------|
+| 2025-10-10 | 1.0    | Agent | Utworzenie dokumentu na podstawie kodu |
 
 ---
 
-## 14. TODO / Przyszłe Usprawnienia
+## 13. TODO / Przyszłe Usprawnienia
 
 ### 14.1. Timeout handling
 - [ ] Implementacja timeout dla transkrypcji (obecnie brak)
