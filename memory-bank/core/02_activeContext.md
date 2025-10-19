@@ -1,14 +1,13 @@
 # Active Context
 
-**Current Focus:** 🎯 **Implementacja specyfikacji testów dla C++**
+**Current Focus:** ✅ **Implementacja specyfikacji testów dla C++ - ZAKOŃCZONA**
 
-**Priorytet #1:** Stworzenie zautomatyzowanych testów dla `whisper-cli` zgodnie z podejściem TDD. 
+**Następny Priorytet:** 📝 **Dokumentacja - Tłumaczenie na angielski**
 
-**Specyfikacja:** `specs/20251019_cpp_tests_spec.md`
-
-**Cel:** Zbudowanie "czerwonych" testów, które odtworzą znane błędy w wersji C++ (ucinanie audio, błędny tryb transkrypcji), zanim przystąpimy do ich naprawy.
+**Cel:** Przetłumaczenie całej dokumentacji w folderze `/docs` na język angielski.
 
 --- 
 
 *Poprzedni kontekst (zakończony):*
 *Identyfikacja głównej przyczyny problemów z jakością w implementacji `whisper.cpp`.*
+*Implementacja specyfikacji testów dla C++.*

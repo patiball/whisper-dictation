@@ -1,6 +1,4 @@
-# Progress
-
-**Last Update:** 2025-01-30
+Last Update: 2025-10-20
 
 **Current Status:** 🎉 **M1 SUPPORT FIX COMPLETED** - All phases successfully implemented and production ready!
 
@@ -64,32 +62,6 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 - **Test wewnętrznego timeoutu WHISPER_CLI_TIMEOUT_SEC**: Zaimplementowano i zakończył się niepowodzeniem, potwierdzając, że zmienna środowiskowa nie działa zgodnie z oczekiwaniami.
 
 **Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
-
-**Expected Timeline:** 1-2 days (applying known working solutions)
-
-**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
-
-**Expected Timeline:** 1-2 days (applying known working solutions)
-
-**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
-
-**Expected Timeline:** 1-2 days (applying known working solutions)
-
-**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
-
-**Expected Timeline:** 1-2 days (applying known working solutions)
-
-**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
-
-**Expected Timeline:** 1-2 days (applying known working solutions)
-
-**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
-
-**Expected Timeline:** 1-2 days (applying known working solutions)
-
-**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
-
-**Expected Timeline:** 1-2 days (applying known working solutions)
 
 **Expected Timeline:** 1-2 days (applying known working solutions)
 
