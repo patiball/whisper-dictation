@@ -117,7 +117,7 @@ classDiagram
         +stop_recording() ndarray
         +record_duration(duration_seconds: float) ndarray
     }
-    note for Recorder "start_recording_with_timestamp: Rozpoczyna nagrywanie\nstop_recording: Zatrzymuje i zwraca dane audio\nrecord_duration: Nagrywa przez określony czas (testy)"
+    note for Recorder "start_recording_with_timestamp: Rozpoczyna nagrywanie<br/>stop_recording: Zatrzymuje i zwraca dane audio<br/>record_duration: Nagrywa przez określony czas (testy)"
 ```
 
 #### SpeechTranscriber
@@ -135,7 +135,7 @@ classDiagram
         +transcribe_audio_data(audio_data: ndarray) TranscriptionResult
         +get_model_state() str
     }
-    note for SpeechTranscriber "transcribe: Transkrybuje plik audio\ntranscribe_audio_data: Real-time transkrypcja\nget_model_state: Zwraca stan modelu"
+    note for SpeechTranscriber "transcribe: Transkrybuje plik audio<br/>transcribe_audio_data: Real-time transkrypcja<br/>get_model_state: Zwraca stan modelu"
 ```
 
 #### DeviceManager
@@ -153,7 +153,7 @@ classDiagram
         +handle_device_error(error: Exception, operation: OperationType, current_device: str) str
         +register_operation_success(device: str, operation: OperationType) void
     }
-    note for DeviceManager "get_device_for_operation: Wybiera optymalne urządzenie\nhandle_device_error: Obsługuje błąd i zwraca fallback\nregister_operation_success: Rejestruje sukces operacji"
+    note for DeviceManager "get_device_for_operation: Wybiera optymalne urządzenie<br/>handle_device_error: Obsługuje błąd i zwraca fallback<br/>register_operation_success: Rejestruje sukces operacji"
 ```
 
 #### MPSOptimizer & EnhancedDeviceManager
