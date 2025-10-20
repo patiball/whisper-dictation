@@ -2,13 +2,15 @@
 
 **Date**: 2025-10-20  
 **Session**: Root Cause Investigation  
-**Status**: Hypothesis Formation  
+**Status**: Hypothesis Formation — Python path quick fix (warm-up + buffer) deployed; validation in progress  
 
 ---
 
 ## 🎯 Hypothesis: Two-Pass Processing with Language Detection
 
 ### Background from Python Version
+
+Note: Current code inspection did not find explicit "first-second-for-language-detection" logic in Python path; clipping likely due to stream initialization/buffering. Quick fix applied in Python.
 
 User recalled from Python version experience:
 1. **Double Processing**: Audio file was transcribed twice

@@ -8,17 +8,21 @@
 ## 🔴 CRITICAL ISSUES
 
 ### Issue 1: Audio Clipping at Start (Intermittent)
-**Status**: Under Investigation  
+**Status**: In Progress — Quick Fix (Python) deployed; measurement ongoing  
 **Priority**: High  
 **Description**: First 50-200ms of audio is sometimes lost, causing beginning of speech to be cut off  
 **Evidence**: Occurs intermittently - not 100% reproducible  
 **Root Cause**: Diagnostic spec created - see `memory-bank/specs/task-audio-clipping-diagnosis.md`  
-**Related Files**: `whisper-dictation-fast.py` (lines 134-162, `Recorder._record_impl()`)  
-**Diagnosis Status**: 
-- [ ] Phase 1: Timing instrumentation (measure stream initialization delay)
-- [ ] Phase 2: Audio content analysis (inspect captured WAV files)
-- [ ] Phase 3: Component isolation tests
-- [ ] Phase 4: Root cause confirmation
+**Related Files**:
+- `whisper-dictation-fast.py` (lines 134-162, `Recorder._record_impl()`) — C++ path (pending)
+- `whisper-dictation.py` (Recorder `_record_impl`) — Python path (quick fix deployed)
+- `specs/20251020_audio_clipping_warmup_fix.md` — spec for warm-up + buffer sizing
+- `scripts/tmp_rovodev_measure_start_silence.py` — diagnostic script to measure start_silence_ms  
+**Diagnosis Status**:
+- [x] Phase 1: Initial instrumentation strategy defined (spec) — minimal debug timestamps in Python path
+- [x] Phase 2: Audio content analysis via start_silence_ms script (PoC added)
+- [ ] Phase 3: Component isolation tests (Python vs C++ paths) — pending
+- [ ] Phase 4: Root cause confirmation — pending (collect metrics over 30 runs)
 
 ---
 
