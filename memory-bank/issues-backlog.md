@@ -82,7 +82,35 @@
 
 ## 🟡 SECONDARY ISSUES
 
-### Issue 4: Long Transcription Time
+### Issue 4: Max Recording Time - Configurability & Feedback
+**Status**: NEW - Enhancement/UX  
+**Priority**: Medium  
+**Description**: Max recording time (30s) should be either increased or user-configurable
+- **Current limit**: 30 seconds (arbitrary, not documented)
+- **Problem**: Too short for longer dictations, silent stop with no feedback
+- **Solutions**:
+  1. Increase default limit to 120+ seconds
+  2. Make configurable via command-line argument (already supported, but undiscoverable)
+  3. Add runtime UI control to change limit during session
+  4. Add feedback when max time is approaching (countdown)
+
+**Implementation Options**:
+- **Quick fix**: Just increase default from 30 to 120 seconds
+- **Better fix**: Add visual countdown when approaching limit
+- **Best fix**: Add CLI arg to set custom limit + UI feedback
+
+**Related Files**:
+- `whisper-dictation-fast.py:295-298` - Already supports `-t` arg but needs discovery
+- `whisper-dictation-fast.py:224-226` - Timer logic
+
+**Acceptance Criteria**:
+- [ ] User can specify max time via CLI: `--max-time 300` (5 minutes)
+- [ ] Default increased to more reasonable value (120s recommended)
+- [ ] User gets visual/audio feedback when time is running low
+
+---
+
+### Issue 5: Long Transcription Time
 **Status**: Known/Expected  
 **Priority**: Low (Acknowledged as secondary)  
 **Description**: Model transcription takes significant time for longer audio (medium model)
@@ -132,7 +160,7 @@
 
 1. **Immediate**: Implement diagnostics for Issue 1 (audio clipping)
 2. **Parallel**: Investigate Issue 2 (joined words) - simpler to debug
-3. **Quick Fix**: Add max-time feedback for Issue 3
+3. **Quick Fix**: Increase max-time default + add feedback for Issue 3 & 4
 4. **Later**: Optimize transcription time if needed
 
 ---
