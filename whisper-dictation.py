@@ -114,31 +114,85 @@ class Recorder:
 
 
     def _record_impl(self, language):
+        import os
         self.recording = True
         
         # Odtwórz dźwięk rozpoczęcia nagrywania
         self.sound_player.play_start_sound()
         
-        frames_per_buffer = 1024
+        # Resolve frames_per_buffer from ENV override if provided
+        env_fpb = os.getenv('WHISPER_FRAMES_PER_BUFFER')
+        try:
+            frames_per_buffer = int(env_fpb) if env_fpb else int(self.frames_per_buffer)
+        except Exception:
+            frames_per_buffer = int(self.frames_per_buffer)
+        
         p = pyaudio.PyAudio()
-        stream = p.open(format=pyaudio.paInt16,
-                        channels=1,
-                        rate=16000,
-                        frames_per_buffer=frames_per_buffer,
-                        input=True)
+
+        def open_stream(fpb):
+            return p.open(format=pyaudio.paInt16,
+                          channels=1,
+                          rate=16000,
+                          frames_per_buffer=fpb,
+                          input=True)
+        
+        stream = open_stream(frames_per_buffer)
         frames = []
-
+        
+        # Warm-up: discard first N buffers to stabilize stream
+        for _ in range(int(self.warmup_buffers)):
+            try:
+                _ = stream.read(frames_per_buffer, exception_on_overflow=False)
+            except Exception:
+                pass
+        
+        # Main read loop with simple auto-fallback on early errors
+        errors = 0
+        reads = 0
+        escalated = False
+        
         while self.recording:
-            data = stream.read(frames_per_buffer)
-            frames.append(data)
-
+            try:
+                data = stream.read(frames_per_buffer, exception_on_overflow=False)
+                frames.append(data)
+            except Exception:
+                errors += 1
+                if self.debug:
+                    print(f"[Recorder] read error (errors={errors})")
+            finally:
+                reads += 1
+            
+            # Auto-fallback logic only in the first 10 reads, single escalation
+            if not escalated and reads <= 10 and errors >= 3 and frames_per_buffer < 1024:
+                try:
+                    if self.debug:
+                        print(f"[Recorder] escalating frames_per_buffer {frames_per_buffer} -> 1024 and reopening stream")
+                    stream.stop_stream()
+                    stream.close()
+                    frames_per_buffer = 1024
+                    stream = open_stream(frames_per_buffer)
+                    # Warm-up again after reopen
+                    for _ in range(int(self.warmup_buffers)):
+                        try:
+                            _ = stream.read(frames_per_buffer, exception_on_overflow=False)
+                        except Exception:
+                            pass
+                    errors = 0
+                    reads = 0
+                    escalated = True
+                except Exception as e:
+                    if self.debug:
+                        print(f"[Recorder] escalation failed: {e}")
+                    # If escalation fails, continue with current settings
+                    escalated = True
+        
         stream.stop_stream()
         stream.close()
         p.terminate()
         
         # Odtwórz dźwięk zakończenia nagrywania
         self.sound_player.play_stop_sound()
-
+        
         audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
         audio_data_fp32 = audio_data.astype(np.float32) / 32768.0
         self.transcriber.transcribe(audio_data_fp32, language)
