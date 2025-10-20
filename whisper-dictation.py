@@ -97,10 +97,13 @@ class SoundPlayer:
             threading.Thread(target=SoundPlayer._play_sound, args=(sound_path,)).start()
 
 class Recorder:
-    def __init__(self, transcriber):
+    def __init__(self, transcriber, frames_per_buffer=512, warmup_buffers=2, debug=False):
         self.recording = False
         self.transcriber = transcriber
         self.sound_player = SoundPlayer()
+        self.frames_per_buffer = frames_per_buffer
+        self.warmup_buffers = warmup_buffers
+        self.debug = debug
 
     def start(self, language=None):
         thread = threading.Thread(target=self._record_impl, args=(language,))
@@ -295,6 +298,12 @@ def parse_args():
     parser.add_argument('-t', '--max_time', type=float, default=30,
                         help='Specify the maximum recording time in seconds. The app will automatically stop recording after this duration. '
                         'Default: 30 seconds.')
+    parser.add_argument('--frames-per-buffer', dest='frames_per_buffer', type=int, choices=[256,512,1024], default=512,
+                        help='Frames per buffer for audio input. Default: 512. Can be overridden by env WHISPER_FRAMES_PER_BUFFER.')
+    parser.add_argument('--warmup-buffers', dest='warmup_buffers', type=int, default=2,
+                        help='Number of warm-up buffers to discard right after opening the stream. Default: 2.')
+    parser.add_argument('--debug-recorder', dest='debug_recorder', action='store_true',
+                        help='Enable verbose debug logs for Recorder (startup timing, escalation).')
 
     args = parser.parse_args()
 
@@ -359,7 +368,12 @@ if __name__ == "__main__":
         print(f"Language detection constrained to: {allowed_languages}")
     
     transcriber = SpeechTranscriber(model, allowed_languages, device_manager)
-    recorder = Recorder(transcriber)
+    recorder = Recorder(
+        transcriber,
+        frames_per_buffer=args.frames_per_buffer,
+        warmup_buffers=args.warmup_buffers,
+        debug=bool(args.debug_recorder or os.getenv('WHISPER_DEBUG_RECORDER')),
+    )
     
     app = StatusBarApp(recorder, args.language, args.max_time)
     if args.k_double_cmd:
