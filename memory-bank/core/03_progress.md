@@ -24,7 +24,7 @@ Last Update: 2025-10-20
     - Phase 3: Enhanced error handling with Polish user messages
     - Phase 4: M1-specific optimizations and adaptive settings
   - **C++ Version Discovery**: Found existing whisper.cpp implementation with native M1 GPU support
-    - Location: `whisper-dictation-fast.py` and `whisper-dictation-optimized.py`
+    - Location: `whisper-dictation-fast.py`
     - Installation: `brew install whisper-cpp` (already available)
     - GPU Support: Native Metal Performance Shaders (no PyTorch overhead)
   - **Critical Issues Identified**: C++ version has quality problems (audio cutting, translation vs transcription)
@@ -65,9 +65,33 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 
 **Expected Timeline:** 1-2 days (applying known working solutions)
 
+## Current Sprint: Audio Quality Fixes (2025-10-21) ✅ COMPLETED
+
+**Priority**: CRITICAL
+**Focus**: User-facing audio quality issues
+
+### Sprint Goals:
+1. ✅ **Audio Clipping Fix (Python)** - specs/20251020_audio_clipping_warmup_fix.md
+   - Status: **ALREADY IMPLEMENTED** (discovered during implementation)
+   - Implementation: frames_per_buffer=512, warm-up buffers, auto-fallback, ENV overrides
+   - CLI flags: `--frames-per-buffer`, `--warmup-buffers`, `--debug-recorder`
+   - Result: All acceptance criteria met
+
+2. ✅ **Whisper.cpp Quality Fix** - specs/20250130_whisper_cpp_quality_fix.md
+   - Status: **IMPLEMENTED**
+   - Phase 1 (Audio Pipeline): Start sound delayed 0.1s, stop sound immediate
+   - Phase 2 (Transcription Mode): Verified `--translate` flag defaults to false
+   - Phase 3 (Language Detection): Fixed with `-l auto` flag for proper Polish transcription
+   - Result: Polish audio → Polish text (no translation to English)
+
+### Outcomes Achieved:
+- ✅ Python version: Audio clipping fix already in production
+- ✅ C++ version: Production-ready with correct language detection
+- ✅ Removed duplicate `whisper-dictation-optimized.py` (consolidated into fast.py)
+
 ## Backlog
 
-- **Testy C++**: Stworzyć zautomatyzowane testy w `pytest` dla wersji C++ (`whisper-cli`), zastępując stare skrypty manualne.
-- **Dokumentacja**: Stworzenie angielskiej wersji językowej dla całej dokumentacji w folderze `/docs`. Obecna wersja jest po polsku.
+- **Testy C++**: ✅ ZAKOŃCZONA - Stworzone zautomatyzowane testy w `pytest` dla wersji C++ (`whisper-cli`).
+- **Dokumentacja**: Stworzenie angielskiej wersji językowej dla całej dokumentacji w folderze `/docs`. Obecna wersja jest po polsku. (DEFERRED - after audio fixes)
 - **Test wydajności (niski priorytet)**: Naprawić test `test_memory_usage_during_transcription`, który nie przechodzi z powodu nadmiernego zużycia pamięci.
 - **Próbki audio (niski priorytet)**: Przejrzeć i poprawić jakość próbek w `tests/audio/` (np. `test_immediate_start`). Należy je nagrać ponownie lub zastąpić lepszymi z otwartych zasobów.

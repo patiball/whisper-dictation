@@ -45,19 +45,20 @@ class SpeechTranscriber:
                 '-nt',  # Bez timestampów
                 '-t', '8',  # Użyj 8 wątków dla M1
                 '-np',  # Nie drukuj dodatkowych informacji
+                # NOTE: Do NOT include -tr/--translate flag - it defaults to false (transcribe mode)
                 temp_wav_path  # plik audio jako ostatni argument
             ]
             
-            # Dodaj język lub pozwól na auto-detect
+            # Dodaj język lub użyj auto-detection
             if detected_language:
                 cmd.insert(-1, '-l')
                 cmd.insert(-1, detected_language)
-            elif self.allowed_languages:
-                # Jeśli nie ma określonego języka ale są ograniczenia, użyj pierwszego dozwolonego
-                # To jest kompromis między wydajnością a dokładnością
+                cmd.insert(-1, '-np')  # No prints for clean output
+            else:
+                # Auto-detect mode - use 'auto' for language detection (from whisper-dictation-optimized.py)
                 cmd.insert(-1, '-l')
-                cmd.insert(-1, self.allowed_languages[0])  # Domyślnie pierwszy dozwolony (en)
-                print(f"Używam domyślnego języka: {self.allowed_languages[0]} (dla wydajności)")
+                cmd.insert(-1, 'auto')
+                # Don't add -np to see verbose output with detected language
             
             # Domyślnie whisper-cli używa GPU na M1 jeśli dostępny
             
@@ -133,10 +134,7 @@ class Recorder:
 
     def _record_impl(self, language):
         self.recording = True
-        
-        # Odtwórz dźwięk rozpoczęcia nagrywania
-        self.sound_player.play_start_sound()
-        
+
         frames_per_buffer = 1024
         p = pyaudio.PyAudio()
         stream = p.open(format=pyaudio.paInt16,
@@ -146,6 +144,9 @@ class Recorder:
                         input=True)
         frames = []
 
+        # Delay start sound to avoid interfering with recording
+        threading.Timer(0.1, self.sound_player.play_start_sound).start()
+
         while self.recording:
             data = stream.read(frames_per_buffer)
             frames.append(data)
@@ -153,12 +154,15 @@ class Recorder:
         stream.stop_stream()
         stream.close()
         p.terminate()
-        
-        # Odtwórz dźwięk zakończenia nagrywania
-        self.sound_player.play_stop_sound()
 
+        # Process audio data before stop sound
         audio_data = np.frombuffer(b''.join(frames), dtype=np.int16)
         audio_data_fp32 = audio_data.astype(np.float32) / 32768.0
+
+        # Play stop sound immediately (no delay - per user request)
+        self.sound_player.play_stop_sound()
+
+        # Transcribe after sound
         self.transcriber.transcribe(audio_data_fp32, language)
 
 class DoubleCommandKeyListener:
