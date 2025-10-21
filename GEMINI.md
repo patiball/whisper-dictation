@@ -100,32 +100,95 @@ memory-bank/
 
 ## Specification Standards
 
-### Format (stored per Readme_MB.md location)
+### Hierarchy & Naming Convention
+
+Specs use Epic → User Story → Task hierarchy for complex features:
+
+**File Naming:**
+```
+[XX-YY-ZZ]_short_name.md
+
+XX = Epic number (01, 02, 03...)
+YY = User Story (00 for Epic, 01-99 for US)
+ZZ = Task (00 for US, 01-99 for Task)
+```
+
+**When to use:**
+- **Single Spec** (<1 hour, 1-2 files): Simple bug fix or enhancement
+- **Epic + User Stories** (1-3 hours): Feature with multiple phases
+- **Epic + US + Tasks** (>3 hours): Complex refactoring, many files
+
+**Examples:**
+```
+[01-00-00]_macos_portability.md        # Epic
+[01-01-00]_whisper_cli_detection.md    # User Story
+[01-01-01]_implement_detection.md      # Task
+```
+
+### Format Templates
+
+**Epic:**
 ```markdown
-# [Type]: [Title]
+# Epic: [Title]
+**ID**: XX-00-00
 **Status**: Draft | Ready | In Progress | Implemented
 **Priority**: High | Medium | Low
-**Complexity**: Simple | Medium | Complex
 
 ## Overview
-What needs to be implemented
+High-level WHAT and WHY
+
+## User Stories
+- [ ] [XX-01-00] Story name
+- [ ] [XX-02-00] Story name
+
+## Success Criteria
+Overall epic metrics
+```
+
+**User Story:**
+```markdown
+# User Story: [Title]
+**ID**: XX-YY-00
+**Epic**: [XX-00-00] Epic name
+**Status**: Ready | In Progress | Implemented
+**Priority**: High | Medium | Low
+**Estimate**: X hours
+
+## User Story
+As a [user], I want [feature] so that [benefit]
 
 ## Acceptance Criteria
-- [ ] Specific testable requirements
-- [ ] Clear success conditions
+- [ ] Testable requirement
 
 ## File Changes Required
-- File paths and change descriptions
+- file.py: Description
+```
 
-## Integration Points
-How this connects with existing code
+**Task:**
+```markdown
+# Task: [Title]
+**ID**: XX-YY-ZZ
+**User Story**: [XX-YY-00] Story
+**Complexity**: Simple | Medium | Complex
+**Estimate**: X minutes
+
+## What
+Single concrete change
+
+## Acceptance Criteria
+- [ ] Specific outcome
+
+## File Changes
+- file.py (line XX): Change
 ```
 
 ### Quality Guidelines
-- **DO**: Describe WHAT and WHY
-- **DON'T**: Prescribe exact HOW unless critical
-- **DO**: Provide behavior examples
+- **DO**: Describe WHAT and WHY (not HOW)
+- **DON'T**: Prescribe exact implementation code
+- **DO**: Provide behavior examples (before/after)
 - **DON'T**: Include unnecessary code snippets
+- **DO**: Keep specs concise (50-100 lines)
+- **DON'T**: Create 400-line specs (use hierarchy instead)
 
 ## Remember
 After every reset, I start fresh. The Memory Bank is my only connection to previous work. Readme_MB.md is my navigation map - I must read it first to understand the project organization and continue work effectively.

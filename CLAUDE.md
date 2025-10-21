@@ -189,36 +189,135 @@ WHISPER_DEBUG_RECORDER=1 poetry run python whisper-dictation.py
 5. Document current state
 
 ### Specifications
-- `specs/` directory contains feature specifications and fix plans
-- Filenames follow date pattern: `YYYYMMDD_feature_name.md`
-- Key specs: M1 support, audio clipping fix, whisper.cpp quality, multilingual improvements
 
-**Specification Format:**
-```markdown
-# [Type]: [Title]
-**Status**: Draft | Ready | In Progress | Implemented
-**Priority**: High | Medium | Low
-**Complexity**: Simple | Medium | Complex
+The `specs/` directory contains feature specifications organized hierarchically.
 
-## Overview
-What needs to be implemented
+#### Specification Hierarchy & Naming
 
-## Acceptance Criteria
-- [ ] Specific testable requirements
-- [ ] Clear success conditions
+Use Epic → User Story → Task hierarchy for complex features:
 
-## File Changes Required
-- File paths and change descriptions
+**Naming Convention:**
+```
+[XX-YY-ZZ]_short_name.md
 
-## Integration Points
-How this connects with existing code
+XX = Epic number (01, 02, 03...)
+YY = User Story number (00 for Epic, 01-99 for US)
+ZZ = Task number (00 for US, 01-99 for Task)
 ```
 
-**Quality Guidelines:**
-- **DO**: Describe WHAT and WHY
-- **DON'T**: Prescribe exact HOW unless critical
-- **DO**: Provide behavior examples
-- **DON'T**: Include unnecessary code snippets
+**When to use which level:**
+
+| Level | When to Use | Effort | Example |
+|-------|-------------|--------|---------|
+| **Single Spec** | Simple feature, 1-2 files, <1 hour | Quick | Bug fix, small enhancement |
+| **Epic + User Stories** | Multiple related features, 1-3 hours | Medium | Feature with phases |
+| **Epic + US + Tasks** | Complex feature, >3 hours, many files | Large | Major refactoring |
+
+**Hierarchy Examples:**
+```
+specs/
+├── [01-00-00]_macos_portability.md              # Epic 1
+├── [01-01-00]_whisper_cli_detection.md          # Epic 1 → US 1
+├── [01-01-01]_implement_detection.md            # Epic 1 → US 1 → Task 1
+├── [01-01-02]_update_fast_py.md                 # Epic 1 → US 1 → Task 2
+├── [01-02-00]_portable_scripts.md               # Epic 1 → US 2
+├── [02-00-00]_audio_improvements.md             # Epic 2
+└── 20251020_audio_clipping_fix.md               # Legacy (old naming)
+```
+
+**Grep Examples:**
+```bash
+ls specs/[*-00-00]*        # All epics
+ls specs/[01-*-00]*        # All user stories for epic 01
+ls specs/[01-01-*]         # All tasks for US 01.01
+```
+
+#### Specification Format
+
+**Epic Format:**
+```markdown
+# Epic: [Title]
+
+**ID**: XX-00-00
+**Created**: YYYY-MM-DD
+**Status**: Draft | Ready | In Progress | Implemented
+**Priority**: High | Medium | Low
+
+## Overview
+High-level WHAT and WHY
+
+## User Stories
+- [ ] [XX-01-00] User story 1 name
+- [ ] [XX-02-00] User story 2 name
+
+## Success Criteria
+Overall epic success metrics
+```
+
+**User Story Format:**
+```markdown
+# User Story: [Title]
+
+**ID**: XX-YY-00
+**Epic**: [XX-00-00] Epic name
+**Status**: Ready | In Progress | Implemented
+**Priority**: High | Medium | Low
+**Estimate**: X hours/minutes
+
+## User Story
+As a [user type], I want [feature] so that [benefit]
+
+## Acceptance Criteria
+- [ ] Specific testable requirement 1
+- [ ] Specific testable requirement 2
+
+## Tasks (if needed)
+- [ ] [XX-YY-01] Task 1 name
+- [ ] [XX-YY-02] Task 2 name
+
+## File Changes Required
+- file.py: Brief description
+```
+
+**Task Format:**
+```markdown
+# Task: [Title]
+
+**ID**: XX-YY-ZZ
+**User Story**: [XX-YY-00] Story name
+**Complexity**: Simple | Medium | Complex
+**Estimate**: X minutes
+
+## What
+Single, concrete change to be made
+
+## Acceptance Criteria
+- [ ] Specific testable outcome
+
+## File Changes
+- file.py (line XX): Exact change needed
+```
+
+#### Quality Guidelines
+
+**DO:**
+- Describe WHAT and WHY (not HOW)
+- Provide behavior examples (before/after)
+- Keep specs concise (50-100 lines for single spec)
+- Use hierarchy (Epic/US/Task) for complex features
+- Include testable acceptance criteria
+
+**DON'T:**
+- Prescribe exact implementation code
+- Include full function definitions
+- Write test cases in spec (those go in tests/)
+- Create 400-line specs (use Epic/US/Task instead)
+
+#### Legacy Specs
+
+Older specs use date-based naming: `YYYYMMDD_feature_name.md`
+- These remain as-is for historical reference
+- New specs use hierarchical naming: `[XX-YY-ZZ]_name.md`
 
 ## Common Patterns
 
