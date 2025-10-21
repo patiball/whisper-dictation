@@ -133,24 +133,36 @@ The repository contains test audio files for debugging and performance testing i
 
 **M1 GPU Support Status:**
 - **Python Version**: ❌ MPS backend incompatible with OpenAI Whisper (SparseMPS errors)
-- **C++ Version**: ✅ Native M1 GPU support via whisper.cpp, but with quality issues
-- **Current Recommendation**: Use Python version for accuracy, C++ version experimental
+- **C++ Version**: ✅ Native M1/M2 GPU support via whisper.cpp + Metal Performance Shaders
+- **Current Recommendation**:
+  - M1/M2 Macs: Use C++ version for GPU acceleration
+  - Intel Macs: Use Python version (CPU only)
 
 **Implementation Comparison:**
 | Feature | Python Version | C++ Version |
 |---------|---------------|-------------|
-| M1 GPU Support | ❌ CPU only | ✅ Native GPU |
-| Transcription Quality | ✅ High | ⚠️ Issues detected |
-| Audio Processing | ✅ Complete | ❌ Cutting issues |
-| Language Support | ✅ Multilingual | ❌ Forces English |
-| Stability | ✅ Production ready | ⚠️ Experimental |
+| M1/M2 GPU Support | ❌ CPU only | ✅ Native GPU (Metal) |
+| Transcription Quality | ✅ High | ✅ High (fixed Oct 2025) |
+| Audio Processing | ✅ Complete | ✅ Complete (fixed Oct 2025) |
+| Language Support | ✅ Multilingual | ✅ Multilingual (auto-detect) |
+| Model Selection | tiny/base/small/medium/large | tiny/base/small/medium/large |
+| Stability | ✅ Production ready | ✅ Production ready (Oct 2025) |
+| Best For | Intel Macs, maximum accuracy | M1/M2 Macs, GPU speed |
 
 ### Running Tests
 
 ```bash
-# Advanced recording and performance test
-poetry run python test_recording_advanced.py
+# Run all tests with pytest
+poetry run pytest
 
-# Basic language detection test
-poetry run python test_language_detection.py
+# Run specific test suites
+poetry run pytest tests/test_language_detection.py
+poetry run pytest tests/test_performance.py
+poetry run pytest tests/test_whisper_cpp.py
+
+# Run with coverage
+poetry run pytest --cov
+
+# Skip C++ tests (if whisper-cli not installed)
+poetry run pytest -m "not whisper_cpp"
 ```
