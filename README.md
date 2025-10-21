@@ -112,19 +112,19 @@ To have the app run automatically when your computer starts, follow these steps:
  1. Open System Preferences.
  2. Go to Users & Groups.
  3. Click on your username, then select the Login Items tab.
- 4. Click the + button and add the `run.sh` script from the whisper-dictation folder.
+ 4. Click the + button and add the `scripts/run.sh` script from the whisper-dictation folder.
 
 ## Test Files
 
-The repository contains test audio files for debugging and performance testing:
+The repository contains test audio files for debugging and performance testing in `tests/audio/`:
 
-- `test_polish_*.wav` - Polish language test recordings
-- `test_english_*.wav` - English language test recordings (if available)
+- `tests/audio/test_polish_*.wav` - Polish language test recordings
+- `tests/audio/test_english_*.wav` - English language test recordings
 
 ### Test Results
 
 **Latest Performance Test (Polish):**
-- File: `test_polish_20250630_083944.wav`
+- File: `tests/audio/test_polish_20250630_083944.wav`
 - Content: "1, 2, 3, 4, 5. To jest test aplikacji Whisper z językiem polskim."
 - Language Detection: 2.13s (Polish detected correctly)
 - Transcription: 2.95s

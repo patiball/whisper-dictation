@@ -117,8 +117,8 @@ Sprawdza, czy konkretny model jest dostępny lokalnie.
 
 ### Używany przez:
 - `whisper-dictation.py`: Główna aplikacja
-- `debug_transcriptions.py`: Narzędzia debugujące
-- Testy: `tests/test_language_detection.py`, `tests/test_performance.py`, `test_*`
+- `scripts/debug_transcriptions.py`: Narzędzia debugujące
+- Testy: `tests/test_language_detection.py`, `tests/test_performance.py`, `tests/test_whisper_cpp.py`
 
 ## Przykład Użycia
 

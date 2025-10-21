@@ -77,21 +77,19 @@ This document provides a comprehensive inventory of all source files in the whis
 
 ## 5. Utility Scripts
 
-| File | Type | Lines | Description |
-|------|------|-------|-------------|
-| `check_models.py` | Utility | 47 | Checks available Whisper models and prevents unwanted downloads |
-| `debug_transcriptions.py` | Debug | 72 | Debug script to see actual transcription results from test files |
-| `run_tdd_red_phase.py` | TDD Runner | 213 | TDD Red Phase Runner - executes all tests to verify failures before implementation |
-| `run.sh` | Shell | 4 | Quick launch script for the application |
-| `start_whisper.sh` | Shell | 32 | Main startup script with environment setup |
-
-### Scripts Directory (`scripts/`)
+All utility scripts are located in the `scripts/` directory:
 
 | File | Type | Lines | Description |
 |------|------|-------|-------------|
+| `scripts/check_models.py` | Utility | 47 | Checks available Whisper models and prevents unwanted downloads |
+| `scripts/debug_transcriptions.py` | Debug | 72 | Debug script to see actual transcription results from test files |
+| `scripts/run_tdd_red_phase.py` | TDD Runner | 213 | TDD Red Phase Runner - executes all tests to verify failures before implementation |
+| `scripts/run.sh` | Shell | 4 | Quick launch script for the application |
+| `scripts/start_whisper.sh` | Shell | 32 | Main startup script with environment setup |
+| `scripts/whisper-dictation-wrapper.sh` | Shell | - | Wrapper script for whisper-dictation |
+| `scripts/tmp_rovodev_measure_start_silence.py` | Diagnostic | 168 | Measures start silence/delay in audio recordings |
 | `scripts/check-links.py` | Utility | 18 | Validates documentation links |
 | `scripts/setup-docs-mvp.sh` | Shell | 67 | Sets up documentation structure (MVP) |
-| `scripts/warp-run.sh` | Shell | 34 | Warp terminal integration script |
 
 **Total Script Files:** 8  
 **Total Script Lines:** 487
@@ -268,34 +266,38 @@ The following files warrant further investigation or cleanup:
 
 ```
 whisper-dictation/
-├── whisper-dictation.py          # Main app (Python Whisper)
-├── whisper-dictation-fast.py     # Main app (whisper.cpp)
-├── whisper-dictation-optimized.py # Main app (optimized)
-├── whisper-dictation-wrapper.sh  # Launch wrapper
-├── recorder.py                   # Recording module
-├── transcriber.py                # Transcription module
+├── whisper-dictation.py          # Main app (Python Whisper, CPU)
+├── whisper-dictation-fast.py     # Main app (whisper.cpp, M1/M2 GPU)
+├── recorder.py                   # Recording module (TDD-compatible)
+├── transcriber.py                # Transcription module (TDD-compatible)
 ├── device_manager.py             # Device management
 ├── mps_optimizer.py              # M1/M2 optimizations
-├── check_models.py               # Model checker utility
-├── debug_transcriptions.py       # Debug utility
-├── run_tdd_red_phase.py          # TDD runner
-├── run.sh                        # Quick launcher
-├── start_whisper.sh              # Main launcher
 ├── pyproject.toml                # Project config
 ├── requirements.txt              # Dependencies
 ├── .gitignore                    # Git config
-├── test_*.py                     # Root test files (legacy?)
-├── _test_*.py                    # Backup test files
 ├── tests/                        # Main test directory
 │   ├── conftest.py
 │   ├── record_test_samples.py
 │   ├── test_language_detection.py
 │   ├── test_performance.py
-│   └── test_recording_quality.py
-├── scripts/                      # Utility scripts
+│   ├── test_recording_quality.py
+│   ├── test_whisper_cpp.py
+│   └── audio/                    # Test audio samples
+│       ├── test_polish_*.wav
+│       └── test_english_*.wav
+├── scripts/                      # Utility scripts (all scripts moved here)
+│   ├── check_models.py
+│   ├── debug_transcriptions.py
+│   ├── run_tdd_red_phase.py
+│   ├── run.sh
+│   ├── start_whisper.sh
+│   ├── whisper-dictation-wrapper.sh
+│   ├── tmp_rovodev_measure_start_silence.py
 │   ├── check-links.py
-│   ├── setup-docs-mvp.sh
-│   └── warp-run.sh
+│   └── setup-docs-mvp.sh
+├── temp/                         # Temporary and archived files
+│   ├── archive/                  # Archived documentation tasks
+│   └── manual_tests/             # Old manual test files
 └── docs/                         # Documentation
     ├── README.md
     ├── PROJECT_OVERVIEW.md
@@ -348,19 +350,20 @@ whisper-dictation/
 | M1 optimizations | `mps_optimizer.py` |
 | Language detection tests | `tests/test_language_detection.py` |
 | Performance benchmarks | `tests/test_performance.py` |
-| Model management | `check_models.py` |
-| Debug output | `debug_transcriptions.py` |
+| Model management | `scripts/check_models.py` |
+| Debug output | `scripts/debug_transcriptions.py` |
 
 ### Common Tasks
 
 | Task | Command/File |
 |------|--------------|
 | Run tests | `python -m pytest tests/` |
-| Check models | `python check_models.py` |
-| Debug transcriptions | `python debug_transcriptions.py` |
-| Run TDD red phase | `python run_tdd_red_phase.py` |
-| Start application | `./start_whisper.sh` or `./run.sh` |
+| Check models | `python scripts/check_models.py` |
+| Debug transcriptions | `python scripts/debug_transcriptions.py` |
+| Run TDD red phase | `python scripts/run_tdd_red_phase.py` |
+| Start application | `./scripts/start_whisper.sh` or `./scripts/run.sh` |
 | Record test samples | `python tests/record_test_samples.py` |
+| Measure audio delay | `python scripts/tmp_rovodev_measure_start_silence.py` |
 
 ---
 
