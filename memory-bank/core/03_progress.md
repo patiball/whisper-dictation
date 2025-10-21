@@ -91,7 +91,21 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 
 ## Backlog
 
+### High Priority
+
+- **macOS Portability** - specs/20251021_macos_portability_improvements.md
+  - Status: Ready to implement
+  - Priority: High
+  - Issue: C++ version fails on Intel Macs (hard-coded Apple Silicon paths)
+  - Phases: whisper-cli auto-detection, launch script fixes, documentation
+  - Effort: ~30-45 minutes
+
+### Medium Priority
+
+- **Dokumentacja**: Stworzenie angielskiej wersji językowej dla całej dokumentacji w folderze `/docs`. Obecna wersja jest po polsku. (DEFERRED - after critical fixes)
+
+### Low Priority
+
 - **Testy C++**: ✅ ZAKOŃCZONA - Stworzone zautomatyzowane testy w `pytest` dla wersji C++ (`whisper-cli`).
-- **Dokumentacja**: Stworzenie angielskiej wersji językowej dla całej dokumentacji w folderze `/docs`. Obecna wersja jest po polsku. (DEFERRED - after audio fixes)
-- **Test wydajności (niski priorytet)**: Naprawić test `test_memory_usage_during_transcription`, który nie przechodzi z powodu nadmiernego zużycia pamięci.
-- **Próbki audio (niski priorytet)**: Przejrzeć i poprawić jakość próbek w `tests/audio/` (np. `test_immediate_start`). Należy je nagrać ponownie lub zastąpić lepszymi z otwartych zasobów.
+- **Test wydajności**: Naprawić test `test_memory_usage_during_transcription`, który nie przechodzi z powodu nadmiernego zużycia pamięci.
+- **Próbki audio**: Przejrzeć i poprawić jakość próbek w `tests/audio/` (np. `test_immediate_start`). Należy je nagrać ponownie lub zastąpić lepszymi z otwartych zasobów.
