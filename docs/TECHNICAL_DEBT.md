@@ -1,8 +1,9 @@
 # TECHNICAL DEBT - Inwentarz długu technicznego
 
-**Data utworzenia**: 2025-10-10  
-**Projekt**: whisper-dictation  
-**Wersja**: 1.0
+**Data utworzenia**: 2025-10-10
+**Ostatnia aktualizacja**: 2025-10-21
+**Projekt**: whisper-dictation
+**Wersja**: 1.1
 
 ---
 
@@ -75,8 +76,8 @@ Problemy z obsługą błędów, brak walidacji, potencjalne wycieki pamięci.
 | **TD-023** | Architecture | Brak dependency injection w głównych klasach | `whisper-dictation.py`, wszystkie wersje | Medium | High | **Should** | 🔴 Open |
 | **TD-024** | Code Quality | Brak type hints w większości funkcji | Wszystkie pliki `.py` (szczególnie legacy code) | Medium | Medium | **Should** | 🔴 Open |
 | **TD-025** | Performance | Synchroniczne odtwarzanie dźwięków może blokować | `whisper-dictation.py:79-83`, `whisper-dictation-fast.py:105-108` | Low | Low | **Could** | 🟡 Partial (używane threading) |
-| **TD-026** | Testing | Brak testów dla whisper-dictation-fast.py | `whisper-dictation-fast.py` (326 linii) | High | High | **Must** | 🔴 Open |
-| **TD-027** | Testing | Brak testów dla whisper-dictation-optimized.py | `whisper-dictation-optimized.py` (376 linii) | High | High | **Must** | 🔴 Open |
+| **TD-026** | Testing | Brak testów dla whisper-dictation-fast.py | `whisper-dictation-fast.py` (326 linii) | High | High | **Must** | ✅ Zrobione (październik 2025) |
+| **TD-027** | Testing | Brak testów dla whisper-dictation-optimized.py | `whisper-dictation-optimized.py` (376 linii) | High | High | **Must** | ✅ Usunięte (plik usunięty, skonsolidowano do fast.py) |
 | **TD-028** | Architecture | Brak konfiguracji zewnętrznej (wszystko hardcoded) | Wszystkie pliki główne | Medium | Medium | **Should** | 🔴 Open |
 | **TD-029** | Code Quality | Niespójne nazewnictwo (snake_case vs camelCase w tym samym pliku) | `whisper-dictation.py`, `device_manager.py` | Low | Low | **Won't** | 🔴 Open |
 | **TD-030** | Performance | Brak cachowania wyników language detection | `transcriber.py:106-196`, `whisper-dictation.py:29-74` | Low | Medium | **Could** | 🟡 Partial (w whisper-optimized) |
@@ -85,6 +86,39 @@ Problemy z obsługą błędów, brak walidacji, potencjalne wycieki pamięci.
 | **TD-033** | Documentation | TODO comments wskazujące na niekompletną implementację | `docs/ARCHITECTURE.md:935,967,1013,1049,1056,1088,1097,1138` | Medium | High | **Should** | 🔴 Open |
 | **TD-034** | Testing | Brak regression tests dla MPS compatibility | `device_manager.py`, `mps_optimizer.py` | High | High | **Must** | 🔴 Open |
 | **TD-035** | Code Quality | Zbyt długie metody (>50 linii) wymagające ekstrakcji | `transcriber.py:106-196`, `whisper-dictation.py:113-142` | Medium | Medium | **Should** | 🔴 Open |
+| **TD-036** | Quality | C++ version - audio cutting during recording | `whisper-dictation-fast.py` | High | High | **Must** | ✅ Rozwiązane (październik 2025) |
+| **TD-037** | Quality | C++ version - translation instead of transcription | `whisper-dictation-fast.py` | High | High | **Must** | ✅ Rozwiązane (październik 2025) |
+| **TD-038** | Quality | C++ version - language detection issues (Polish → English) | `whisper-dictation-fast.py` | High | High | **Must** | ✅ Rozwiązane (październik 2025) |
+
+---
+
+## 3.1. Rozwiązane problemy (Październik 2025)
+
+### C++ Implementation Quality Fixes ✅
+
+**TD-036: Audio cutting during recording**
+- **Problem**: Start sound interfered with recording, cutting initial audio
+- **Rozwiązanie**: Delayed start sound by 0.1s using threading.Timer
+- **Status**: ✅ Zaimplementowane w `whisper-dictation-fast.py:148`
+
+**TD-037: Translation instead of transcription**
+- **Problem**: Whisper-cli was translating to English instead of transcribing
+- **Rozwiązanie**: Verified default behavior (no `--translate` flag = transcription mode)
+- **Status**: ✅ Zweryfikowane
+
+**TD-038: Language detection issues**
+- **Problem**: Polish audio transcribed to English text
+- **Rozwiązanie**: Implemented `-l auto` flag for proper language detection
+- **Status**: ✅ Zaimplementowane w `whisper-dictation-fast.py:52-61`
+
+**TD-026: Missing tests for C++ version**
+- **Rozwiązanie**: Created comprehensive pytest test suite in `tests/test_whisper_cpp.py`
+- **Pokrycie**: Language detection, timeout handling, error logging, retries
+- **Status**: ✅ Zaimplementowane
+
+**TD-027: whisper-dictation-optimized.py**
+- **Rozwiązanie**: File removed, functionality consolidated into `whisper-dictation-fast.py`
+- **Status**: ✅ Usunięte
 
 ---
 
@@ -132,13 +166,14 @@ def check_microphone_permissions() -> tuple[bool, str]:
 **Ryzyko**: Niskie  
 **Akcja**: Rozszerzyć TD-018 o sprawdzenie dostępności urządzeń przed rozpoczęciem nagrania
 
-#### TD-026, TD-027: Testy dla wersji fast i optimized
-**Czas realizacji**: 2-3 dni (każda wersja)  
-**Ryzyko**: Średnie  
-**Akcja**:
-- Stworzyć test suites dla obu wersji
-- Testy jakości transkrypcji (porównanie z Python version)
-- Testy wydajnościowe (M1 GPU utilization)
+#### TD-026, TD-027: Testy dla wersji fast i optimized ✅ ZROBIONE
+**Czas realizacji**: 2-3 dni (każda wersja)
+**Ryzyko**: Średnie
+**Status**: ✅ Ukończone (październik 2025)
+**Wykonane akcje**:
+- ✅ Stworzono test suite dla wersji fast (`tests/test_whisper_cpp.py`)
+- ✅ Usunięto whisper-dictation-optimized.py (skonsolidowano do fast.py)
+- ✅ Naprawiono problemy jakości (audio cutting, language detection, translation mode)
 
 #### TD-034: MPS compatibility regression tests
 **Czas realizacji**: 2 dni  

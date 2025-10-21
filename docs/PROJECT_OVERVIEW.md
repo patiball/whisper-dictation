@@ -4,7 +4,7 @@
 
 Whisper Dictation to opensource'owa aplikacja do dyktowania dla macOS, wykorzystująca najnowocześniejszy model rozpoznawania mowy OpenAI Whisper. Projekt powstał jako odpowiedź na potrzebę prywatnego, offline'owego narzędzia do transkrypcji, które nie wymaga połączenia z chmurą ani wysyłania danych osobowych do zewnętrznych serwerów.
 
-Aplikacja jest szczególnie zoptymalizowana dla procesorów Apple Silicon (M1/M2), oferując dwie implementacje: stabilną wersję Python oraz eksperymentalną wersję wykorzystującą whisper.cpp z akceleracją GPU.
+Aplikacja jest szczególnie zoptymalizowana dla procesorów Apple Silicon (M1/M2), oferując dwie implementacje produkcyjne: wersję Python (CPU) oraz wersję C++ wykorzystującą whisper.cpp z pełną akceleracją GPU przez Metal.
 
 ## Cel aplikacji
 
@@ -45,8 +45,8 @@ Wielojęzyczna aplikacja dyktowania oparta na potężnym modelu OpenAI Whisper A
 
 - **Python 3.x** - język programowania
 - **OpenAI Whisper** - silnik rozpoznawania mowy (ASR)
-  - Wersja Python (rekomendowana, CPU)
-  - Wersja whisper.cpp (eksperymentalna, GPU M1)
+  - Wersja Python (produkcyjna, CPU)
+  - Wersja whisper.cpp (produkcyjna, GPU M1/M2 przez Metal)
 - **PyTorch** - framework uczenia maszynowego
 - **PyAudio / PortAudio** - obsługa nagrywania audio
 - **Poetry** - zarządzanie zależnościami
@@ -115,9 +115,9 @@ Więcej o integracji z systemem macOS i personalizacji skrótów znajdziesz w [M
 Aplikacja wspiera wybór różnych modeli Whisper oraz oferuje dwie implementacje:
 
 - **Wybór modeli Whisper**: Możliwość wyboru spośród modeli `tiny`, `base`, `small`, `medium`, `large`, z różnymi kompromisami między szybkością a dokładnością.
-- **Dwie implementacje**:
-  - **Python**: Stabilna i przetestowana implementacja, wykorzystująca CPU.
-  - **C++ (whisper.cpp)**: Eksperymentalna implementacja z akceleracją GPU M1, w trakcie optymalizacji.
+- **Dwie implementacje produkcyjne**:
+  - **Python**: Stabilna implementacja, wykorzystująca CPU (wszystkie platformy).
+  - **C++ (whisper.cpp)**: Stabilna implementacja z akceleracją GPU M1/M2 przez Metal (✅ problemy jakości rozwiązane, październik 2025).
 
 Szczegóły dotyczące konfiguracji modeli i implementacji znajdują się w [transcriber.md](../docs/modules/transcriber.md) oraz [API_INTERFACES.md](./API_INTERFACES.md).
 
@@ -274,13 +274,11 @@ performance:
 
 ### W trakcie realizacji 🚧
 
-- Optymalizacja implementacji whisper.cpp
-- Pełne wsparcie GPU dla Apple Silicon
 - Zaawansowana redukcja szumów
 - System aktualizacji automatycznych
 - Rozszerzona konfiguracja UI
-- Poprawa jakości wersji C++ (GPU M1)
 - Wsparcie dla większej liczby języków
+- Dokumentacja w języku angielskim
 
 ### Planowane usprawnienia 📋
 
@@ -303,11 +301,11 @@ performance:
 
 ## Znane ograniczenia ⚠️
 
-- **Implementacja whisper.cpp**: Wersja C++ (GPU M1) wymaga dalszej optymalizacji i ma problemy z jakością - zalecana wersja Python (CPU)
 - **Wymagania zasobów**: Większe modele (medium/large) wymagają znacznych zasobów RAM i mogą ładować się do 30 sekund
 - **Czas transkrypcji**: Rośnie liniowo z długością audio, brak wsparcia dla realtime (transkrypcja rozpoczyna się po zakończeniu nagrywania)
 - **Wsparcie platform**: Brak wsparcia dla systemów innych niż macOS (Windows/Linux)
 - **Jakość audio**: Zależna od jakości mikrofonu i środowiska akustycznego - słabsza przy złych warunkach lub odległym mikrofonie
+- **GPU Python**: Wersja Python nie wspiera GPU M1/M2 (PyTorch MPS incompatibility) - użyj wersji C++ dla akceleracji GPU
 
 Szczegółowa lista w [TECHNICAL_DEBT.md](./TECHNICAL_DEBT.md).
 

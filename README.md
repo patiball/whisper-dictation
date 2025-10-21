@@ -45,28 +45,52 @@ pip install -r requirements.txt
 
 This project includes **two different Whisper implementations** with different trade-offs:
 
-#### 1. **Python Version (Recommended for Accuracy)**
+#### 1. **Python Version (Production-Ready, CPU Only)**
 ```bash
-# High accuracy, CPU only (M1 GPU not supported due to PyTorch MPS incompatibility)
+# High accuracy, stable, CPU only (M1 GPU not supported due to PyTorch MPS incompatibility)
 poetry run python whisper-dictation.py --k_double_cmd
+
+# With specific model
+poetry run python whisper-dictation.py -m large --k_double_cmd -l en
 ```
 
-#### 2. **C++ Version (Experimental - M1 GPU Support)**
+#### 2. **C++ Version (Production-Ready, M1/M2 GPU Accelerated)** ✅
 ```bash
-# M1 GPU acceleration, but with current quality issues
+# M1/M2 GPU acceleration via Metal, all quality issues resolved (Oct 2025)
 poetry run python whisper-dictation-fast.py --k_double_cmd
+
+# With model selection (tiny/base/small/medium/large)
+poetry run python whisper-dictation-fast.py -m medium --k_double_cmd  # Recommended
+poetry run python whisper-dictation-fast.py -m small --k_double_cmd   # Balanced
+poetry run python whisper-dictation-fast.py -m base --k_double_cmd    # Default
+poetry run python whisper-dictation-fast.py -m tiny --k_double_cmd    # Fastest
+
+# With language specification
+poetry run python whisper-dictation-fast.py -m medium --k_double_cmd -l pl
+poetry run python whisper-dictation-fast.py -m medium --k_double_cmd --allowed_languages en,pl
 ```
 
-**⚠️ Known Issues with C++ Version:**
-- Audio cutting during recording
-- Translation instead of transcription (converts to English)
-- Lower transcription quality compared to Python version
+**📊 Model Comparison (C++ Version):**
+| Model | Size | Quality | Speed |
+|-------|------|---------|-------|
+| tiny | 74MB | Basic | Fastest |
+| base | 141MB | Good | Fast |
+| small | 470MB | Very Good | Medium |
+| medium | 1.4GB | Excellent | Slower |
+| large | 3GB | Best | Slowest |
+
+**✅ Recent Fixes (Oct 2025):**
+- Audio pipeline optimized (start sound delayed 0.1s)
+- Language detection fixed (proper Polish → Polish transcription)
+- Translation mode verified (defaults to transcription, not translation)
 
 ### **Prerequisites for C++ Version**
 ```bash
 # Install whisper.cpp (if not already installed)
 brew install whisper-cpp
 ```
+
+**Note:** Models are automatically downloaded to `~/.whisper-models/` on first use.
 
 ### **Standard Usage (Python Version)**
 ```bash

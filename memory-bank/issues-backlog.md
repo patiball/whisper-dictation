@@ -86,7 +86,37 @@
 
 ## 🟡 SECONDARY ISSUES
 
-### Issue 4: Max Recording Time - Configurability & Feedback
+### Issue 4: Delay Between Transcription Completion and Text Insertion
+**Status**: NEW - UX/Performance Issue
+**Priority**: Medium
+**Description**: Noticeable delay between when transcription completes (CLI output shows "Done") and when text actually appears in the editor
+- **User Experience**: User sees transcription finished in terminal, but has to wait additional time before text is pasted
+- **Impact**: Creates confusion about whether transcription actually succeeded
+- **Possible causes**:
+  1. Keyboard simulation delay (pykeyboard typing speed)
+  2. Processing overhead between whisper-cli completion and keyboard input start
+  3. OS-level clipboard or input method latency
+  4. Delay in status bar app state transitions
+
+**Investigation Needed**:
+- [ ] Measure time between whisper-cli process exit and first keyboard event
+- [ ] Check if delay is proportional to text length
+- [ ] Profile keyboard typing speed in `pykeyboard.type()` (lines 70-81)
+- [ ] Add timestamps to track state transitions
+
+**Related Code**:
+- `whisper-dictation-fast.py:70-81` - Keyboard typing logic
+- `whisper-dictation-fast.py:22-94` - Transcription completion handling
+
+**Possible Solutions**:
+1. Increase keyboard typing speed
+2. Use clipboard paste instead of character-by-character typing
+3. Add visual feedback during text insertion phase
+4. Optimize state transition logic
+
+---
+
+### Issue 5: Max Recording Time - Configurability & Feedback
 **Status**: NEW - Enhancement/UX  
 **Priority**: Medium  
 **Description**: Max recording time (30s) should be either increased or user-configurable
@@ -114,9 +144,9 @@
 
 ---
 
-### Issue 5: Long Transcription Time
-**Status**: Known/Expected  
-**Priority**: Low (Acknowledged as secondary)  
+### Issue 6: Long Transcription Time
+**Status**: Known/Expected
+**Priority**: Low (Acknowledged as secondary)
 **Description**: Model transcription takes significant time for longer audio (medium model)
 - **Scope**: Using medium model (1.4GB) with Metal GPU
 - **Expected**: Longer than base model, but still reasonable for medium quality

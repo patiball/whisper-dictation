@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Multilingual dictation app based on OpenAI Whisper ASR models for accurate speech-to-text conversion. Runs in background, triggered via keyboard shortcuts, entirely offline. Features two implementations:
 
-- **Python Version (whisper-dictation.py)**: Recommended for accuracy, CPU-only on M1 (MPS incompatibility)
-- **C++ Version (whisper-dictation-fast.py)**: Experimental M1 GPU support via whisper.cpp, has quality issues
+- **Python Version (whisper-dictation.py)**: Production-ready, CPU-only on M1 (MPS incompatibility)
+- **C++ Version (whisper-dictation-fast.py)**: Production-ready with M1 GPU support via whisper.cpp (Metal)
 
 ## Development Environment
 
@@ -46,14 +46,24 @@ poetry run pytest --reruns 1
 
 ### Running the Application
 ```bash
-# Python version (recommended)
+# Python version (CPU-only on M1/M2)
 poetry run python whisper-dictation.py --k_double_cmd
 
-# With specific model and language
+# Python with specific model and language
 poetry run python whisper-dictation.py -m large -k cmd_r+shift -l en
 
-# C++ version (experimental)
+# C++ version (GPU-accelerated on M1/M2 via Metal)
 poetry run python whisper-dictation-fast.py --k_double_cmd
+
+# C++ with model selection (tiny/base/small/medium/large)
+poetry run python whisper-dictation-fast.py -m medium --k_double_cmd  # Best quality
+poetry run python whisper-dictation-fast.py -m small --k_double_cmd   # Balanced
+poetry run python whisper-dictation-fast.py -m base --k_double_cmd    # Default (141MB)
+poetry run python whisper-dictation-fast.py -m tiny --k_double_cmd    # Fastest (74MB)
+
+# C++ with language specification
+poetry run python whisper-dictation-fast.py -m medium --k_double_cmd -l pl
+poetry run python whisper-dictation-fast.py -m medium --k_double_cmd --allowed_languages en,pl
 
 # Audio recording configuration (frames_per_buffer)
 poetry run python whisper-dictation.py --frames-per-buffer 512  # Default
@@ -70,6 +80,29 @@ poetry run python whisper-dictation.py --debug-recorder
 # OR via environment
 WHISPER_DEBUG_RECORDER=1 poetry run python whisper-dictation.py
 ```
+
+## Version Comparison
+
+### Python vs C++ Implementation
+
+| Feature | Python (whisper-dictation.py) | C++ (whisper-dictation-fast.py) |
+|---------|-------------------------------|----------------------------------|
+| **Backend** | PyTorch + Whisper | whisper.cpp (Metal) |
+| **GPU Support (M1/M2)** | ❌ CPU only | ✅ GPU-accelerated |
+| **Model Format** | PyTorch (.pt) | GGML (.bin) |
+| **Model Location** | Auto-downloaded by Whisper | `~/.whisper-models/` |
+| **Available Models** | tiny, base, small, medium, large | tiny, base, small, medium, large |
+| **Model Sizes** | Varies | 74MB (tiny) → 1.4GB (medium) |
+| **Status** | ✅ Production-ready | ✅ Production-ready |
+| **Quality Issues** | None | ✅ Fixed (Oct 2025) |
+| **Best For** | Intel Macs, accuracy priority | M1/M2 Macs, speed priority |
+
+### Recent Fixes (Oct 2025)
+
+C++ version quality improvements:
+- ✅ **Audio Pipeline**: Start sound delayed 0.1s to prevent interference
+- ✅ **Language Detection**: Fixed with `-l auto` flag for correct Polish transcription
+- ✅ **Translation Mode**: Verified defaults to transcription (not translation)
 
 ## Code Architecture
 
@@ -130,8 +163,13 @@ WHISPER_DEBUG_RECORDER=1 poetry run python whisper-dictation.py
 
 ### M1/M2 GPU Support
 - **Python Whisper**: No MPS support due to PyTorch SparseMPS incompatibility
-- **Solution**: `DeviceManager` auto-detects and falls back to CPU on M1/M2
-- **Status**: See specs/20250130_m1_support_fix.md for implementation details
+  - **Solution**: `DeviceManager` auto-detects and falls back to CPU on M1/M2
+  - **Status**: Production-ready CPU implementation
+- **C++ whisper.cpp**: ✅ Full M1/M2 GPU support via Metal Performance Shaders
+  - **Command**: `whisper-dictation-fast.py -m medium --k_double_cmd`
+  - **Status**: Production-ready, all quality issues resolved (Oct 2025)
+- **Recommendation**: Use C++ version on M1/M2 for best performance
+- **Details**: See specs/20250130_m1_support_fix.md and specs/20250130_whisper_cpp_quality_fix.md
 
 ### Audio Clipping Issues
 - **Problem**: Initial audio frames may be clipped/contain noise on some systems
