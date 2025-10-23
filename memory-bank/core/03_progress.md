@@ -89,6 +89,19 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 - ✅ C++ version: Production-ready with correct language detection
 - ✅ Removed duplicate `whisper-dictation-optimized.py` (consolidated into fast.py)
 
+## Current Sprint: Transcription Timestamps (2025-10-23)
+
+**Priority**: HIGH
+**Focus**: User feedback and diagnostics for transcription delays
+
+### Sprint Goals:
+- **Transcription Timestamps** - specs/20251023_transcription_timestamps.md
+  - Status: Ready for implementation
+  - Issue: "Done" message appears instantly but transcription takes 2-5s (no feedback)
+  - Solution: Add timestamps to all console messages, clarify pipeline stages
+  - Changes: Both whisper-dictation.py and whisper-dictation-fast.py
+  - Estimate: 30-45 minutes
+
 ## Backlog
 
 ### High Priority
@@ -105,6 +118,13 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 - **Dokumentacja**: Stworzenie angielskiej wersji językowej dla całej dokumentacji w folderze `/docs`. Obecna wersja jest po polsku. (DEFERRED - after critical fixes)
 
 ### Low Priority
+
+- **File Renaming** - specs/20251023_rename_fast_to_metal.md
+  - Status: Backlog
+  - Priority: Low
+  - Issue: Confusing naming (fast vs metal/cpp)
+  - Proposed: whisper-dictation-fast.py → whisper-dictation-metal.py
+  - Effort: ~15-20 minutes
 
 - **Testy C++**: ✅ ZAKOŃCZONA - Stworzone zautomatyzowane testy w `pytest` dla wersji C++ (`whisper-cli`).
 - **Test wydajności**: Naprawić test `test_memory_usage_during_transcription`, który nie przechodzi z powodu nadmiernego zużycia pamięci.
