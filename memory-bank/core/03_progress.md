@@ -61,7 +61,7 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 - **Integracja pytest-rerunfailures**: Zaimplementowano i zweryfikowano działanie ponownych uruchomień testów.
 - **Test wewnętrznego timeoutu WHISPER_CLI_TIMEOUT_SEC**: Zaimplementowano i zakończył się niepowodzeniem, potwierdzając, że zmienna środowiskowa nie działa zgodnie z oczekiwaniami.
 
-**Status implementacji testów C++ (specs/20251019_cpp_tests_spec.md): ZAKOŃCZONA**
+**Status implementacji testów C++ (specs/[07-00-00]_cpp_tests_spec.md): ZAKOŃCZONA**
 
 **Expected Timeline:** 1-2 days (applying known working solutions)
 
@@ -71,13 +71,13 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 **Focus**: User-facing audio quality issues
 
 ### Sprint Goals:
-1. ✅ **Audio Clipping Fix (Python)** - specs/20251020_audio_clipping_warmup_fix.md
+1. ✅ **Audio Clipping Fix (Python)** - specs/[08-00-00]_audio_clipping_warmup_fix.md
    - Status: **ALREADY IMPLEMENTED** (discovered during implementation)
    - Implementation: frames_per_buffer=512, warm-up buffers, auto-fallback, ENV overrides
    - CLI flags: `--frames-per-buffer`, `--warmup-buffers`, `--debug-recorder`
    - Result: All acceptance criteria met
 
-2. ✅ **Whisper.cpp Quality Fix** - specs/20250130_whisper_cpp_quality_fix.md
+2. ✅ **Whisper.cpp Quality Fix** - specs/[02-00-00]_whisper_cpp_quality_fix.md
    - Status: **IMPLEMENTED**
    - Phase 1 (Audio Pipeline): Start sound delayed 0.1s, stop sound immediate
    - Phase 2 (Transcription Mode): Verified `--translate` flag defaults to false
@@ -95,7 +95,7 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 **Focus**: User feedback and diagnostics for transcription delays
 
 ### Sprint Goals:
-- **Transcription Timestamps** - specs/20251023_transcription_timestamps.md
+- **Transcription Timestamps** - specs/[10-00-00]_transcription_timestamps.md
   - Status: Ready for implementation
   - Issue: "Done" message appears instantly but transcription takes 2-5s (no feedback)
   - Solution: Add timestamps to all console messages, clarify pipeline stages
@@ -106,7 +106,7 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 
 ### High Priority
 
-- **macOS Portability** - specs/20251021_macos_portability_improvements.md
+- **macOS Portability** - specs/[09-00-00]_macos_portability_improvements.md
   - Status: Ready to implement
   - Priority: High
   - Issue: C++ version fails on Intel Macs (hard-coded Apple Silicon paths)
@@ -119,7 +119,7 @@ Whisper.cpp powtarza **dokładnie te same błędy architekturalne** które już 
 
 ### Low Priority
 
-- **File Renaming** - specs/20251023_rename_fast_to_metal.md
+- **File Renaming** - specs/[11-00-00]_rename_fast_to_metal.md
   - Status: Backlog
   - Priority: Low
   - Issue: Confusing naming (fast vs metal/cpp)

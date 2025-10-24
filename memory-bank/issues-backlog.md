@@ -16,7 +16,7 @@
 **Related Files**:
 - `whisper-dictation-fast.py` (lines 134-162, `Recorder._record_impl()`) — C++ path (pending)
 - `whisper-dictation.py` (Recorder `_record_impl`) — Python path (quick fix deployed)
-- `specs/20251020_audio_clipping_warmup_fix.md` — spec for warm-up + buffer sizing
+- `specs/[08-00-00]_audio_clipping_warmup_fix.md` — spec for warm-up + buffer sizing
 - `scripts/tmp_rovodev_measure_start_silence.py` — diagnostic script to measure start_silence_ms  
 **Diagnosis Status**:
 - [x] Phase 1: Initial instrumentation strategy defined (spec) — minimal debug timestamps in Python path

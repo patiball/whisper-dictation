@@ -232,42 +232,49 @@ The `specs/` directory contains feature specifications organized hierarchically.
 
 #### Specification Hierarchy & Naming
 
-Use Epic → User Story → Task hierarchy for complex features:
+**ALL specifications use hierarchical format `[XX-YY-ZZ]_short_name.md`:**
 
-**Naming Convention:**
 ```
 [XX-YY-ZZ]_short_name.md
 
-XX = Epic number (01, 02, 03...)
-YY = User Story number (00 for Epic, 01-99 for US)
+XX = Epic/US number (01, 02, 03...)
+YY = User Story number (00 for standalone US or Epic, 01-99 for US in Epic)
 ZZ = Task number (00 for US, 01-99 for Task)
+```
+
+**Exception: Hotfixes only**
+```
+YYYYMMDD_emergency_fix.md  ← ONLY for unplanned, critical production fixes
 ```
 
 **When to use which level:**
 
-| Level | When to Use | Effort | Example |
-|-------|-------------|--------|---------|
-| **Single Spec** | Simple feature, 1-2 files, <1 hour | Quick | Bug fix, small enhancement |
-| **Epic + User Stories** | Multiple related features, 1-3 hours | Medium | Feature with phases |
-| **Epic + US + Tasks** | Complex feature, >3 hours, many files | Large | Major refactoring |
+| Level | Format | When to Use | Effort | Example |
+|-------|--------|-------------|--------|---------|
+| **Standalone US** | `[XX-00-00]_name.md` | Simple feature, 1-2 files, <3 hours | Quick/Medium | Bug fix, small feature |
+| **Epic + User Stories** | `[XX-00-00]_epic.md`<br>`[XX-01-00]_us.md` | Multiple related features, 3-8 hours | Medium | Feature with phases |
+| **Epic + US + Tasks** | `[XX-00-00]_epic.md`<br>`[XX-01-00]_us.md`<br>`[XX-01-01]_task.md` | Complex feature, >8 hours, many files | Large | Major refactoring |
+| **Hotfix** | `YYYYMMDD_fix.md` | Emergency production fix | Any | Critical crash fix |
 
 **Hierarchy Examples:**
 ```
 specs/
-├── [01-00-00]_macos_portability.md              # Epic 1
-├── [01-01-00]_whisper_cli_detection.md          # Epic 1 → US 1
-├── [01-01-01]_implement_detection.md            # Epic 1 → US 1 → Task 1
-├── [01-01-02]_update_fast_py.md                 # Epic 1 → US 1 → Task 2
-├── [01-02-00]_portable_scripts.md               # Epic 1 → US 2
-├── [02-00-00]_audio_improvements.md             # Epic 2
-└── 20251020_audio_clipping_fix.md               # Legacy (old naming)
+├── [01-00-00]_m1_support_fix.md                 # Standalone US 01
+├── [02-00-00]_macos_portability.md              # Epic 02
+├── [02-01-00]_whisper_cli_detection.md          # Epic 02 → US 1
+├── [02-01-01]_implement_detection.md            # Epic 02 → US 1 → Task 1
+├── [02-01-02]_update_fast_py.md                 # Epic 02 → US 1 → Task 2
+├── [02-02-00]_portable_scripts.md               # Epic 02 → US 2
+├── [03-00-00]_transcription_timestamps.md       # Standalone US 03
+└── 20251023_critical_crash_fix.md               # Hotfix (emergency only)
 ```
 
 **Grep Examples:**
 ```bash
-ls specs/[*-00-00]*        # All epics
-ls specs/[01-*-00]*        # All user stories for epic 01
-ls specs/[01-01-*]         # All tasks for US 01.01
+ls specs/\[*-00-00\]*      # All standalone US and Epics
+ls specs/\[02-*-00\]*      # All user stories for epic 02
+ls specs/\[02-01-*\]       # All tasks for US 02.01
+ls specs/202*.md           # All hotfixes
 ```
 
 #### Specification Format
@@ -351,11 +358,13 @@ Single, concrete change to be made
 - Write test cases in spec (those go in tests/)
 - Create 400-line specs (use Epic/US/Task instead)
 
-#### Legacy Specs
+#### Important Notes
 
-Older specs use date-based naming: `YYYYMMDD_feature_name.md`
-- These remain as-is for historical reference
-- New specs use hierarchical naming: `[XX-YY-ZZ]_name.md`
+**Hotfixes only:** Date-based format `YYYYMMDD_*.md` is reserved exclusively for emergency production fixes.
+
+**All planned work:** Use hierarchical format `[XX-00-00]_name.md` (standalone US) or `[XX-YY-ZZ]_name.md` (Epic/US/Task).
+
+**Numbering:** Assign next available number sequentially (01, 02, 03...). Check existing specs with `ls specs/\[*-00-00\]*` to find the last number.
 
 ## Common Patterns
 

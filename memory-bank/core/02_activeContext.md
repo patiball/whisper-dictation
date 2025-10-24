@@ -3,14 +3,14 @@
 **Current Focus:** 🕐 **Transcription Timestamps & User Feedback**
 
 **Status:** Spec created, ready for implementation
-- **Spec:** specs/20251023_transcription_timestamps.md
+- **Spec:** specs/[10-00-00]_transcription_timestamps.md
 - **Issue:** "Done" message appears instantly, but actual transcription takes 2-5s with no feedback
 - **Solution:** Add timestamps to all messages, clarify pipeline stages
 - **Priority:** High (user-facing feedback issue)
 - **Estimate:** 30-45 minutes
 
 **Następny Priorytet (Next Priority):**
-1. 🔧 **macOS Portability** (specs/20251021_macos_portability_improvements.md)
+1. 🔧 **macOS Portability** (specs/[09-00-00]_macos_portability_improvements.md)
    - C++ version fails on Intel Macs (hard-coded Apple Silicon paths)
    - Priority: High, Estimate: 30-45 minutes
 
