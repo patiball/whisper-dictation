@@ -11,6 +11,11 @@ import subprocess
 import os
 import tempfile
 import wave
+from datetime import datetime
+
+def get_timestamp():
+    """Returns formatted timestamp [HH:MM:SS.mmm]"""
+    return datetime.now().strftime("[%H:%M:%S.%f")[:-3] + "]"
 
 class SpeechTranscriber:
     def __init__(self, model_path, allowed_languages=None):
@@ -63,11 +68,13 @@ class SpeechTranscriber:
             # Domyślnie whisper-cli używa GPU na M1 jeśli dostępny
             
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            
+
             if result.returncode == 0:
+                print(f'{get_timestamp()} Transcription complete')
                 # Pobierz tekst ze stdout
                 text = result.stdout.strip()
                 if text:
+                    print(f'{get_timestamp()} Typing text...')
                     # Wpisz tekst znak po znak
                     is_first = True
                     for element in text:
@@ -219,7 +226,7 @@ class StatusBarApp(rumps.App):
 
     @rumps.clicked('Start Recording')
     def start_app(self, _):
-        print('Listening...')
+        print(f'{get_timestamp()} Listening...')
         self.started = True
         self.menu['Start Recording'].set_callback(None)
         self.menu['Stop Recording'].set_callback(self.stop_app)
@@ -240,13 +247,12 @@ class StatusBarApp(rumps.App):
         if self.timer is not None:
             self.timer.cancel()
 
-        print('Transcribing...')
+        print(f'{get_timestamp()} Transcribing...')
         self.title = "⚡"
         self.started = False
         self.menu['Stop Recording'].set_callback(None)
         self.menu['Start Recording'].set_callback(self.start_app)
         self.recorder.stop()
-        print('Done.\\n')
 
     def update_title(self):
         if self.started:

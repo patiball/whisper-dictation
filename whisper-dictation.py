@@ -10,6 +10,11 @@ import platform
 import subprocess
 import os
 import torch
+from datetime import datetime
+
+def get_timestamp():
+    """Returns formatted timestamp [HH:MM:SS.mmm]"""
+    return datetime.now().strftime("[%H:%M:%S.%f")[:-3] + "]"
 
 class SpeechTranscriber:
     def __init__(self, model, allowed_languages=None, device_manager=None):
@@ -59,7 +64,9 @@ class SpeechTranscriber:
             result = self.model.transcribe(audio_data, **options)
         else:
             result = self.model.transcribe(audio_data, **options)
-            
+
+        print(f'{get_timestamp()} Transcription complete')
+        print(f'{get_timestamp()} Typing text...')
         is_first = True
         for element in result["text"]:
             if is_first and element == " ":
@@ -280,7 +287,7 @@ class StatusBarApp(rumps.App):
 
     @rumps.clicked('Start Recording')
     def start_app(self, _):
-        print('Listening...')
+        print(f'{get_timestamp()} Listening...')
         self.started = True
         self.menu['Start Recording'].set_callback(None)
         self.menu['Stop Recording'].set_callback(self.stop_app)
@@ -301,13 +308,12 @@ class StatusBarApp(rumps.App):
         if self.timer is not None:
             self.timer.cancel()
 
-        print('Transcribing...')
+        print(f'{get_timestamp()} Transcribing...')
         self.title = "⏯"
         self.started = False
         self.menu['Stop Recording'].set_callback(None)
         self.menu['Start Recording'].set_callback(self.start_app)
         self.recorder.stop()
-        print('Done.\n')
 
     def update_title(self):
         if self.started:
