@@ -25,27 +25,27 @@ Core issues addressed:
 
 For implementation details see: `specs/[02-00-00]_whisper_cpp_quality_fix.md` and `specs/[08-00-00]_audio_clipping_warmup_fix.md`
 
-## Current Sprint: Transcription Timestamps (2025-10-23)
+## Current Sprint: Lessons Learned Foundation (2025-10-25)
 
-**Priority**: HIGH
-**Focus**: User feedback and diagnostics for transcription delays
+**Priority**: CRITICAL
+**Focus**: Stability and reliability foundation from macos-dictate
 
 ### Sprint Goals:
-- **Transcription Timestamps** - specs/[10-00-00]_transcription_timestamps.md
-  - Status: Ready for implementation
-  - Issue: "Done" message appears instantly but transcription takes 2-5s (no feedback)
-  - Solution: Add timestamps to all console messages, clarify pipeline stages
+- **Lessons Learned Foundation Epic** - specs/[13-00-00]_lessons_learned_foundation.md
+  - Status: Epic specification ready for implementation
+  - Scope: 5 User Stories (Lock file, Signal handling, Microphone check, Watchdog, Logging, Tests)
+  - Approach: TDD-first implementation in 5 phases
   - Changes: Both whisper-dictation.py and whisper-dictation-fast.py
-  - Estimate: 30-45 minutes
+  - Estimate: 135-170 minutes (2.5-3 hours)
 
 ## Backlog (Priority Order)
 
 | # | Item | Spec | Priority | Estimate |
 |---|------|------|----------|----------|
-| 1 | macOS Portability - Intel Mac support | [09-00-00] | High | 30-45 min |
-| 2 | Lessons Learned Foundation - Stability improvements | [13-00-00] | High | 2-3 hours |
-| 3 | Documentation - English translation of /docs | N/A | Medium | Deferred |
-| 4 | File Renaming - fast.py → metal.py | [11-00-00] | Low | 15-20 min |
-| 5 | Performance Tests - Fix memory usage test | N/A | Low | TBD |
+| 1 | **CURRENT** Lessons Learned Foundation - Stability improvements | [13-00-00] | Critical | 2.5-3 hours |
+| 2 | Transcription Timestamps - User feedback clarity | [10-00-00] | High | 30-45 min |
+| 3 | macOS Portability - Intel Mac support for C++ | [09-00-00] | High | 30-45 min |
+| 4 | Documentation - English translation of /docs | N/A | Medium | Deferred |
+| 5 | File Renaming - fast.py → metal.py | [11-00-00] | Low | 15-20 min |
 
 **For detailed backlog see:** `memory-bank/issues-backlog.md`
