@@ -1,6 +1,6 @@
 # Issues & Backlog - Whisper Dictation C++ Version
 
-**Last Updated**: 2025-10-20  
+**Last Updated**: 2025-10-25  
 **Status**: Active Issues Identified  
 
 ---
@@ -156,6 +156,51 @@
 - [ ] Measure actual transcription time for 10s, 20s, 30s audio
 - [ ] Compare: Python version vs C++ version
 - [ ] Verify Metal GPU is actually being used during transcription
+
+---
+
+## 💡 FEATURE REQUESTS & ENHANCEMENTS
+
+### Enhancement 1: Expandable Application Menu
+**Status**: NEW - Backlog
+**Priority**: Medium
+**Description**: Add runtime configuration options to the application menu for better UX control
+
+**Requested Features**:
+1. **Recording Time Limit Control**
+   - Current: Hardcoded 30s default, only changeable via CLI args
+   - Desired: Menu option to increase limit (60s, 120s, custom)
+   - Benefit: User doesn't need terminal knowledge
+
+2. **Model Selection Menu**
+   - Current: Fixed model selection via CLI (`--model base`, `--model medium`)
+   - Desired: Menu option to switch between models (base, small, medium)
+   - Benefit: Runtime model switching without restart
+
+3. **Other Settings (To Research)**
+   - Language selection (auto, EN, PL, etc.)
+   - Mic sensitivity/input device selection
+   - Output format/text processing options
+   - Hotkey customization
+   - Log verbosity level
+
+**Implementation Approach**:
+- [ ] Research: What settings are user-configurable and valuable?
+- [ ] Design: Menu structure for Rumps status bar app
+- [ ] Implement: Add configuration UI to StatusBarApp
+- [ ] Persist: Save user preferences to config file (~/.whisper-dictation-config.json?)
+- [ ] Test: Ensure menu changes take effect without restart where possible
+
+**Related Code**:
+- `whisper-dictation.py:StatusBarApp` - GUI menu logic
+- `whisper-dictation-fast.py:StatusBarApp` - GUI menu logic (C++ version)
+- Config handling: May need to add new config module
+
+**Acceptance Criteria**:
+- [ ] User can change recording time limit from menu (instant effect on next recording)
+- [ ] User can select model from menu (instant effect on next recording)
+- [ ] Settings persist across app restarts
+- [ ] Both Python and C++ versions support all new menu options
 
 ---
 
