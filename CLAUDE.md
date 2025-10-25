@@ -358,6 +358,68 @@ Single, concrete change to be made
 - Write test cases in spec (those go in tests/)
 - Create 400-line specs (use Epic/US/Task instead)
 
+#### Abstraction & Durability Guidelines
+
+**Why This Matters**: Specs must remain valid across code refactoring, file path changes, and version updates. "Brittle" specs become obsolete quickly and create maintenance burden.
+
+**Key Principle**: Specs describe **BEHAVIOR and REQUIREMENTS**, not implementation details. A spec should be valid 2 years from now even if the codebase changes significantly.
+
+**DO - Write Durable Specs:**
+
+- **Use abstraction**: "Call setup_lock_file() at application startup" (not "add code at line 245")
+- **Use structural names**: "In the Recorder class" (not "in whisper-dictation.py line 123")
+- **Describe outcomes**: "User cannot start second instance" (not "lock file exists at ~/.whisper-dictation.lock")
+- **Use relative paths**: "in user's home directory" (not "~/.whisper-dictation.lock")
+- **Separate concerns**: Separate "WHAT must happen" from "WHERE it currently happens"
+- **Add context diagrams**: Show relationships without implementation details
+
+**DON'T - Avoid Brittle Specs:**
+
+- ❌ **Line numbers**: "Line 245 in fast.py" → ✅ "In StatusBarApp.start_recording()"
+- ❌ **Exact file paths**: "~/.whisper-dictation.log" → ✅ "Log file in user's home directory"
+- ❌ **Variable names as requirements**: "Set watchdog_active = False" → ✅ "Stop watchdog monitoring"
+- ❌ **Hard-coded values as constraints**: "5 backup files" → ✅ "Configurable number of backups (default 5)"
+- ❌ **Current code structure as requirement**: "In Recorder._record_impl()" → ✅ "During audio recording loop"
+
+**Implementation Notes Pattern**:
+
+For specs that DO need implementation context (line numbers, current structure), use a separate section:
+
+```markdown
+## Implementation Context (Not Part of Spec)
+
+**Current Location**: `whisper-dictation.py`, class `Recorder`, method `_record_impl()`
+**Current Variables**: `frames_per_buffer`, `watchdog_active`
+**Note**: These implementation details change. The spec above remains stable.
+
+**Current Line References** (for review purposes only):
+- Lock file creation: whisper-dictation.py:45-50
+- Signal handler registration: whisper-dictation.py:78-85
+```
+
+This allows developers to find code quickly during review, but keeps the spec itself stable.
+
+**When to Apply Abstraction**:
+
+| Spec Type | Apply Abstraction | Rationale |
+|-----------|------------------|-----------|
+| Epic (XX-00-00) | **REQUIRED** | Long-lived, multiple refactors expected |
+| User Story (XX-YY-00) | **REQUIRED** | Developers change implementation details |
+| Task (XX-YY-ZZ) | **Optional** | Short-lived, usually 1 dev touches it |
+| Bug Fix | **Optional** | One-off, may not need future updates |
+| Hotfix (YYYYMMDD_*.md) | **Optional** | Emergency, durability less important |
+
+**Checklist for Durable Specs**:
+
+Before finalizing a spec, ask:
+- [ ] Does spec mention specific line numbers? → Move to "Implementation Notes"
+- [ ] Does spec hardcode file paths? → Use "user's home directory" instead
+- [ ] Does spec prescribe variable names? → Describe outcome instead
+- [ ] Does spec assume current code structure? → Describe requirement abstractly
+- [ ] Would spec be valid if codebase restructured tomorrow? → If not, make it more abstract
+
+---
+
 #### Important Notes
 
 **Hotfixes only:** Date-based format `YYYYMMDD_*.md` is reserved exclusively for emergency production fixes.
