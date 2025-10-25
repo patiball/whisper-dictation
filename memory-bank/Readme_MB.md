@@ -14,3 +14,4 @@ This file defines the structure of the Memory Bank for the whisper-dictation pro
 ## Optional Extensions
 
 - **specs/**: Specifications directory.
+- **lessons_learned/**: Lessons learned and recommendations.

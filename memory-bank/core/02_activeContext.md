@@ -29,3 +29,8 @@
 *Poprzedni kontekst (zakończony):*
 *✅ Implementacja specyfikacji testów dla C++ - ZAKOŃCZONA*
 *Identyfikacja głównej przyczyny problemów z jakością w implementacji `whisper.cpp`.*
+
+---
+
+## Ostatnie aktualizacje Memory Bank
+- Utworzono plik `lessons_learned/recommendations_from_macos_dictate.md` zawierający rekomendacje dotyczące stabilności i dojrzałości projektu, oparte na analizie `macos-dictate`.
