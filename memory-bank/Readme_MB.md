@@ -11,7 +11,10 @@ This file defines the structure of the Memory Bank for the whisper-dictation pro
 - **core/04_systemPatterns.md**: Architecture and key patterns.
 - **core/05_techContext.md**: Technologies and setup requirements.
 
-## Optional Extensions
+## Additional Directories
 
-- **specs/**: Specifications directory.
-- **lessons_learned/**: Lessons learned and recommendations.
+- **specs/**: All feature specifications ([XX-YY-ZZ]_name.md hierarchical naming)
+  - Epics ([XX-00-00])
+  - User Stories ([XX-YY-00])
+  - Tasks ([XX-YY-ZZ])
+- **lessons_learned/**: Lessons learned and recommendations from previous implementations

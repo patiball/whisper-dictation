@@ -39,7 +39,7 @@ This file provides guidance for Claude Code when working with this repository, w
 
 ## Specifications
 
-The `specs/` directory contains feature specifications following hierarchical naming: `[XX-YY-ZZ]_name.md`
+The `memory-bank/specs/` directory contains all feature specifications following hierarchical naming: `[XX-YY-ZZ]_name.md`
 
 **Hierarchy:**
 - **[XX-00-00]**: Epic or Standalone User Story
