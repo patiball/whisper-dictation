@@ -24,13 +24,33 @@ Ten epic implementuje 5 filarów stabilności i profesjonalizmu oprogramowania z
 
 ---
 
-## User Stories (Planned)
+## User Stories & Tasks Hierarchy
 
-- [ ] **[13-01-00]** Lock File + Signal Handling - Zapobieganie konfliktom wieloinstancji i prawidłowe czyszczenie
-- [ ] **[13-02-00]** Microphone Proactive Check - Test dostępu do mikrofonu na starcie
-- [ ] **[13-03-00]** Audio Stream Watchdog - Monitorowanie i restart zawieszenia strumienia
-- [ ] **[13-04-00]** Enhanced Logging & Diagnostics - Rozszerzone logi dla diagnostyki
-- [ ] **[13-05-00]** Lessons Learned Tests Suite - Kompleksowe testy TDD dla wszystkich filarów
+### [13-01-00] Lock File + Signal Handling
+- [ ] [13-01-01] Lock File Mechanism - Create/validate/cleanup lock files
+- [ ] [13-01-02] Signal Handlers - Register and execute graceful shutdown
+- [ ] [13-01-03] Lock File Tests - TDD test suite
+
+### [13-02-00] Microphone Proactive Check
+- [ ] [13-02-01] Microphone Verification Function - Capability check on startup
+- [ ] [13-02-02] Microphone Check Tests - Test suite
+
+### [13-03-00] Audio Stream Watchdog
+- [ ] [13-03-01] Heartbeat Tracking - Update heartbeat after audio reads
+- [ ] [13-03-02] Stall Detection - Monitor loop and detection logic
+- [ ] [13-03-03] Stream Recovery - Stream restart mechanism
+- [ ] [13-03-04] Watchdog Tests - TDD test suite
+
+### [13-04-00] Enhanced Logging & Diagnostics
+- [ ] [13-04-01] Logging Setup - RotatingFileHandler configuration
+- [ ] [13-04-02] Logging Events - Key events and log levels
+- [ ] [13-04-03] Logging Tests - Test suite
+
+### [13-05-00] Lessons Learned Tests Suite
+- [ ] [13-05-01] Unit Tests - Test structure and utilities
+- [ ] [13-05-02] Integration Tests - End-to-end scenarios
+- [ ] [13-05-03] Manual Tests - Manual test procedures
+- [ ] [13-05-04] Test Infrastructure - CI/CD, fixtures, configuration
 
 ---
 

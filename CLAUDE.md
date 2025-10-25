@@ -60,6 +60,96 @@ The `specs/` directory contains feature specifications following hierarchical na
 - DON'T write test cases in spec (those go in tests/)
 - DON'T create 400-line specs (use Epic/US/Task hierarchy)
 
+#### User Story Format (80-120 lines)
+
+```markdown
+# User Story: [Title]
+
+**ID**: XX-YY-00
+**Epic**: [XX-00-00] Epic name (if applicable)
+**Priority**: High | Medium | Low
+**Complexity**: Simple | Medium | Complex
+**Estimate**: [Total minutes - sum of related Tasks]
+
+## User Story
+As a [role], I want [feature], so that [benefit]
+
+## Acceptance Criteria
+- [ ] Main criterion 1 (testable)
+- [ ] Main criterion 2 (testable)
+- [ ] Main criterion 3 (testable)
+
+## Behavior Examples
+Brief examples showing expected behavior before/after
+
+## Key Assumptions
+- Main assumption 1 and validation
+- Main assumption 2 and validation
+
+## Related Tasks
+- [XX-YY-01] Task 1 name
+- [XX-YY-02] Task 2 name
+
+## Implementation Context (Not Part of Spec)
+**Affected Components**: Brief list
+**Related Systems**: Brief list
+```
+
+**When to create User Story:**
+- Feature/requirement is too large for single implementation session (>30 minutes)
+- Multiple distinct tasks needed
+- Clear user value proposition
+- Can be estimated in hours not minutes
+
+#### Task Format (60-80 lines)
+
+```markdown
+# Task: [Specific Objective]
+
+**ID**: XX-YY-ZZ
+**User Story**: [XX-YY-00] Story name
+**Complexity**: Simple | Medium
+**Estimate**: 15-30 minutes
+
+## What
+Single, concrete objective to implement.
+
+## Design Approach
+Key design decisions and approach (not prescriptive code)
+
+## Failure Modes
+- Key failure mode 1: Detection, Consequence, Prevention, Mitigation
+- Key failure mode 2: Detection, Consequence, Prevention, Mitigation
+
+## Acceptance Criteria
+- [ ] Specific testable outcome 1
+- [ ] Specific testable outcome 2
+
+## Implementation Context (Not Part of Spec)
+**Current Location**: Brief reference to where in codebase
+**Key Variables/Functions**: Current patterns
+```
+
+**When to create Task:**
+- User Story > 150 lines
+- Implementation estimate > 30 minutes
+- Multiple distinct implementation phases
+- Technical details too lengthy for User Story section
+
+**Task Sizing Rules:**
+- If Task estimate > 30 minutes → split further or re-scope
+- Each Task should be independently testable
+- Task Tests should all pass independently of other Tasks in same US
+
+#### Sizing Guidelines
+
+| Type | Lines | Time | When |
+|------|-------|------|------|
+| Simple Task | 60-70 | 15-20 min | Single focused change |
+| Medium Task | 70-80 | 20-30 min | Multi-step implementation |
+| User Story | 80-120 | 30-120 min | Multiple Tasks needed |
+| Epic | 150-250 | 2-8 hours | Multiple User Stories |
+
 #### Abstraction & Durability Guidelines
 
 **Why This Matters**: Specs must remain valid across code refactoring, file path changes, and version updates. "Brittle" specs become obsolete quickly and create maintenance burden.
