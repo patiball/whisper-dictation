@@ -42,78 +42,69 @@ Projekt `macos-dictate` rozwiązuje to poprzez:
 ## What We're Building
 
 ### Lock File Mechanism
-```python
-LOCK_FILE = Path.home() / ".whisper-dictation.lock"
 
-def setup_lock_file():
-    """Check if already running, create lock file"""
-    if LOCK_FILE.exists():
-        old_pid = int(LOCK_FILE.read_text().strip())
-        if psutil.pid_exists(old_pid):
-            logging.error(f"Already running (PID {old_pid}), exiting")
-            sys.exit(1)
-    LOCK_FILE.write_text(str(os.getpid()))
-    logging.info("Lock file created")
+**Core Behavior:**
+1. On application startup, check if lock file exists
+2. If lock file exists, verify the process it references is still alive
+3. If process is alive, exit with error message (another instance is running)
+4. If process is dead, remove stale lock file and continue
+5. Create new lock file with current process ID
+6. On shutdown, remove lock file
 
-def cleanup_lock_file():
-    """Remove lock file at shutdown"""
-    if LOCK_FILE.exists():
-        LOCK_FILE.unlink()
-        logging.info("Lock file removed")
-```
+**Lock File Content:**
+- Simple text file containing the process ID of the running instance
+- Located in user's home directory with hidden file naming convention
 
 ### Signal Handlers
-```python
-def signal_exit_handler(signum, frame):
-    """Handle Ctrl+C, SIGTERM gracefully"""
-    logging.info(f"Signal {signum} received, shutting down...")
 
-    # Set flags to stop recording/transcribing
-    global watchdog_active
-    watchdog_active = False
+**Core Behavior:**
+1. Register handlers for common termination signals (Ctrl+C, SIGTERM, etc.)
+2. On signal receipt, log the shutdown event
+3. Stop all monitoring threads and recording operations
+4. Execute cleanup operations in correct order
+5. Release all file locks and resources
+6. Exit cleanly without leaving processes or files behind
 
-    # Cleanup in reverse order
-    cleanup_audio_stream()
-    cleanup_lock_file()
-
-    logging.info("Shutdown complete")
-    sys._exit(0)
-
-# Register handlers
-signal.signal(signal.SIGINT, signal_exit_handler)   # Ctrl+C
-signal.signal(signal.SIGTERM, signal_exit_handler)  # kill -TERM
-```
+**Cleanup Order:**
+- Stop monitoring/recording operations
+- Release audio resources
+- Remove lock file
+- Log final shutdown message
+- Exit with appropriate code
 
 ---
 
-## Assumptions & Validation
+## Assumptions & Validations
 
-### A1: PID File Based Locking is Sufficient
-- Assumption: File-based PID checking is safe for this use case
-- Validation: Verify `psutil.pid_exists()` correctly detects dead processes in macOS
-- Risk: PID reuse (unlikely but possible) - mitigation: check lock file timestamp
+### A1: Process Validity Can Be Determined from Lock File
+- **Assumption**: Lock file contains sufficient information to determine if original process still exists
+- **Validation**: PID lookup mechanism correctly identifies dead processes on target OS
+- **Risk**: PID reuse could allow new process to be blocked by very old lock file
+- **Mitigation**: Lock file should include timestamp to detect stale entries
 
-### A2: Signal Handlers Receive Control
-- Assumption: SIGINT/SIGTERM handlers will be called before hard shutdown
-- Validation: Manual test with Ctrl+C and `kill -TERM $(pgrep whisper-dictation)`
-- Risk: If process hangs in C call, signal may not be delivered - mitigation: user can force-kill
+### A2: Signal Handlers Receive Control for Graceful Shutdown
+- **Assumption**: Operating system will deliver termination signals before hard process kill
+- **Validation**: Test graceful shutdown with both programmatic and user-initiated signals
+- **Risk**: Process hanging in system calls could prevent signal delivery
+- **Mitigation**: Provide user documentation for force-kill procedures
 
-### A3: atexit Handlers Run Before Exit
-- Assumption: Python's atexit module is reliable for cleanup
-- Validation: Test that functions registered with atexit are called
-- Risk: If signal handler calls `os._exit()`, atexit bypassed - mitigation: use `sys.exit()` instead
+### A3: Cleanup Handlers Execute in Correct Order
+- **Assumption**: Cleanup handlers registered properly and execute before process termination
+- **Validation**: Verify all registered cleanup handlers execute and lock file is removed
+- **Risk**: Conflicting cleanup operations (e.g., atexit vs signal handlers) could cause issues
+- **Mitigation**: Use guard flags to prevent duplicate cleanup execution
 
 ---
 
 ## Acceptance Criteria
 
 ### Lock File Behavior
-- [ ] **A1** Lock file created at `~/.whisper-dictation.lock` on startup
-- [ ] **A2** Lock file contains current process PID
-- [ ] **A3** On startup, if lock file exists with valid PID: app exits with message "Already running (PID X)"
-- [ ] **A4** On startup, if lock file exists with dead PID: app continues and updates lock file
-- [ ] **A5** Lock file removed when application exits gracefully (Ctrl+C, SIGTERM)
-- [ ] **A6** Lock file persists if app crashes (so user must manually clean or restart)
+- [ ] **A1** Lock file created in user's home directory on startup
+- [ ] **A2** Lock file contains current process identifier
+- [ ] **A3** On startup, if lock file references active process: app exits with error message
+- [ ] **A4** On startup, if lock file references dead process: app removes stale lock and continues
+- [ ] **A5** Lock file removed when application shuts down gracefully
+- [ ] **A6** Lock file persists if app crashes without cleanup (stale lock scenario)
 
 ### Signal Handling
 - [ ] **S1** Ctrl+C causes graceful shutdown (no errors)
@@ -199,138 +190,22 @@ Exit code 0 (success), lock file gone.
 
 ---
 
-## Design & Implementation
+## Design Principles
 
-### File Structure
-```
-whisper-dictation.py (and fast version)
-├── Imports
-│   ├── psutil (for PID checking)
-│   ├── signal (for handlers)
-│   ├── atexit (for cleanup)
-│   └── logging (for messages)
-│
-├── Constants
-│   └── LOCK_FILE = Path.home() / ".whisper-dictation.lock"
-│
-├── Functions (Global)
-│   ├── setup_lock_file()         [NEW]
-│   ├── cleanup_lock_file()       [NEW]
-│   ├── cleanup_audio_stream()    [NEW]
-│   └── signal_exit_handler()     [NEW]
-│
-├── Main Execution
-│   ├── setup_lock_file()         [CALL ON STARTUP]
-│   ├── signal.signal(..., handler)  [REGISTER ON STARTUP]
-│   ├── atexit.register(cleanup)  [REGISTER ON STARTUP]
-│   └── try/except main loop
-│
-└── Classes (Unchanged)
-    ├── SpeechTranscriber
-    ├── Recorder
-    ├── StatusBarApp
-    └── ...
-```
+### Modular Cleanup
+- Separate concerns: Lock file cleanup, audio resource cleanup, logging
+- Cleanup functions can be called independently
+- Guard against repeated cleanup attempts
 
-### Pseudo-Code
+### Signal Safety
+- Signal handlers should be minimal and non-blocking
+- Use atomic flags to communicate with main loop
+- Ensure all registered handlers execute before process termination
 
-**Module-level (top of file):**
-```python
-import psutil
-import signal
-import atexit
-import os
-import sys
-import logging
-from pathlib import Path
-
-LOCK_FILE = Path.home() / ".whisper-dictation.lock"
-
-def setup_lock_file():
-    """
-    Check if already running, create/update lock file.
-    Exit if another instance is alive.
-    """
-    if LOCK_FILE.exists():
-        try:
-            old_pid = int(LOCK_FILE.read_text().strip())
-            if psutil.pid_exists(old_pid):
-                logging.error(f"Another instance is already running (PID {old_pid})")
-                print(f"Another instance is already running (PID {old_pid}), exiting.")
-                sys.exit(1)
-            else:
-                logging.warning(f"Stale lock file found (PID {old_pid} is dead), removing")
-        except (ValueError, OSError) as e:
-            logging.warning(f"Invalid lock file: {e}, removing")
-
-    # Write current PID to lock file
-    LOCK_FILE.write_text(str(os.getpid()))
-    logging.info("Lock file created")
-
-def cleanup_lock_file():
-    """Remove lock file at shutdown."""
-    try:
-        if LOCK_FILE.exists():
-            LOCK_FILE.unlink()
-            logging.info("Lock file removed")
-    except OSError as e:
-        logging.warning(f"Failed to remove lock file: {e}")
-
-def cleanup_audio_stream():
-    """Close audio stream if open."""
-    global recorder
-    if recorder is not None:
-        try:
-            recorder.stop()
-            logging.info("Audio stream stopped")
-        except Exception as e:
-            logging.warning(f"Error stopping recorder: {e}")
-
-def signal_exit_handler(signum, frame):
-    """Handle signals gracefully."""
-    logging.info(f"Signal {signum} received, shutting down...")
-
-    # Set global flags to stop loops
-    global watchdog_active, recording, transcribing
-    watchdog_active = False
-    recording = False
-    transcribing = False
-
-    # Call cleanup functions (in order)
-    cleanup_audio_stream()
-    cleanup_lock_file()
-
-    logging.info("Shutdown complete")
-    sys._exit(0)
-```
-
-**In main execution (before the try/except loop):**
-```python
-if __name__ == "__main__":
-    # Setup logging first
-    logging.basicConfig(...)
-
-    # Lock file handling
-    setup_lock_file()
-
-    # Register cleanup on normal exit
-    atexit.register(cleanup_lock_file)
-    atexit.register(cleanup_audio_stream)
-
-    # Register signal handlers
-    signal.signal(signal.SIGINT, signal_exit_handler)
-    signal.signal(signal.SIGTERM, signal_exit_handler)
-
-    # Rest of initialization
-    app = StatusBarApp()
-
-    try:
-        # Main event loop
-        app.run()
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}", exc_info=True)
-        sys.exit(1)
-```
+### Error Handling
+- File operations should gracefully handle missing files (don't error on re-cleanup)
+- Process validation should handle invalid lock file content
+- Cleanup should not prevent shutdown (errors logged but not fatal)
 
 ---
 
@@ -509,170 +384,86 @@ class TestMultiInstanceIntegration:
 
 ---
 
-## File Changes Required
+## Affected Components
 
-### `whisper-dictation.py`
+The following components require modifications to implement lock file and signal handling:
 
-**Add at top (after imports):**
-```python
-import psutil
-import signal
-import atexit
-from pathlib import Path
+- **Application Entry Point**: Initialize lock file on startup before main loop
+- **Main Event Loop**: Register signal handlers on initialization
+- **Shutdown Path**: Ensure cleanup handlers are registered and execute on exit
+- **Both Versions**: Changes must be synchronized between Python and C++ entry points
+- **Dependencies**: Verify required process management and signal handling libraries available
 
-LOCK_FILE = Path.home() / ".whisper-dictation.lock"
-```
+### Integration Points
 
-**Add these functions (before main class definitions):**
-```python
-def setup_lock_file():
-    """Check if already running, create lock file"""
-    if LOCK_FILE.exists():
-        try:
-            old_pid = int(LOCK_FILE.read_text().strip())
-            if psutil.pid_exists(old_pid):
-                logging.error(f"Another instance is already running (PID {old_pid})")
-                print(f"Another instance is already running (PID {old_pid}), exiting.")
-                sys.exit(1)
-            else:
-                logging.warning(f"Stale lock file found (PID {old_pid} is dead), removing")
-        except (ValueError, OSError) as e:
-            logging.warning(f"Invalid lock file: {e}, removing")
-
-    LOCK_FILE.write_text(str(os.getpid()))
-    logging.info("Lock file created")
-
-def cleanup_lock_file():
-    """Remove lock file at shutdown"""
-    try:
-        if LOCK_FILE.exists():
-            LOCK_FILE.unlink()
-            logging.info("Lock file removed")
-    except OSError as e:
-        logging.warning(f"Failed to remove lock file: {e}")
-
-def cleanup_audio_stream():
-    """Close audio stream if open"""
-    global recorder
-    if 'recorder' in globals() and recorder is not None:
-        try:
-            recorder.stop()
-            logging.info("Audio stream stopped")
-        except Exception as e:
-            logging.warning(f"Error stopping recorder: {e}")
-
-def signal_exit_handler(signum, frame):
-    """Handle signals gracefully"""
-    logging.info(f"Signal {signum} received, shutting down...")
-    global watchdog_active, recording, transcribing
-    watchdog_active = False
-    if 'recording' in globals():
-        recording = False
-    if 'transcribing' in globals():
-        transcribing = False
-    cleanup_audio_stream()
-    cleanup_lock_file()
-    logging.info("Shutdown complete")
-    os._exit(0)
-```
-
-**In main block (before app.run()):**
-```python
-if __name__ == "__main__":
-    setup_lock_file()
-    atexit.register(cleanup_lock_file)
-    atexit.register(cleanup_audio_stream)
-    signal.signal(signal.SIGINT, signal_exit_handler)
-    signal.signal(signal.SIGTERM, signal_exit_handler)
-
-    app = StatusBarApp()
-    app.run()
-```
-
-### `whisper-dictation-fast.py`
-
-**Identyczne zmiany jak wyżej** (must keep both versions in sync)
-
-### `requirements.txt`
-
-Verify `psutil` is already there (should be):
-```
-psutil>=5.9.0
-```
+1. **On Startup**: Lock file created before any other initialization (earliest possible point)
+2. **Before Main Loop**: Signal handlers registered for graceful termination
+3. **During Shutdown**: Cleanup handlers execute in reverse order of registration
+4. **Error Path**: Cleanup executed even if exception occurs before normal exit
 
 ---
 
-## Brittleness Analysis
+## Failure Modes & Durability
 
-### Failure Mode 1: Lock File on Shared Storage
-**Scenario**: User home on NFS → lock file flaky
-**Detection**: Lock file write timeouts
-**Consequence**: Race condition where two instances start
-**Prevention**: Use reliable check (stat before write)
-**Recovery**: Retry lock file creation 3x before giving up
-**Mitigation**: Add retry logic with exponential backoff
+### Failure Mode 1: Concurrent File System Access
+**Scenario**: Multiple processes attempt lock file creation simultaneously
+- **Detection**: Race condition where both processes see file doesn't exist
+- **Consequence**: Both instances start, microphone conflicts occur
+- **Prevention**: Atomic lock file operations with validation
+- **Recovery**: File system semantics prevent simultaneous writes
+- **Mitigation**: Verify lock file content after creation, check PID again after write
 
-### Failure Mode 2: Permission Denied Removing Lock
-**Scenario**: Running as different user, can't delete lock file from previous user
-**Detection**: OSError on unlink
-**Consequence**: Cleanup incomplete, stale lock persists
-**Prevention**: Check permissions before creating lock file
-**Recovery**: Log warning, don't crash
-**Mitigation**: Implemented in cleanup_lock_file() with try/except
+### Failure Mode 2: Permission Issues on Lock File
+**Scenario**: Lock file ownership changed (e.g., different user or elevated privileges)
+- **Detection**: Permission error when attempting cleanup
+- **Consequence**: Stale lock remains but non-fatal (next startup resolves it)
+- **Prevention**: Lock file in user's home directory avoids cross-user issues
+- **Recovery**: Graceful error handling in cleanup (log warning, continue)
+- **Mitigation**: Document sudo usage not supported
 
-### Failure Mode 3: Signal Handler Interrupts During Cleanup
-**Scenario**: User presses Ctrl+C twice during shutdown
-**Detection**: Signal handler reentrancy
-**Consequence**: Cleanup called twice, potential race condition
-**Prevention**: Set flag before calling cleanup
-**Recovery**: Check flag, skip if already cleaning
-**Mitigation**: Use atomic flag (e.g., `cleanup_in_progress`)
+### Failure Mode 3: Duplicate Cleanup Execution
+**Scenario**: Both signal handler and atexit handler attempt cleanup
+- **Detection**: Second cleanup attempt on already-removed lock file
+- **Consequence**: File not found error (harmless but logs noise)
+- **Prevention**: Guard flag prevents reentrant execution
+- **Recovery**: Cleanup operations idempotent (remove non-existent files is safe)
+- **Mitigation**: Use guard flag `_cleanup_done` to prevent duplicate execution
 
-### Failure Mode 4: atexit vs signal Handler
-**Scenario**: Both atexit and signal handler try to cleanup lock file
-**Detection**: Double removal
-**Consequence**: Error in logs but harmless
-**Prevention**: Use flag to prevent double cleanup
-**Recovery**: Already handled with try/except
-**Mitigation**: Add guard flag `_cleanup_done`
+### Failure Mode 4: PID Reuse by Operating System
+**Scenario**: Old process PID recycled for completely unrelated process
+- **Detection**: New unrelated process has same PID as old lock file
+- **Consequence**: New whisper-dictation instance blocked incorrectly
+- **Prevention**: Include timestamp in lock file to detect stale entries
+- **Recovery**: Treat lock file as stale if creation time significantly in past
+- **Mitigation**: Add timestamp validation (consider >1 hour old as stale)
 
-### Failure Mode 5: Lock File PID Reuse
-**Scenario**: Old PID recycled by OS for new process
-**Detection**: Different process with same old PID
-**Consequence**: Block new instance of whisper-dictation
-**Prevention**: Check PID + lock file timestamp (age < 1 hour)
-**Recovery**: Assume stale if >1 hour old
-**Mitigation**: Add timestamp check in lock file content
-
-### Failure Mode 6: Running as sudo
-**Scenario**: `sudo python whisper-dictation.py` → lock file owned by root
-**Detection**: Permission denied for next user
-**Consequence**: Second instance (different user) can't start
-**Prevention**: Document not to use sudo
-**Recovery**: Manual cleanup `sudo rm ~/.whisper-dictation.lock`
-**Mitigation**: Add check for euid, warn if running as root
+### Failure Mode 5: Signal During Critical Cleanup
+**Scenario**: User sends multiple signals (e.g., repeated Ctrl+C) during shutdown
+- **Detection**: Signal handler called while previous handler still executing
+- **Consequence**: Potential race condition in cleanup
+- **Prevention**: Use atomic flags for cleanup coordination
+- **Recovery**: Guard flag ensures cleanup executes once
+- **Mitigation**: Signal handler checks flag before proceeding
 
 ---
 
-## Rollout Strategy
+## Implementation Approach
 
-### Phase 1: Development & Testing
-1. Write all test cases first (TDD)
-2. Implement lock file mechanism
-3. Implement signal handlers
-4. Run pytest tests locally
-5. Manual test: 2 instances scenario
-6. Manual test: Ctrl+C shutdown
+### TDD-First Testing
+- Write comprehensive test suite before implementation
+- Test coverage includes: normal operation, edge cases, error conditions
+- Integration tests verify behavior with real process spawning
 
-### Phase 2: Integration
-1. Merge with other Lessons Learned features
-2. Run full test suite
-3. Manual end-to-end test
+### Phased Implementation
+1. **Lock File Mechanism**: Implement PID-based mutual exclusion
+2. **Signal Handlers**: Register and execute cleanup handlers
+3. **Integration**: Verify both mechanisms work together without conflicts
 
-### Phase 3: Validation
-1. Monitor for lock file issues in real usage
-2. Collect feedback
-3. Adjust if needed
+### Validation Strategy
+- Unit tests verify lock file creation, validation, cleanup
+- Integration tests verify multi-instance scenarios
+- Manual tests verify user-visible behavior (startup messages, cleanup)
+- Stress tests verify no resource leaks
 
 ---
 
@@ -689,30 +480,12 @@ psutil>=5.9.0
 
 ---
 
-## Documentation Updates Required
+## Documentation Requirements
 
-### README.md - Add Section
-
-```markdown
-### Troubleshooting
-
-#### "Another instance is already running (PID X)"
-
-If you see this error when starting whisper-dictation, it means an instance is already running.
-
-**Solutions:**
-1. If it's running, kill it: `pkill -f whisper-dictation`
-2. If it crashed, remove the lock file: `rm ~/.whisper-dictation.lock`
-3. To see if process is alive: `ps aux | grep whisper-dictation`
-
-#### Stale Lock File
-
-If the app crashed and the lock file wasn't cleaned up:
-```bash
-rm ~/.whisper-dictation.lock
-```
-(The app checks if the PID is alive, so this shouldn't block startup)
-```
+- **Troubleshooting Guide**: Explain "already running" error and how to resolve
+- **Lock File Location**: Document where lock file is stored
+- **Manual Cleanup**: Document how to manually remove stale lock file if needed
+- **Multi-Instance Behavior**: Clarify that only one instance can run at a time
 
 ---
 
@@ -728,13 +501,25 @@ rm ~/.whisper-dictation.lock
 
 ---
 
-## Dependencies
+## Technical Requirements
 
-- `psutil>=5.9.0` (already in requirements)
-- `signal` (stdlib)
-- `atexit` (stdlib)
-- `pathlib` (stdlib)
-- `logging` (stdlib)
+- **Process Management Capability**: Ability to check if a process with given ID is still alive
+- **Signal Handling**: Operating system support for signal handlers (SIGINT, SIGTERM, etc.)
+- **Cleanup Registration**: Mechanism to register cleanup handlers on program exit
+- **File Operations**: Write, read, and delete files in user's home directory
+- **No New External Dependencies**: Use existing or stdlib modules
 
-No new external dependencies.
+---
+
+## Implementation Context (Not Part of Spec)
+
+**Current Implementation Structure:**
+- Lock file path: `~/.whisper-dictation.lock` (user's home directory)
+- Process checking: `psutil.pid_exists()` for PID validation
+- Signal registration: `signal.signal()` for SIGINT/SIGTERM handlers
+- Cleanup registration: `atexit.register()` for exit-time cleanup
+- Cleanup in signal handler: `os._exit()` for immediate termination
+- Guard flag: `cleanup_in_progress` to prevent reentrant cleanup
+
+**Note**: This implementation context documents current choices which may evolve. The specification above describes stable requirements independent of these implementation details.
 

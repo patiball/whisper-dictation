@@ -147,69 +147,28 @@ Check runs only once on startup.
 
 ---
 
-## Design & Implementation
+## Design Approach
 
-### Function Signature
-```python
-def test_microphone_access():
-    """
-    Test if microphone is accessible.
-    Logs result, does not raise exception.
-    """
-    try:
-        sd.check_input_settings()
-        logging.info("Microphone access test passed")
-    except Exception as e:
-        logging.warning(f"Microphone access test failed: {e}")
-```
+### Microphone Capability Verification
 
-### Placement in Code
-```
-whisper-dictation.py
-├── Imports
-├── Constants
-├── Functions
-│   ├── setup_lock_file()
-│   ├── cleanup_lock_file()
-│   ├── test_microphone_access()    [NEW]
-│   └── signal_exit_handler()
-│
-└── Main Block
-    ├── setup_lock_file()
-    ├── test_microphone_access()    [NEW - CALL HERE]
-    ├── atexit.register(...)
-    ├── signal.signal(...)
-    └── app.run()
-```
+**Core Behavior:**
+1. Single verification function that tests microphone capability
+2. Function queries audio system for available input devices
+3. Attempts to validate default input device settings
+4. Gracefully handles all failure cases without stopping startup
+5. Logs result at appropriate level (INFO for success, WARNING for failure)
 
-### Pseudo-Code
+### Integration Point
 
-**Add this function (next to other setup functions):**
-```python
-def test_microphone_access():
-    """
-    Test if microphone is accessible.
-    Logs result at WARNING level if failed, INFO if passed.
-    """
-    try:
-        import sounddevice as sd
-        sd.check_input_settings()
-        logging.info("Microphone access test passed")
-        print("[Microphone access OK]")
-    except Exception as e:
-        logging.warning(f"Microphone access test failed: {e}")
-        print(f"[WARNING] Microphone access failed: {e}")
-```
+**Timing:** Called during application initialization
+- After lock file setup but before main event loop
+- Early in startup sequence to provide immediate feedback
+- Called exactly once per startup (not on every recording)
 
-**In main block (after setup_lock_file, before setting up event listeners):**
-```python
-if __name__ == "__main__":
-    setup_lock_file()
-    test_microphone_access()    # [NEW]
-    atexit.register(cleanup_lock_file)
-    # ... rest of setup ...
-    app.run()
-```
+**Error Handling:**
+- No exceptions propagate to caller
+- All errors logged and communicated to user
+- Application continues regardless of result
 
 ---
 
@@ -317,134 +276,87 @@ class TestMicrophoneCheckIntegration:
 
 ---
 
-## File Changes Required
+## Affected Components
 
-### `whisper-dictation.py`
+The following components require modifications:
 
-**Add after other imports:**
-```python
-import sounddevice as sd
-```
+- **Main Application Initialization**: Call microphone check early in startup sequence
+- **Setup Functions**: Add microphone verification function alongside other setup functions
+- **Logging Output**: Log results to both logging system and console
+- **Error Handling**: Gracefully handle all audio subsystem errors
+- **Both Versions**: Changes must be synchronized across Python and C++ implementations
 
-**Add this function (with other setup functions):**
-```python
-def test_microphone_access():
-    """
-    Test if microphone is accessible.
-    Logs result, does not crash if failed.
-    """
-    try:
-        sd.check_input_settings()
-        logging.info("Microphone access test passed")
-        print("[Microphone access OK]")
-    except Exception as e:
-        logging.warning(f"Microphone access test failed: {e}")
-        print(f"[WARNING] Microphone access failed: {e}")
-```
+### Dependencies
 
-**In main block (right after setup_lock_file):**
-```python
-if __name__ == "__main__":
-    setup_lock_file()
-    test_microphone_access()  # [NEW LINE]
-    # ... rest of initialization ...
-```
-
-### `whisper-dictation-fast.py`
-
-**Identical changes as above** (keep both versions in sync)
-
-### `requirements.txt`
-
-Verify `sounddevice` is already there:
-```
-sounddevice>=0.4.4
-```
+- Audio input capability verification library (must be in project dependencies)
+- Logging system for capturing results
+- No new external dependencies (use existing)
 
 ---
 
-## Brittleness Analysis
+## Failure Modes & Durability
 
-### Failure Mode 1: macOS Permission Prompt
-**Scenario**: First call to `sounddevice.check_input_settings()` triggers permission prompt
-**Detection**: Permission dialog appears on startup
-**Consequence**: User must interact with dialog to continue
-**Prevention**: Can't prevent on first run (expected behavior)
-**Recovery**: Dialog is clear and expected on first use
-**Mitigation**: Document this in README
+### Failure Mode 1: OS Permission Dialog on First Use
+**Scenario**: Operating system displays permission dialog during first capability check
+- **Detection**: User sees system dialog on startup
+- **Consequence**: User must respond to dialog to proceed
+- **Prevention**: Cannot prevent on first use (OS-level requirement)
+- **Recovery**: Dialog is expected and documented
+- **Mitigation**: Document expected behavior in README
 
-### Failure Mode 2: sounddevice Module Not Available
-**Scenario**: sounddevice import fails (missing dependency)
-**Detection**: ImportError
-**Consequence**: App won't start
-**Prevention**: Ensure sounddevice in requirements.txt (it is)
-**Recovery**: User installs requirements: `pip install -r requirements.txt`
-**Mitigation**: Check is only called if sounddevice imported successfully
+### Failure Mode 2: Missing Audio Subsystem Capability
+**Scenario**: Audio library or module not available in environment
+- **Detection**: Import or initialization error
+- **Consequence**: Microphone check fails, app logs warning and continues
+- **Prevention**: Verify dependency is in project requirements
+- **Recovery**: User installs missing dependency
+- **Mitigation**: Clear error message helps user resolve issue
 
-### Failure Mode 3: sounddevice.check_input_settings() Hangs
-**Scenario**: Function blocks indefinitely (rare)
-**Detection**: App never shows "Listening..."
-**Consequence**: App appears frozen
-**Prevention**: Could add timeout (out of scope)
-**Recovery**: User force-kills app with Ctrl+C
-**Mitigation**: Document timeout behavior if needed in future
+### Failure Mode 3: Timeout During Capability Check
+**Scenario**: Audio subsystem check hangs indefinitely (system-level issue)
+- **Detection**: App startup stalls, no timeout occurs
+- **Consequence**: App appears frozen
+- **Prevention**: Capability check completes quickly in normal conditions
+- **Recovery**: User can force-terminate with Ctrl+C
+- **Mitigation**: Consider async check or timeout in future iterations (out of scope)
 
-### Failure Mode 4: Microphone Permission Changes During Runtime
-**Scenario**: User removes microphone permission while app running
-**Detection**: Next recording attempt fails
-**Consequence**: Recording fails (but app still running)
-**Prevention**: Would require continuous polling (expensive)
-**Recovery**: App gracefully handles recording error, suggests restart
-**Mitigation**: Document that permissions should not change during use
+### Failure Mode 4: Permission Revocation During Runtime
+**Scenario**: User removes microphone permissions while app is running
+- **Detection**: Check passed on startup but permission removed later
+- **Consequence**: Recording fails when attempted
+- **Prevention**: Would require continuous polling (performance overhead)
+- **Recovery**: App gracefully handles recording error
+- **Mitigation**: Permissions are typically stable during app session
 
-### Failure Mode 5: Multiple Audio Devices, Some Disabled
-**Scenario**: System has 3 devices, 2 disabled, 1 working
-**Detection**: `check_input_settings()` may check wrong device
-**Consequence**: False negative (thinks mic not available)
-**Prevention**: sounddevice checks default input device (usually correct)
-**Recovery**: User can specify device via system settings
-**Mitigation**: Document which device is being checked (sounddevice default)
-
----
-
-## Rollout Strategy
-
-### Phase 1: Testing
-1. Write TDD tests
-2. Implement function
-3. Test locally (with/without microphone)
-4. Test with permissions disabled
-
-### Phase 2: Integration
-1. Merge with lock file feature
-2. Run full test suite
-3. Manual startup test
-
-### Phase 3: Monitoring
-1. Check logs for microphone errors
-2. Collect user feedback
-3. Adjust error messages if needed
+### Failure Mode 5: Multiple Audio Devices with Different Permissions
+**Scenario**: System has multiple input devices, some disabled or restricted
+- **Detection**: Default device may have different access status than alternative devices
+- **Consequence**: Check may return false negative if default is unavailable
+- **Prevention**: Check queries default input device (expected system behavior)
+- **Recovery**: User can configure default device in OS settings
+- **Mitigation**: Log which device is being checked for user visibility
 
 ---
 
-## Documentation Updates
+## Implementation Approach
 
-### README.md - Add Troubleshooting Section
+### TDD-First Development
+- Write comprehensive test suite covering success and failure cases
+- Test with actual microphone availability
+- Test with permission-denied scenarios
+- Test timeout and error handling
 
-```markdown
-### Microphone Permission Issues
+### Testing Phases
+1. Unit tests for verification logic
+2. Integration tests with audio subsystem
+3. Manual testing with various microphone configurations
+4. Timing verification (startup latency)
 
-If you see "Microphone access failed" on startup:
-
-**macOS:**
-1. Open System Preferences → Security & Privacy
-2. Select "Microphone" from left panel
-3. Make sure `whisper-dictation` is in the list and enabled
-4. Click the lock icon and enter your password if needed
-5. Restart the application
-
-**The app will start normally even if the check fails** — you just won't be able to record until permissions are fixed.
-```
+### Documentation Requirements
+- Explain expected startup messages
+- Document microphone permission issues and resolution steps
+- Clarify that app continues even if check fails
+- Provide OS-specific setup instructions
 
 ---
 
@@ -458,12 +370,25 @@ If you see "Microphone access failed" on startup:
 
 ---
 
+## Implementation Context (Not Part of Spec)
+
+**Current Implementation Structure:**
+- Verification function: `test_microphone_access()` (or similar name)
+- Audio library: `sounddevice` module with `check_input_settings()` method
+- Logging: Uses Python's logging system at INFO and WARNING levels
+- Console output: Prints messages to stdout for user visibility
+- Called in main block: Right after lock file setup, before event loop
+
+**Note**: This implementation context documents current choices which may evolve. The specification above describes stable requirements independent of these implementation details.
+
+---
+
 ## Acceptance Criteria (Ready to Implement)
 
 - [ ] TDD tests written BEFORE implementation
-- [ ] Function implemented
+- [ ] Verification function implemented and integrated into startup
 - [ ] Works with both whisper-dictation.py and whisper-dictation-fast.py
-- [ ] All tests pass
-- [ ] Manual testing confirms correct behavior
+- [ ] All tests pass (unit, integration, manual)
+- [ ] Startup latency verified (<100ms)
 - [ ] No regressions in existing tests
 

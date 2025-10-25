@@ -162,101 +162,48 @@ Watchdog cleanly stops when app exits.
 
 ---
 
-## Design & Implementation
+## Design Approach
 
-### Global Variables (Module Level)
-```python
-# Watchdog state
-watchdog_active = True        # Controls watchdog loop
-last_heartbeat = datetime.now()  # Last successful audio read
-audio_timeout = 10            # Seconds before stall detected
-watchdog_thread = None        # Reference to watchdog thread
-```
+### Watchdog Architecture
 
-### Functions
+**Core Components:**
 
-```python
-def update_heartbeat():
-    """Call this every time audio is successfully read"""
-    global last_heartbeat
-    last_heartbeat = datetime.now()
+1. **Heartbeat Tracking**: Timestamp of last successful audio read
+   - Updated on every successful audio frame read
+   - Compared periodically to detect stalls
 
-def restart_audio_stream():
-    """Stop and restart the audio stream"""
-    global stream, recording
-    try:
-        if stream is not None:
-            stream.stop()
-            stream.close()
-        # Reinitialize stream
-        import pyaudio
-        p = pyaudio.PyAudio()
-        stream = p.open(
-            format=pyaudio.paFloat32,
-            channels=1,
-            rate=16000,
-            input=True,
-            frames_per_buffer=512,
-            exception_on_overflow=False
-        )
-        stream.start_stream()
-        logging.info("Audio stream restarted successfully")
-    except Exception as e:
-        logging.error(f"Failed to restart audio stream: {e}")
-        recording = False  # Stop recording on restart failure
+2. **Stall Detection**: Monitor loop that checks heartbeat age
+   - Runs in background thread continuously
+   - Only checks during active recording
+   - Compares elapsed time since last heartbeat against timeout threshold
 
-def watchdog_monitor():
-    """Monitor audio stream for stalls and restart if needed"""
-    global watchdog_active, last_heartbeat, audio_timeout, recording, stream
-    logging.info("Watchdog thread started")
+3. **Stream Recovery**: Automated restart of audio stream
+   - Stops current stream
+   - Closes audio resources
+   - Reinitializes stream with same parameters
+   - Resumes audio capture
 
-    while watchdog_active:
-        try:
-            if recording:
-                time_since_heartbeat = (datetime.now() - last_heartbeat).total_seconds()
-                if time_since_heartbeat > audio_timeout:
-                    logging.warning(
-                        f"Audio system stalled! No heartbeat for {time_since_heartbeat:.1f}s"
-                    )
-                    logging.info("Restarting audio stream...")
-                    restart_audio_stream()
-            time.sleep(1)  # Check every second
-        except Exception as e:
-            logging.error(f"Watchdog error: {e}")
-            time.sleep(5)  # Back off if error
-
-    logging.info("Watchdog thread exiting")
-```
+4. **Graceful Shutdown**: Controlled thread termination
+   - Uses shutdown flag to signal watchdog to stop
+   - Waits for thread to complete before exit
+   - Timeout prevents indefinite hang
 
 ### Integration Points
 
-**In Recorder._record_impl() loop:**
-```python
-# Every time we successfully read audio
-try:
-    data = stream.read(frames_per_buffer, exception_on_overflow=False)
-    frames.append(data)
-    update_heartbeat()  # [NEW - update watchdog]
-except Exception as e:
-    # error handling...
-```
+**Heartbeat Updates:**
+- Called within audio read loop after successful frame read
+- Minimal overhead (single timestamp update)
+- No blocking operations
 
-**In main block:**
-```python
-if __name__ == "__main__":
-    # ... setup lock file, microphone check, etc. ...
+**Watchdog Thread:**
+- Starts after other initialization
+- Monitors continuously but only acts during recording
+- Exits cleanly on application shutdown
 
-    # Start watchdog thread [NEW]
-    watchdog_thread = threading.Thread(target=watchdog_monitor, daemon=False)
-    watchdog_thread.start()
-
-    # ... rest of setup ...
-    app.run()
-
-    # On exit (handled by signal handler)
-    watchdog_active = False
-    watchdog_thread.join(timeout=2)
-```
+**Stream Restart:**
+- Triggered when stall detected
+- Stops current stream and reinitializes
+- Handles failures gracefully without crashing app
 
 ---
 
@@ -499,198 +446,105 @@ def test_watchdog_with_actual_recording():
 
 ---
 
-## File Changes Required
+## Affected Components
 
-### `whisper-dictation.py`
+The following components require modifications:
 
-**Add imports:**
-```python
-import threading
-from datetime import datetime
-```
+- **Main Application Initialization**: Start watchdog thread during startup
+- **Audio Recording Loop**: Add heartbeat update after each successful audio read
+- **Shutdown Handler**: Signal watchdog to stop and wait for thread completion
+- **Logging System**: Log watchdog lifecycle events (start, stall detection, restart, exit)
+- **Stream Management**: Implement stream restart capability for recovery
+- **Both Versions**: Changes must be synchronized across Python and C++ implementations
 
-**Add after Recorder class (module level):**
-```python
-# Watchdog variables
-watchdog_active = True
-last_heartbeat = datetime.now()
-audio_timeout = 10  # seconds
-watchdog_thread = None
+### Key Variables Needed
 
-def update_heartbeat():
-    """Update last heartbeat time (call on successful audio read)"""
-    global last_heartbeat
-    last_heartbeat = datetime.now()
+- **Watchdog Control**: Flag to enable/disable watchdog monitoring
+- **Heartbeat Timestamp**: Last time successful audio was read
+- **Timeout Configuration**: Seconds before stall is detected
+- **Thread Reference**: Reference to watchdog monitor thread
 
-def restart_audio_stream():
-    """Stop and restart the audio stream"""
-    global stream, recording
-    try:
-        if stream is not None:
-            stream.stop()
-            stream.close()
-            logging.info("Audio stream closed")
+### Dependencies
 
-        import pyaudio
-        p = pyaudio.PyAudio()
-        stream = p.open(
-            format=pyaudio.paFloat32,
-            channels=1,
-            rate=16000,
-            input=True,
-            frames_per_buffer=512,
-            exception_on_overflow=False
-        )
-        stream.start_stream()
-        logging.info("Audio stream restarted successfully")
-    except Exception as e:
-        logging.error(f"Failed to restart audio stream: {e}")
-        recording = False
-
-def watchdog_monitor():
-    """Monitor audio stream for stalls"""
-    global watchdog_active, last_heartbeat, audio_timeout, recording
-    logging.info("Watchdog thread started")
-
-    while watchdog_active:
-        try:
-            if recording:
-                time_since_heartbeat = (datetime.now() - last_heartbeat).total_seconds()
-                if time_since_heartbeat > audio_timeout:
-                    logging.warning(
-                        f"Audio system stalled! No heartbeat for {time_since_heartbeat:.1f}s"
-                    )
-                    logging.info("Restarting audio stream...")
-                    restart_audio_stream()
-            time.sleep(1)
-        except Exception as e:
-            logging.error(f"Watchdog error: {e}")
-            time.sleep(5)
-
-    logging.info("Watchdog thread exiting")
-```
-
-**In Recorder._record_impl() method (in read loop):**
-```python
-# After: data = stream.read(...)
-try:
-    data = stream.read(frames_per_buffer, exception_on_overflow=False)
-    frames.append(data)
-    update_heartbeat()  # [NEW]
-except Exception as e:
-    # ...
-```
-
-**In main block:**
-```python
-if __name__ == "__main__":
-    setup_lock_file()
-    test_microphone_access()
-
-    # Start watchdog thread [NEW]
-    watchdog_thread = threading.Thread(target=watchdog_monitor, daemon=False)
-    watchdog_thread.start()
-
-    atexit.register(cleanup_lock_file)
-    # ...
-```
-
-**In signal_exit_handler():**
-```python
-def signal_exit_handler(signum, frame):
-    """Handle signals gracefully"""
-    logging.info(f"Signal {signum} received, shutting down...")
-    global watchdog_active
-    watchdog_active = False  # Stop watchdog
-
-    # Wait for watchdog to exit
-    if watchdog_thread is not None:
-        watchdog_thread.join(timeout=2)
-
-    cleanup_audio_stream()
-    cleanup_lock_file()
-    logging.info("Shutdown complete")
-    os._exit(0)
-```
-
-### `whisper-dictation-fast.py`
-
-**Identical changes as above** (must keep in sync)
+- Threading capability for background monitoring
+- Timestamp/timing facilities for heartbeat comparison
+- Access to recording state flag
+- Audio stream reference for restart operations
 
 ---
 
-## Brittleness Analysis
+## Failure Modes & Durability
 
 ### Failure Mode 1: Stream Restart Hangs
-**Scenario**: `stream.stop()` or `stream.start_stream()` blocks forever
-**Detection**: Watchdog doesn't return from restart
-**Consequence**: Watchdog thread hangs, app no longer responsive
-**Prevention**: Add timeout on stream operations (out of scope for MVP)
-**Recovery**: User force-kills app
-**Mitigation**: Log restart start/completion, monitor thread health
+**Scenario**: Stream restart operation blocks indefinitely (hardware/driver issue)
+- **Detection**: Watchdog doesn't return from restart operation
+- **Consequence**: Watchdog thread hangs, app becomes unresponsive
+- **Prevention**: Configure timeouts on stream operations
+- **Recovery**: User force-terminates application
+- **Mitigation**: Timeout on thread join prevents shutdown hang
 
-### Failure Mode 2: Watchdog Detects False Positive
-**Scenario**: Transcription takes >10 seconds, heartbeat paused
-**Detection**: Watchdog tries to restart stream
-**Consequence**: Restarts during active transcription
-**Prevention**: Only check during recording state, disable during transcription
-**Recovery**: Needs refinement in future
-**Mitigation**: Currently acceptable - user can increase timeout in future
+### Failure Mode 2: False Stall Detection
+**Scenario**: Legitimate long-duration operation causes heartbeat pause
+- **Detection**: Watchdog detects stall during heavy transcription
+- **Consequence**: Unnecessary stream restart interrupts operations
+- **Prevention**: Disable heartbeat monitoring during transcription phases
+- **Recovery**: Can be refined with state-aware monitoring (future)
+- **Mitigation**: Currently acceptable; timeout can be tuned
 
-### Failure Mode 3: Rapid Stall + Restart Loop
-**Scenario**: Stream keeps stalling, restart keeps failing
-**Detection**: Watchdog loops endlessly trying to restart
-**Consequence**: CPU usage high, app unresponsive
-**Prevention**: Add restart attempt counter, bail after 3 failures
-**Recovery**: Stop recording, exit watchdog
-**Mitigation**: Implement counter in restart_audio_stream()
+### Failure Mode 3: Persistent Stall Loop
+**Scenario**: Stream repeatedly stalls and restart repeatedly fails
+- **Detection**: Watchdog repeatedly attempts and fails to restart
+- **Consequence**: High CPU usage, resource drain, poor responsiveness
+- **Prevention**: Implement restart attempt counter with backoff
+- **Recovery**: Stop recording after threshold exceeded
+- **Mitigation**: Limit restart attempts to prevent infinite loop
 
-### Failure Mode 4: PyAudio Not Initialized
-**Scenario**: PyAudio instance doesn't exist when restarting
-**Detection**: AttributeError on `p.open(...)`
-**Consequence**: Restart fails, recording stops
-**Prevention**: Store PyAudio instance as global
-**Recovery**: User restarts app
-**Mitigation**: Document this limitation
+### Failure Mode 4: Stream Initialization Failure
+**Scenario**: Audio subsystem unavailable when restarting stream
+- **Detection**: Stream initialization fails with exception
+- **Consequence**: Restart fails, recording cannot continue
+- **Prevention**: Verify audio subsystem available during initialization
+- **Recovery**: User must restart application
+- **Mitigation**: Clear error logging helps diagnosis
 
 ### Failure Mode 5: Watchdog Thread Doesn't Exit
-**Scenario**: `watchdog_active = False` but thread still running
-**Detection**: App hangs on shutdown waiting for watchdog.join()
-**Consequence**: Shutdown hangs forever
-**Prevention**: Timeout on watchdog.join() (already in code)
-**Recovery**: Timeout triggers, app exits anyway
-**Mitigation**: 2-second join timeout is sufficient
+**Scenario**: Shutdown flag set but watchdog thread still running
+- **Detection**: Application hangs waiting for thread completion
+- **Consequence**: Shutdown hangs indefinitely, requires force-kill
+- **Prevention**: Use timeout on thread join operation
+- **Recovery**: Timeout expires, app exits despite hung thread
+- **Mitigation**: Conservative timeout prevents permanent hang
 
-### Failure Mode 6: Concurrent Update of Recording Flag
-**Scenario**: Main thread changes `recording` while watchdog reads it
-**Detection**: Watchdog uses stale value
-**Consequence**: Monitoring state out of sync
-**Prevention**: Python bool assignment is atomic (safe)
-**Recovery**: Next iteration sees correct value
-**Mitigation**: Python GIL ensures safety
+### Failure Mode 6: Race Condition on State Flags
+**Scenario**: Multiple threads access recording/watchdog state simultaneously
+- **Detection**: Inconsistent state observed by watchdog
+- **Consequence**: Watchdog may miss stall or false-detect
+- **Prevention**: Atomic operations for flag updates
+- **Recovery**: Next monitoring cycle sees correct state
+- **Mitigation**: Careful variable access patterns
 
 ---
 
-## Rollout Strategy
+## Implementation Approach
 
-### Phase 1: Development & Testing
-1. Write TDD tests for all watchdog functions
-2. Implement watchdog thread and heartbeat
-3. Implement stream restart logic
-4. Run pytest tests
-5. Manual test: simulate stall, verify recovery
+### TDD-First Strategy
+- Write comprehensive tests for all watchdog functions before implementation
+- Test heartbeat tracking, stall detection, stream restart
+- Include both unit and integration tests
+- Test with timeout/edge cases
 
-### Phase 2: Integration
-1. Integrate with lock file + microphone check
-2. Integrate with audio stream restart
-3. Run full test suite
-4. Manual stress test (long recordings)
+### Phased Implementation
+1. **Heartbeat Tracking**: Implement timestamp update mechanism
+2. **Monitoring Loop**: Implement background watchdog thread
+3. **Stream Recovery**: Implement stream restart logic
+4. **Integration**: Connect all components together
 
-### Phase 3: Validation
-1. Monitor logs for watchdog activity
-2. Test with various model sizes (tiny, large)
-3. Collect user feedback
-4. Adjust timeout if needed
+### Validation Phases
+- Unit testing: Verify each component in isolation
+- Integration testing: Verify watchdog with actual recording loop
+- Stress testing: Long-duration recordings, multiple stall scenarios
+- Manual testing: Verify user-visible behavior and logging
+- Performance testing: Verify minimal overhead
 
 ---
 
@@ -715,14 +569,29 @@ For future enhancements:
 
 ---
 
+## Implementation Context (Not Part of Spec)
+
+**Current Implementation Structure:**
+- Watchdog thread: Runs continuously, checks heartbeat every 1 second
+- Heartbeat variable: `last_heartbeat` timestamp updated after each successful audio read
+- Timeout configuration: `audio_timeout = 10` seconds before stall detected
+- Stream restart: Stop → Close → Reinitialize → Start cycle
+- Thread management: `watchdog_active` flag controls monitoring, `join(timeout=2)` on shutdown
+- Integration point: Heartbeat update in audio read loop, thread start in main block
+
+**Note**: This implementation context documents current choices which may evolve. The specification above describes stable requirements independent of these implementation details.
+
+---
+
 ## Acceptance Criteria (Ready to Implement)
 
-- [ ] TDD tests written FIRST
-- [ ] Watchdog thread starts/stops cleanly
-- [ ] Heartbeat tracking works
-- [ ] Stall detection works
-- [ ] Stream restart works (or fails gracefully)
-- [ ] All tests pass
-- [ ] No regressions
+- [ ] TDD tests written FIRST covering all watchdog functions
+- [ ] Heartbeat tracking mechanism implemented and verified
+- [ ] Stall detection logic working correctly
+- [ ] Stream restart mechanism implemented with error handling
+- [ ] Watchdog thread lifecycle management (start/stop/shutdown) working
+- [ ] All unit and integration tests pass
+- [ ] No regressions in existing features
 - [ ] Manual testing confirms recovery behavior
+- [ ] Performance impact verified (negligible)
 

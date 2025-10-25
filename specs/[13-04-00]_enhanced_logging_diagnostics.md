@@ -32,73 +32,66 @@
 - **Performance**: Track timing of operations
 - **Support**: Users can share logs for debugging
 
-### Pattern from macos-dictate
-```python
-LOG_FILE = Path.home() / '.dictate.log'
-logging.basicConfig(
-    filename=str(LOG_FILE),
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-```
+### Inspiration
+Similar dictation applications use centralized logging with rotating file handlers, consistent timestamp formats, and configurable log levels to balance verbosity with disk usage.
 
 ---
 
 ## What We're Building
 
 **Centralized logging system** with:
-1. File output to `~/.whisper-dictation.log`
-2. Log rotation (5 files × 5MB max)
+1. File output to user's home directory
+2. Log rotation with size limits
 3. Consistent timestamp format
-4. Key diagnostic events logged
-5. Optional debug mode (CLI flag)
+4. Key diagnostic events logged across all major components
+5. Configurable log levels via command-line interface
 
 ---
 
 ## Assumptions & Validation
 
-### A1: RotatingFileHandler is Sufficient
-- Assumption: `logging.handlers.RotatingFileHandler` handles rotation
-- Validation: Verify disk space doesn't fill up (5×5MB = 25MB max)
-- Risk: Rotation fails, log grows unbounded
-- Mitigation: Use proven stdlib handler
+### A1: Standard Library Rotation is Sufficient
+- Assumption: Standard library's rotating file handler handles rotation reliably
+- Validation: Verify disk space doesn't fill up with reasonable file size limits
+- Risk: Rotation mechanism fails, log grows unbounded
+- Mitigation: Use proven standard library components
 
-### A2: Log File in Home Directory is Safe
-- Assumption: User always has write permission to home dir
-- Validation: Test with different user accounts
-- Risk: Permission denied → no logging
+### A2: Home Directory is Writable
+- Assumption: User always has write permission to home directory
+- Validation: Test with different user accounts and permission configurations
+- Risk: Permission denied prevents logging entirely
 - Mitigation: Graceful fallback if write fails
 
-### A3: File Logging Doesn't Impact Performance
-- Assumption: Async logging or buffering handles blocking
-- Validation: Benchmark I/O overhead
-- Risk: Logging adds latency to recording
-- Mitigation: Use buffering (default in logging module)
+### A3: File I/O Doesn't Impact Performance
+- Assumption: Buffered I/O handles logging without blocking critical operations
+- Validation: Benchmark I/O overhead during recording and transcription
+- Risk: Logging adds latency to audio processing
+- Mitigation: Use buffering (default in logging infrastructure)
 
 ---
 
 ## Acceptance Criteria
 
 ### Logging Infrastructure
-- [ ] **L1** Logs written to `~/.whisper-dictation.log`
-- [ ] **L2** Log rotation: max 5 files, 5MB each (25MB total max)
-- [ ] **L3** Old log files automatically deleted
-- [ ] **L4** Timestamp format: `YYYY-MM-DD HH:MM:SS.mmm`
-- [ ] **L5** Log level configuration via CLI `--log-level {DEBUG,INFO,WARNING,ERROR}`
-- [ ] **L6** Default log level: INFO (not too verbose)
+- [ ] **L1** Logs written to designated file in user's home directory
+- [ ] **L2** Log rotation configured with reasonable size limits per file and maximum number of backup files
+- [ ] **L3** Old log files automatically deleted when backup limit exceeded
+- [ ] **L4** Timestamp format includes date, time, and milliseconds
+- [ ] **L5** Log level configuration available via command-line interface
+- [ ] **L6** Default log level balances verbosity with usability
 
 ### Key Events Logged
-- [ ] **E1** Application startup: "Application started, PID=XXXX"
-- [ ] **E2** Lock file created/checked
-- [ ] **E3** Microphone test result (pass/fail)
-- [ ] **E4** Recording started: "Recording started, frames_per_buffer=512"
-- [ ] **E5** Recording stopped: "Recording stopped, duration=3.5s"
-- [ ] **E6** Transcription started: "Transcribing with model=base, device=CPU"
-- [ ] **E7** Transcription completed: "Transcription complete, text_length=42"
-- [ ] **E8** Device selection: "Selected device: CPU" or "Selected device: GPU (MPS)"
-- [ ] **E9** Watchdog events: stall detection, restart attempts
-- [ ] **E10** Errors with full traceback at ERROR level
-- [ ] **E11** Application shutdown: "Application shutting down (signal X)"
+- [ ] **E1** Application startup with process identification
+- [ ] **E2** Lock file operations (creation, validation, cleanup)
+- [ ] **E3** Microphone access test results
+- [ ] **E4** Recording session start with configuration details
+- [ ] **E5** Recording session end with duration information
+- [ ] **E6** Transcription start with model and device information
+- [ ] **E7** Transcription completion with result metadata
+- [ ] **E8** Device selection decisions (CPU vs GPU)
+- [ ] **E9** Watchdog events (stall detection, restart attempts)
+- [ ] **E10** Errors with full traceback at appropriate severity level
+- [ ] **E11** Application shutdown with reason
 
 ### No Regressions
 - [ ] **R1** Console output still works
@@ -148,453 +141,261 @@ logging.basicConfig(
 
 ---
 
-## Design & Implementation
+## Design Concepts
 
-### Logging Setup Function
+### Logging Infrastructure Setup
 
-```python
-import logging
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
-
-def setup_logging(level=logging.INFO):
-    """Setup centralized logging with file rotation"""
-    log_file = Path.home() / ".whisper-dictation.log"
-
-    # Root logger configuration
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
-
-    # File handler with rotation
-    file_handler = RotatingFileHandler(
-        str(log_file),
-        maxBytes=5*1024*1024,    # 5MB
-        backupCount=5             # Keep 5 backup files
-    )
-    file_handler.setLevel(level)
-
-    # Formatter
-    formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    file_handler.setFormatter(formatter)
-
-    # Console handler (for immediate feedback)
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)  # Console only INFO+
-    console_handler.setFormatter(formatter)
-
-    # Add handlers
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
-
-    logging.info(f"Logging initialized: {log_file}, level={logging.getLevelName(level)}")
-```
+The system should establish centralized logging during initialization:
+- Configure root logger with appropriate level
+- Set up file handler with rotation capabilities
+- Define consistent timestamp and message formatting
+- Optionally configure console output for immediate feedback
+- Gracefully handle failures in file handler setup
 
 ### CLI Integration
 
-```python
-def parse_args():
-    """Parse command-line arguments"""
-    parser = argparse.ArgumentParser()
-    # ... existing args ...
-    parser.add_argument(
-        '--log-level',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Logging verbosity level'
-    )
-    parser.add_argument(
-        '--log-file',
-        type=str,
-        default=str(Path.home() / ".whisper-dictation.log"),
-        help='Path to log file'
-    )
-    return parser.parse_args()
-
-# In main block:
-args = parse_args()
-log_level = getattr(logging, args.log_level)
-setup_logging(level=log_level)
-```
+Command-line interface should provide:
+- Option to configure log verbosity level
+- Option to override default log file location
+- Validation of user-provided log level choices
 
 ### Key Diagnostic Logging Points
 
-```python
-# Application startup
-logging.info(f"Application started, PID={os.getpid()}")
+The following major application events should be logged:
 
-# Lock file
-logging.info("Lock file created")
-logging.warning(f"Stale lock file found (PID {old_pid} is dead)")
+**Startup & Initialization:**
+- Application startup with process identification
+- Lock file operations
+- Microphone access test results
 
-# Microphone check
-logging.info("Microphone access test passed")
-logging.warning("Microphone access test failed: {error}")
+**Audio Operations:**
+- Recording session start with buffer configuration
+- Recording session end with duration
+- Warm-up buffer usage (debug level)
 
-# Recording
-logging.info(f"Recording started, frames_per_buffer={frames_per_buffer}")
-logging.debug(f"Warm-up buffers: {warmup_buffers}")
-logging.info(f"Recording stopped, duration={duration:.1f}s")
+**Transcription Operations:**
+- Device selection decision and rationale
+- Transcription start with model and device
+- Command execution details (debug level)
+- Transcription completion with metadata
+- Transcription errors with context
 
-# Device selection
-logging.info("Selected device: CPU")
-logging.info("Selected device: GPU (MPS)")
-logging.debug(f"Device test result: {capability}")
+**Monitoring & Recovery:**
+- Watchdog thread initialization
+- Stall detection warnings
+- Stream restart attempts and outcomes
 
-# Transcription
-logging.info(f"Transcription started with model={model}, device={device}")
-logging.debug(f"Running whisper-cli: {command}")
-logging.info(f"Transcription complete, text_length={len(text)}")
-logging.error(f"Transcription failed: {error}")
-
-# Watchdog
-logging.info("Watchdog thread started")
-logging.warning(f"Audio system stalled! No heartbeat for {time_since:.1f}s")
-logging.info("Restarting audio stream...")
-logging.info("Audio stream restarted successfully")
-logging.error(f"Failed to restart audio stream: {error}")
-
-# Shutdown
-logging.info(f"Shutdown signal received: {signum}")
-logging.info("Shutdown complete")
-```
+**Shutdown:**
+- Shutdown signal reception
+- Cleanup completion
 
 ---
 
-## Test Cases (TDD - Write FIRST)
+## Test Strategy
 
-### Test Suite: `tests/test_logging.py`
+### Test Coverage Areas
 
-```python
-import pytest
-import logging
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-import tempfile
-import os
+**Logging Infrastructure Tests:**
+- Log file creation in expected location
+- Log level configuration (DEBUG, INFO, WARNING, ERROR)
+- Rotation mechanism creates backup files
+- Old logs deleted when backup limit exceeded
+- Graceful fallback when file writing fails
 
-from whisper_dictation_module import setup_logging
+**Log Format Tests:**
+- Timestamp format consistency
+- Log level appears in output
+- Message format follows specification
 
-class TestLoggingSetup:
-    """Test logging initialization"""
+**Event Logging Tests:**
+- Application startup events logged
+- Lock file operations logged
+- Microphone test results logged
+- Recording events logged with configuration
+- Transcription events logged with metadata
+- Error events logged with full traceback
+- Shutdown events logged
 
-    def test_log_file_created(self, tmp_path):
-        """Log file should be created in specified location"""
-        log_file = tmp_path / "test.log"
-
-        # Setup logging (would need to refactor to accept log_file param)
-        # setup_logging(log_file=log_file)
-
-        # For now, test that default location is home dir
-        default_log = Path.home() / ".whisper-dictation.log"
-        assert str(default_log).endswith(".whisper-dictation.log")
-
-    def test_log_level_configuration(self):
-        """Log level should be configurable"""
-        # Test with different levels
-        for level in [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]:
-            # Setup would set this level
-            # Verify logger uses it
-            pass
-
-class TestRotatingFileHandler:
-    """Test log rotation"""
-
-    def test_rotation_creates_multiple_files(self):
-        """Log rotation should create backup files"""
-        # Create logger with small file size to trigger rotation
-        # Write enough data to trigger rotation
-        # Verify backup files created
-        pass
-
-    def test_old_logs_deleted(self):
-        """Should keep only 5 backup files max"""
-        # Create 7 log files by rotation
-        # Verify only 5 backups remain
-        pass
-
-class TestKeyEventsLogged:
-    """Test that key events are logged"""
-
-    def test_startup_logged(self, caplog):
-        """Application startup should be logged"""
-        with caplog.at_level(logging.INFO):
-            logging.info("Test startup")
-        assert "startup" in caplog.text.lower()
-
-    def test_lock_file_logged(self, caplog):
-        """Lock file events should be logged"""
-        with caplog.at_level(logging.INFO):
-            logging.info("Lock file created")
-        assert "lock" in caplog.text.lower()
-
-    def test_error_with_traceback(self, caplog):
-        """Errors should include traceback"""
-        with caplog.at_level(logging.ERROR):
-            try:
-                1/0
-            except Exception:
-                logging.exception("Error occurred")
-        assert "traceback" in caplog.text.lower() or "Traceback" in caplog.text
-
-class TestConsoleFallback:
-    """Test console logging fallback"""
-
-    def test_console_shows_warnings_and_errors(self, capsys):
-        """Console should show at least WARNING level"""
-        logging.warning("Test warning")
-        captured = capsys.readouterr()
-        assert "warning" in captured.err.lower() or "warning" in captured.out.lower()
-
-class TestLogFormat:
-    """Test log format consistency"""
-
-    def test_timestamp_format(self, caplog):
-        """Logs should have consistent timestamp format"""
-        with caplog.at_level(logging.INFO):
-            logging.info("Test message")
-
-        # Check format: YYYY-MM-DD HH:MM:SS
-        # This is implicit in formatter configuration
-        assert len(caplog.records) > 0
-
-    def test_log_level_in_output(self, caplog):
-        """Log level should appear in output"""
-        with caplog.at_level(logging.INFO):
-            logging.info("Info message")
-            logging.warning("Warning message")
-
-        assert any("INFO" in record.levelname for record in caplog.records)
-        assert any("WARNING" in record.levelname for record in caplog.records)
-```
+**Integration Tests:**
+- Console output continues to work alongside file logging
+- Log rotation works with actual file I/O
+- Different log levels filter messages correctly
 
 ---
 
-## File Changes Required
+## Affected Components
 
-### `whisper-dictation.py`
+### Main Application Scripts
+Both Python and C++ implementation entry points require:
+- Import of logging infrastructure
+- Initialization of logging system early in startup
+- Integration of CLI arguments for log configuration
+- Addition of log statements at key diagnostic points
 
-**Add imports:**
-```python
-import logging
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
-import argparse
-```
+### Component Integration Points
 
-**Add this function (with other setup functions):**
-```python
-def setup_logging(level=logging.INFO, log_file=None):
-    """Setup centralized logging with file rotation"""
-    if log_file is None:
-        log_file = Path.home() / ".whisper-dictation.log"
-    else:
-        log_file = Path(log_file)
+**Startup & Configuration:**
+- Command-line argument parsing
+- Logging infrastructure initialization
+- Early startup sequence
 
-    # Root logger configuration
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
+**Lock File Management:**
+- Lock file creation events
+- Lock file validation events
+- Stale lock file detection
 
-    # Clear existing handlers (for testing)
-    root_logger.handlers = []
+**Audio System:**
+- Recording session lifecycle
+- Buffer configuration
+- Microphone access testing
 
-    # File handler with rotation
-    try:
-        file_handler = RotatingFileHandler(
-            str(log_file),
-            maxBytes=5*1024*1024,    # 5MB
-            backupCount=5             # Keep 5 backup files
-        )
-        file_handler.setLevel(level)
+**Transcription System:**
+- Device selection logic
+- Transcription session lifecycle
+- Error handling
 
-        # Formatter
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
-    except Exception as e:
-        print(f"Warning: Could not setup file logging: {e}")
+**Monitoring System:**
+- Watchdog thread operations
+- Stall detection
+- Recovery attempts
 
-    # Console handler (for immediate feedback)
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)  # Console only INFO+
-    if len(root_logger.handlers) > 0:  # Only if file handler worked
-        formatter = logging.Formatter(
-            '[%(asctime)s] %(levelname)s: %(message)s',
-            datefmt='%H:%M:%S'
-        )
-        console_handler.setFormatter(formatter)
-    root_logger.addHandler(console_handler)
+**Shutdown Handling:**
+- Signal reception
+- Cleanup operations
 
-    logging.info(f"Logging initialized, level={logging.getLevelName(level)}")
-```
+### Dependencies
 
-**Modify parse_args() to add:**
-```python
-parser.add_argument(
-    '--log-level',
-    choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-    default='INFO',
-    help='Logging verbosity level (default: INFO)'
-)
-parser.add_argument(
-    '--log-file',
-    type=str,
-    help='Path to log file (default: ~/.whisper-dictation.log)'
-)
-```
-
-**In main block (very first thing):**
-```python
-if __name__ == "__main__":
-    args = parse_args()
-    log_level = getattr(logging, args.log_level)
-    setup_logging(level=log_level, log_file=args.log_file)
-
-    logging.info(f"Application started, PID={os.getpid()}")
-
-    # ... rest of initialization ...
-```
-
-**Add logging calls throughout:**
-```python
-# In setup_lock_file()
-logging.info("Lock file created")
-
-# In test_microphone_access()
-logging.info("Microphone access test passed")
-
-# In Recorder._record_impl()
-logging.info(f"Recording started, frames_per_buffer={self.frames_per_buffer}")
-
-# In SpeechTranscriber.transcribe()
-logging.info(f"Transcription started with model={model}, device={device}")
-
-# In signal_exit_handler()
-logging.info(f"Shutdown signal received: {signum}")
-```
-
-### `whisper-dictation-fast.py`
-
-**Identical changes as above** (keep both versions in sync)
+**Standard Library:**
+- logging module
+- logging.handlers (RotatingFileHandler)
+- argparse (argument parsing)
 
 ---
 
 ## Brittleness Analysis
 
-### Failure Mode 1: Log File Permissions
-**Scenario**: User doesn't have write permission to home directory
-**Detection**: RotatingFileHandler raise OSError
-**Consequence**: No file logging, but app continues
-**Prevention**: Try/except around file handler setup
-**Recovery**: Graceful fallback to console only
-**Mitigation**: Implemented in setup_logging()
+### Failure Mode 1: Log File Write Permission Issues
+**What Happens**: User lacks write permission to log directory
+**Impact**: File logging unavailable, but application continues
+**Detection**: Exception during file handler initialization
+**Prevention**: Wrap file handler setup in error handling
+**Recovery**: Graceful fallback to console-only logging
 
-### Failure Mode 2: Disk Space Exhausted
-**Scenario**: Even with 25MB max, disk is full
-**Detection**: RotatingFileHandler.doRollover() fails
-**Consequence**: Logging stops or errors
-**Prevention**: Rotation prevents unbounded growth
-**Recovery**: Oldest logs auto-deleted
-**Mitigation**: 25MB is reasonable limit
+### Failure Mode 2: Disk Space Exhaustion
+**What Happens**: Disk fills despite rotation limits
+**Impact**: Log writes fail, rotation mechanism cannot create new files
+**Detection**: I/O errors during write or rotation
+**Prevention**: Size limits prevent unbounded growth
+**Recovery**: Oldest logs deleted automatically when space allows
 
-### Failure Mode 3: Log File Locked by Another Process
-**Scenario**: Another tool reading logs while we write
-**Detection**: IOError on write (rare on macOS)
-**Consequence**: Log entry lost
-**Prevention**: Can't prevent, rare issue
-**Recovery**: Next write succeeds
-**Mitigation**: Acceptable risk
+### Failure Mode 3: Concurrent Access to Log Files
+**What Happens**: External process holds lock on log file
+**Impact**: Individual log entries may be lost
+**Detection**: I/O errors on write operations (rare on Unix-like systems)
+**Prevention**: Not preventable, uncommon scenario
+**Recovery**: Subsequent writes succeed after lock released
 
-### Failure Mode 4: Logging in Signal Handler
-**Scenario**: Signal handler calls logging while main thread in logging
-**Detection**: Deadlock potential
-**Consequence**: Hang during shutdown
-**Prevention**: logging module is thread-safe (uses lock)
-**Recovery**: No action needed, stdlib handles it
-**Mitigation**: Already safe
+### Failure Mode 4: Thread Safety in Signal Handlers
+**What Happens**: Signal handler attempts logging while main thread holds logging lock
+**Impact**: Potential deadlock during shutdown
+**Detection**: Application hang during signal handling
+**Prevention**: Logging infrastructure uses thread-safe primitives
+**Recovery**: Standard library handles synchronization
 
-### Failure Mode 5: Circular Logging
-**Scenario**: Some error log triggers another error log
-**Detection**: Excessive log output
-**Consequence**: Log file grows rapidly
-**Prevention**: Don't log from within logging code
-**Recovery**: Should not happen with stdlib
-**Mitigation**: No action needed
+### Failure Mode 5: Recursive Logging Errors
+**What Happens**: Error during logging triggers additional log attempt
+**Impact**: Rapid log growth or stack overflow
+**Detection**: Excessive log volume or application crash
+**Prevention**: Avoid logging operations within logging infrastructure
+**Recovery**: Standard library prevents common recursion patterns
 
 ---
 
-## Rollout Strategy
+## Implementation Approach
 
-### Phase 1: Setup
-1. Add setup_logging() function
-2. Add CLI arguments
-3. Call setup_logging() on startup
-4. Test file creation and rotation
+### Initial Setup Phase
+**Goal**: Establish logging infrastructure without breaking existing functionality
+- Implement logging setup function with error handling
+- Add command-line arguments for configuration
+- Initialize logging early in application startup
+- Validate file creation and basic operation
 
-### Phase 2: Event Logging
-1. Add logging to key events
-2. Test different log levels
-3. Verify rotation works
+### Event Integration Phase
+**Goal**: Add diagnostic logging throughout application
+- Instrument startup and shutdown sequences
+- Add logging to lock file operations
+- Instrument audio recording lifecycle
+- Instrument transcription operations
+- Add logging to monitoring and recovery systems
 
-### Phase 3: Validation
-1. Check log file is readable
-2. Verify rotation works (create big log)
-3. Test with DEBUG level
-4. Document log locations in README
+### Validation Phase
+**Goal**: Verify complete logging functionality
+- Confirm log files created and readable
+- Exercise rotation mechanism with high-volume logging
+- Test different log levels filter correctly
+- Verify error handling and fallback behavior
+- Update user documentation
 
 ---
 
 ## Performance Impact
 
-- **Logging overhead**: <1% CPU (buffered I/O)
-- **File I/O**: Async in logging module
-- **Startup latency**: <5ms (file handler init)
-- **Memory**: ~100KB for log buffers
+- **CPU overhead**: Minimal due to buffered I/O
+- **I/O operations**: Handled asynchronously by logging infrastructure
+- **Startup latency**: Negligible file handler initialization
+- **Memory footprint**: Small buffer space for log messages
 
-**Negligible.**
+Expected impact on application performance is negligible.
 
 ---
 
-## Documentation Updates
+## Documentation Requirements
 
-### README.md - Add Section
+### User Documentation Updates
 
-```markdown
-### Logs and Diagnostics
-
-Logs are written to `~/.whisper-dictation.log` (rotating, max 25MB).
-
-**View recent logs:**
-```bash
-tail -f ~/.whisper-dictation.log
-```
-
-**Change log level:**
-```bash
-poetry run python whisper-dictation.py --log-level DEBUG --k_double_cmd
-```
-
-**Log levels:**
-- `DEBUG`: Detailed diagnostic info (heartbeat updates, device selection)
-- `INFO`: Important events (startup, recording, transcription)
-- `WARNING`: Issues that don't stop operation (permission denied)
-- `ERROR`: Critical problems (transcription failed)
-```
+Documentation should explain:
+- Log file location in user's home directory
+- How to view logs (tail command or text editor)
+- Available log levels and their purposes
+- How to configure log level via command-line
+- Rotation behavior and disk space limits
+- What events are logged at each level
 
 ---
 
 ## Acceptance Criteria (Ready to Implement)
 
 - [ ] TDD tests written FIRST
-- [ ] Log file created at `~/.whisper-dictation.log`
-- [ ] Rotation works (verified with large log)
-- [ ] CLI flags work (--log-level, --log-file)
-- [ ] Key events logged
+- [ ] Log file created in user's home directory
+- [ ] Rotation works (verified with high-volume logging)
+- [ ] CLI configuration options functional
+- [ ] All key events logged per specification
 - [ ] All tests pass
 - [ ] No performance regression
+- [ ] Documentation updated
+
+---
+
+## Implementation Context (Not Part of Spec)
+
+**Current Implementation Structure:**
+The codebase currently has two main entry points:
+- `whisper-dictation.py` (Python implementation)
+- `whisper-dictation-fast.py` (C++ implementation via whisper.cpp)
+
+Both implementations share similar structure with classes like `SpeechTranscriber`, `Recorder`, and `StatusBarApp`.
+
+**Example Implementation Pattern:**
+A logging setup function would configure Python's standard `logging` module with `RotatingFileHandler` from `logging.handlers`. Default configuration might use 5MB per file with 5 backup files (25MB total). The log file path could default to `~/.whisper-dictation.log` in the user's home directory.
+
+CLI integration would extend the existing `parse_args()` function to add arguments like `--log-level` with choices `['DEBUG', 'INFO', 'WARNING', 'ERROR']` and optionally `--log-file` to override the default path.
+
+Logging calls would be inserted at strategic points:
+- In `setup_lock_file()` for lock management
+- In `test_microphone_access()` for microphone checks
+- In `Recorder._record_impl()` for recording events
+- In `SpeechTranscriber.transcribe()` for transcription events
+- In signal handlers for shutdown events
+
+**Note**: This implementation context documents current choices which may evolve. The specification above focuses on WHAT should be achieved, not HOW to implement it.
 

@@ -36,46 +36,36 @@ Ten epic implementuje 5 filarów stabilności i profesjonalizmu oprogramowania z
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                  whisper-dictation                      │
-├─────────────────────────────────────────────────────────┤
-│                                                           │
-│  ┌──────────────────┐         ┌────────────────────┐   │
-│  │  Lock File       │         │  Signal Handler    │   │
-│  │  [13-01-00]      │◄────────│  [13-01-00]        │   │
-│  └──────────────────┘         └────────────────────┘   │
-│           ▲                             ▲               │
-│           │                             │               │
-│  ┌────────┴───────────┬─────────────────┴────────────┐  │
-│  │                    │                              │  │
-│  ▼                    ▼                              ▼  │
-│ ┌──────────────────────────────────────────────────┐   │
-│ │          Enhanced Logging System                 │   │
-│ │          (Central diagnostic hub)                │   │
-│ │          [13-04-00] + [13-02-00]                │   │
-│ └──────────────────────────────────────────────────┘   │
-│  ▲         ▲                       ▲                    │
-│  │         │                       │                    │
-│  │         ▼                       ▼                    │
-│  │  ┌──────────────┐      ┌──────────────────┐        │
-│  │  │ Microphone   │      │  Audio Watchdog  │        │
-│  │  │ Check        │      │  Thread          │        │
-│  │  │ [13-02-00]   │      │  [13-03-00]      │        │
-│  │  └──────────────┘      └──────────────────┘        │
-│  │                                                     │
-│  └──────────────────────────────────────────────────┘  │
-│           ▲                              ▲             │
-│           │                              │             │
-│  ┌────────┴──────────────┬───────────────┴──────────┐ │
-│  │                       │                          │ │
-│  ▼                       ▼                          ▼ │
-│ ┌─────────────────────────────────────────────────┐  │
-│ │  Core Recording/Transcription Loop              │  │
-│ │  (Now with stability & diagnostics)             │  │
-│ └─────────────────────────────────────────────────┘  │
-│                                                       │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    App["Application Startup"]
+
+    App -->|Initialize| LockFile["Lock File Management<br/>[13-01-00]"]
+    App -->|Register| SignalHandlers["Signal Handlers<br/>[13-01-00]"]
+    App -->|Setup| Logging["Enhanced Logging System<br/>[13-04-00]"]
+
+    LockFile -->|Logs to| Logging
+    SignalHandlers -->|Logs to| Logging
+
+    App -->|On Startup| MicCheck["Microphone Capability Check<br/>[13-02-00]"]
+    MicCheck -->|Logs to| Logging
+
+    App -->|Start| Recording["Core Recording Loop<br/>(Existing)"]
+    Recording -->|Monitored by| Watchdog["Audio Stream Watchdog<br/>[13-03-00]"]
+    Watchdog -->|Logs to| Logging
+
+    Recording -->|on Error| SignalHandlers
+    Watchdog -->|on Stall| SignalHandlers
+
+    SignalHandlers -->|Cleanup| Shutdown["Graceful Shutdown"]
+    Shutdown -->|Release| LockFile
+    Shutdown -->|Final Log| Logging
+
+    style LockFile fill:#4a90e2
+    style SignalHandlers fill:#50c878
+    style MicCheck fill:#f5a623
+    style Watchdog fill:#b8e986
+    style Logging fill:#e8a626
 ```
 
 ---
@@ -104,20 +94,23 @@ Utrzymanie parity między wersjami jest KRYTYCZNE.
 ## Key Design Decisions
 
 ### 1. Lock File Location
-- **Gdzie**: `~/.whisper-dictation.lock` (hidden, user home)
-- **Why**: Persistent across shutdowns, easy cleanup, standard Unix pattern
+- **Pattern**: Hidden file in user's home directory
+- **Purpose**: Persistent across shutdowns, easy cleanup, standard Unix pattern for background applications
+- **Why**: Ensures system stability by preventing multiple simultaneous instances
 
 ### 2. Logging Location
-- **Gdzie**: `~/.whisper-dictation.log` (rotating, 5 files x 5MB)
-- **Why**: User home hidden files = standard for background apps, rotation = disk space safe
+- **Pattern**: File-based logging in user's home directory with automatic rotation
+- **Rotation Strategy**: Multiple files with size limits to prevent unbounded disk space growth
+- **Why**: Standard for background apps, disk-safe with rotation mechanism
 
 ### 3. Watchdog Timeout
-- **Value**: 10 seconds bez heartbeatu = audio stalled
-- **Why**: Enough time dla slow transcription, short enough to detect hang quickly
+- **Behavior**: Detects stalled audio stream when no heartbeat signal received for extended period
+- **Trade-off**: Balance between allowing slow transcription vs. detecting hangs quickly
+- **Why**: Enables automatic recovery from audio stream stalls without manual intervention
 
-### 4. Thread Safety
-- **Approach**: Python's `threading.Lock` dla shared resources
-- **Why**: Simple, built-in, no new dependencies
+### 4. Thread Synchronization
+- **Approach**: Synchronization primitives for shared resource access
+- **Why**: Prevents race conditions, ensures data consistency during concurrent operations
 
 ---
 
@@ -156,59 +149,53 @@ BACKLOG:         Performance benchmarking (slow vs fast)
 
 ---
 
-## Brittleness Analysis (Epic Level)
+## Failure Modes & Recovery Strategies (Durability Analysis)
 
 ### 1. Multi-Instance Conflicts
-**Failure Mode**: Dwie instancje czytają z tego samego mikrofonu
-- **Detection**: Licznik otwartych stream = 2+
-- **Consequence**: Audio corruption, unpredictable behavior
-- **Prevention**: Lock file checked on startup
-- **Recovery**: Second instance exits gracefully
+**Failure**: Multiple instances access same microphone simultaneously
+- **User Impact**: Audio corruption, unpredictable behavior
+- **Prevention**: Lock file mechanism prevents concurrent startup
+- **Recovery**: Second instance detects lock and shuts down gracefully
 
 ### 2. Audio Stream Stall
-**Failure Mode**: Strumień zawieszony, aplikacja "żyje" ale nie nagrawa
-- **Detection**: Brak heartbeat > 10s
-- **Consequence**: User czeka bez feedback, no transcription
-- **Prevention**: Watchdog thread monitors
-- **Recovery**: Automatic restart lub user force-quit
+**Failure**: Audio stream stops responding but application continues running
+- **User Impact**: Silent failure - user receives no feedback, transcription doesn't occur
+- **Prevention**: Watchdog monitors stream health with periodic heartbeat checks
+- **Recovery**: Automatic stream restart on detection, logged for diagnosis
 
-### 3. Resource Leak (Lock File)
-**Failure Mode**: Lock file nie usunięty, następny start nie działa
-- **Detection**: Old lock file exists but PID doesn't
-- **Consequence**: Can't start application
-- **Prevention**: Check PID validity before blocking
-- **Recovery**: Auto-cleanup if process doesn't exist
+### 3. Stale Lock File
+**Failure**: Lock file persists from crashed application, preventing new instance
+- **User Impact**: Application refuses to start even though no instance is running
+- **Prevention**: Lock file contains process information for validity verification
+- **Recovery**: Stale locks are automatically cleaned up after process validity check
 
-### 4. Microphone Permission Changes
-**Failure Mode**: User removes microphone permission while app running
-- **Detection**: sounddevice.check_input_settings() fails mid-run
-- **Consequence**: Recording fails silently
-- **Prevention**: Proactive check on startup
-- **Recovery**: Graceful error message in logs
+### 4. Microphone Access Loss
+**Failure**: System audio permissions revoked or device disconnected while recording
+- **User Impact**: Recording fails without indication
+- **Prevention**: Microphone capability check performed at application startup
+- **Recovery**: Logged as warning, application continues with graceful fallback
 
-### 5. Logging Disk Space
-**Failure Mode**: Log file grows unbounded → fills disk
-- **Detection**: Available disk < 100MB
-- **Consequence**: Application fails, no logging
-- **Prevention**: RotatingFileHandler (5 x 5MB)
-- **Recovery**: Old logs auto-deleted
+### 5. Log File Disk Space
+**Failure**: Log file grows unbounded and fills disk
+- **User Impact**: Application fails when disk full, no logging available
+- **Prevention**: Rotating log file mechanism with size limits
+- **Recovery**: Older log files automatically removed to maintain disk space
 
-### 6. Signal Handling Race Condition
-**Failure Mode**: Ctrl+C during cleanup → partial resource release
-- **Detection**: File descriptor check after shutdown
-- **Consequence**: Zombie processes, leaked streams
-- **Prevention**: Signal handler sets flags atomically
-- **Recovery**: atexit handlers registered in correct order
+### 6. Graceful Shutdown Failure
+**Failure**: Partial resource cleanup on forceful termination (e.g., Ctrl+C)
+- **User Impact**: Zombie processes, file descriptors leaked
+- **Prevention**: Atomic signal handlers with ordered cleanup registration
+- **Recovery**: All cleanup handlers execute in reverse registration order
 
 ---
 
-## Dependencies (No New External)
+## Technical Requirements
 
-- `psutil` - PID existence check (already in requirements)
-- `threading` - Watchdog thread (stdlib)
-- `logging` - Rotating file handler (stdlib)
-- `atexit` - Cleanup on exit (stdlib)
-- `signal` - Signal handling (stdlib)
+- **Process Management**: Ability to check process validity and PID information
+- **Thread Management**: Background thread for monitoring with proper synchronization
+- **Logging System**: File-based rotating logger with size limits
+- **Signal Handling**: System signal handlers for graceful shutdown
+- **No New External Dependencies**: All requirements should use existing dependencies or Python stdlib
 
 ---
 
@@ -224,47 +211,37 @@ Więcej szczegółów w [13-05-00] Tests Suite spec.
 
 ---
 
-## Rollout & Validation
+## Implementation Approach
 
-### Phase 1 Rollout (Lock + Signals)
-```
-1. Write all unit tests (TDD)
-2. Implement lock file mechanism
-3. Implement signal handlers
-4. Run tests locally
-5. Manual test 2 instances scenario
-6. Code review
-```
+### Phase 1: Lock File & Signal Handling
+- Write comprehensive test suite (TDD-first)
+- Implement lock file mechanism with process validation
+- Implement signal handlers for graceful termination
+- Verify mutual exclusion of concurrent instances
+- Validate resource cleanup on shutdown
 
-### Phase 2 Rollout (Watchdog)
-```
-1. Write watchdog tests
-2. Implement watchdog thread
-3. Integrate with recording loop
-4. Run full test suite
-5. Manual stress test (long recordings)
-6. Code review
-```
+### Phase 2: Audio Stream Monitoring
+- Write watchdog tests for stall detection
+- Implement background monitoring mechanism
+- Integrate with recording pipeline
+- Validate automatic recovery behavior
+- Stress test with extended recordings
 
-### Phase 3 Validation (All Together)
-```
-1. Run full TDD test suite (pytest)
-2. Manual multi-scenario testing
-3. Verify no regressions in existing features
-4. Update README with new logging locations
-5. Final code review + merge
-```
+### Phase 3: Logging & Integration Testing
+- Write logging system tests
+- Implement rotating file logger
+- Verify key events are logged at appropriate levels
+- Run full integration test suite
+- Validate no regressions in existing functionality
 
 ---
 
-## Files Modified (High-Level)
+## Affected Components
 
-```
-whisper-dictation.py       ← Lock file + Signal handlers + Watchdog + Logging
-whisper-dictation-fast.py  ← Same changes (sync both)
-recorder.py                ← TDD recorder sync
-tests/                     ← New test files (TDD)
-```
+- **Main Application Entry Points**: Lock file initialization, signal handler registration, logging setup
+- **Recording Pipeline**: Watchdog integration, heartbeat updates during recording
+- **TDD Test Modules**: Recording and transcription test utilities for consistency
+- **Test Suite**: New unit, integration, and manual test scenarios
 
 ---
 
@@ -329,9 +306,24 @@ tests/                     ← New test files (TDD)
 
 ---
 
+## Implementation Context (Not Part of Spec)
+
+**Current Implementation Structure:**
+- Main applications: `whisper-dictation.py` (Python), `whisper-dictation-fast.py` (C++)
+- TDD modules: `recorder.py`, `transcriber.py`
+- Test directory: `tests/`
+- Lock file location: `~/.whisper-dictation.lock`
+- Log file location: `~/.whisper-dictation.log`
+- Current dependencies: `psutil` (process checks), stdlib `threading`, `logging`, `signal`, `atexit`
+
+**Note**: This implementation context may change with refactoring. The specification above describes stable requirements independent of current file structure or library choices.
+
+---
+
 ## References
 
 - Memory Bank: lessons_learned/recommendations_from_macos_dictate.md
-- CLAUDE.md: TDD patterns, spec hierarchy
+- CLAUDE.md: Specification standards, abstraction guidelines
 - Existing specs: [08-00-00] (audio clipping), [10-00-00] (timestamps)
+- User Story Specs: [13-01-00] through [13-05-00]
 

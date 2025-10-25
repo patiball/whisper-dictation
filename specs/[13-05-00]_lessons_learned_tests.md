@@ -113,388 +113,268 @@
 
 ---
 
-## Test Files Structure
+## Test Organization Structure
 
-```
-tests/
-├── __init__.py
-├── conftest.py                          # Shared fixtures
-│
-├── test_lock_file.py                    # [13-01-00]
-│   ├── TestLockFileBasics
-│   ├── TestLockFileMultiInstance
-│   ├── TestSignalHandling
-│   └── TestStaleFiles
-│
-├── test_microphone_check.py             # [13-02-00]
-│   ├── TestMicrophoneCheckBasics
-│   ├── TestMicrophoneCheckTiming
-│   └── TestMicrophoneCheckIntegration
-│
-├── test_audio_watchdog.py               # [13-03-00]
-│   ├── TestHeartbeatTracking
-│   ├── TestStallDetection
-│   ├── TestWatchdogThread
-│   ├── TestStreamRestart
-│   └── TestThreadSafety
-│
-├── test_logging.py                      # [13-04-00]
-│   ├── TestLoggingSetup
-│   ├── TestRotatingFileHandler
-│   ├── TestKeyEventsLogged
-│   ├── TestConsoleFallback
-│   └── TestLogFormat
-│
-├── integration/
-│   ├── __init__.py
-│   ├── test_lock_file_integration.py
-│   ├── test_watchdog_integration.py
-│   └── test_full_flow.py
-│
-└── manual_tests/
-    ├── README.md                        # Manual test guide
-    └── test_scenarios.md                # Test cards/scenarios
-```
+**Test Directory Hierarchy:**
+- Root test directory with shared configuration
+- Separate test modules for each major feature
+- Integration test subdirectory for end-to-end scenarios
+- Manual test documentation subdirectory
+
+**Feature Coverage:**
+- Lock file mechanism (basics, multi-instance, signal handling, stale files)
+- Microphone access check (basics, timing, integration)
+- Audio watchdog (heartbeat, stall detection, thread safety, restart)
+- Logging system (setup, rotation, events, format, fallback)
+- Integration scenarios (multi-instance, shutdown, watchdog recovery, full flow)
 
 ---
 
-## Unit Test Examples
+## Unit Test Scenarios
 
-### test_lock_file.py (Abbreviated)
-```python
-"""Tests for lock file mechanism"""
-import pytest
-import os
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+### Lock File Tests
+**Lock file creation:**
+- Lock file should exist after initialization
+- Lock file should contain valid process ID
+- Cleanup should remove lock file
 
-class TestLockFileBasics:
-    def test_lock_file_created_on_startup(self):
-        """Lock file should exist after setup_lock_file()"""
-        from whisper_dictation import setup_lock_file, cleanup_lock_file, LOCK_FILE
-        setup_lock_file()
-        assert LOCK_FILE.exists()
-        cleanup_lock_file()
+**Dead PID handling:**
+- Lock file with non-existent PID should allow startup
+- Lock file should be updated with current PID
+- Warning should be logged about stale lock file
 
-    def test_dead_pid_allows_startup(self):
-        """Dead PID in lock file should be overwritten"""
-        from whisper_dictation import setup_lock_file, LOCK_FILE
-        LOCK_FILE.write_text("99999999")
-        setup_lock_file()  # Should not raise
-        assert int(LOCK_FILE.read_text().strip()) == os.getpid()
-```
+### Watchdog Tests
+**Heartbeat tracking:**
+- Heartbeat update should change timestamp
+- Multiple updates should show progression
+- Timestamp should be accessible for monitoring
 
-### test_audio_watchdog.py (Abbreviated)
-```python
-"""Tests for audio watchdog"""
-import pytest
-import time
-from datetime import datetime, timedelta
-from unittest.mock import patch
+**Stall detection:**
+- Long period without heartbeat should trigger warning
+- Stall should initiate recovery sequence
+- Recovery should be logged appropriately
 
-class TestHeartbeatTracking:
-    def test_heartbeat_updated(self):
-        """update_heartbeat() should update last_heartbeat"""
-        from whisper_dictation import update_heartbeat, last_heartbeat as old_time
-        time.sleep(0.05)
-        update_heartbeat()
-        from whisper_dictation import last_heartbeat as new_time
-        assert new_time > old_time
-```
+### Logging Tests
+**Setup and configuration:**
+- Log file should be created at specified location
+- Log level should be configurable
+- Multiple log levels should filter correctly
 
-### test_logging.py (Abbreviated)
-```python
-"""Tests for logging system"""
-import pytest
-import logging
-from pathlib import Path
-
-class TestLoggingSetup:
-    def test_log_file_created(self):
-        """setup_logging() should create log file"""
-        from whisper_dictation import setup_logging
-        setup_logging()
-        log_file = Path.home() / ".whisper-dictation.log"
-        assert log_file.exists()
-```
+**Rotation behavior:**
+- Large volume of logs should trigger rotation
+- Backup files should be created
+- Old backups should be deleted when limit exceeded
 
 ---
 
-## Integration Test Examples
+## Integration Test Scenarios
 
-### integration/test_lock_file_integration.py
-```python
-"""Integration tests for lock file with real processes"""
-import pytest
-import subprocess
-import sys
-import time
-from pathlib import Path
+### Multi-Instance Behavior
+**Second instance handling:**
+- Starting application when already running should prevent second instance
+- Second instance should exit gracefully with appropriate message
+- Lock file should remain valid for first instance
+- First instance cleanup should work correctly
 
-class TestMultiInstanceIntegration:
-    def test_second_instance_exits(self):
-        """Starting app twice should exit second instance gracefully"""
-        # Start first instance in background
-        proc1 = subprocess.Popen([sys.executable, "whisper-dictation.py"])
-        time.sleep(0.5)
+**Process cleanup:**
+- Terminated instance should release lock
+- New instance should start successfully after previous cleanup
+- Crashed instance should leave detectable stale lock
 
-        # Try to start second instance
-        proc2 = subprocess.run(
-            [sys.executable, "whisper-dictation.py"],
-            capture_output=True
-        )
+### Full Recording Flow
+**End-to-end operation:**
+- Complete recording, transcription, and output cycle
+- All components interact correctly
+- Logging captures full sequence
+- No resource leaks or hangs
 
-        # Second should exit with code 1
-        assert proc2.returncode == 1
-        assert b"already running" in proc2.stderr
-
-        # Clean up
-        proc1.terminate()
-```
-
-### integration/test_full_flow.py
-```python
-"""End-to-end integration tests"""
-import pytest
-
-@pytest.mark.integration
-class TestFullRecordingFlow:
-    def test_record_and_transcribe(self):
-        """Full flow: record audio, transcribe, type text"""
-        # This requires the full app context
-        # Typically requires manual setup or mock audio
-        pass
-```
+### Watchdog Recovery
+**Stall detection and recovery:**
+- Simulated stall triggers watchdog
+- Recovery sequence executes correctly
+- Application continues operation after recovery
+- All events logged appropriately
 
 ---
 
 ## Manual Test Scenarios
 
-### Manual Test Guide: `manual_tests/test_scenarios.md`
+### Test 1: Lock File Behavior
 
-```markdown
-# Manual Test Scenarios
+**Setup Requirements:**
+- Clean system with no running instances
+- Lock file should not exist initially
 
-## Test 1: Lock File Behavior
+**Scenario A: Normal Startup and Shutdown**
+1. Start application
+2. Verify lock file created with valid PID
+3. Verify application enters listening state
+4. Send shutdown signal
+5. Verify lock file removed cleanly
+6. Expected: Clean startup and shutdown cycle
 
-### Setup
-- Start with clean system
-- Ensure no whisper-dictation processes running
-- Check lock file doesn't exist: `ls -la ~/.whisper-dictation.lock`
+**Scenario B: Second Instance Prevention**
+1. Start first instance
+2. Attempt to start second instance
+3. Verify second instance exits with error message
+4. Shutdown first instance
+5. Verify new instance can now start
+6. Expected: Only one instance runs at a time
 
-### Scenario A: Normal Startup
-1. Start app: `poetry run python whisper-dictation.py --k_double_cmd`
-2. Verify lock file created: `cat ~/.whisper-dictation.lock` (should show PID)
-3. Verify app shows "Listening..."
-4. Press Ctrl+C
-5. Verify lock file removed: `ls -la ~/.whisper-dictation.lock` (should not exist)
-6. ✅ PASS
+**Scenario C: Stale Lock File Recovery**
+1. Create lock file with invalid (very high) PID
+2. Start application
+3. Verify application starts successfully
+4. Verify lock file updated with current PID
+5. Expected: Application recovers from stale lock
 
-### Scenario B: Second Instance
-1. Start first app: Terminal 1
-2. Attempt start second app: Terminal 2
-3. Verify Terminal 2 shows "Already running (PID X)"
-4. Kill Terminal 1: Ctrl+C
-5. Verify Terminal 2 can now start
-6. ✅ PASS
+### Test 2: Audio Watchdog
 
-### Scenario C: Crashed App Recovery
-1. Run: `echo 99999999 > ~/.whisper-dictation.lock`
-2. Start app: should start successfully (recognizes dead PID)
-3. Verify: `cat ~/.whisper-dictation.lock` (shows NEW PID)
-4. ✅ PASS
+**Setup Requirements:**
+- Debug logging enabled
+- Log monitoring active
 
----
+**Scenario A: Normal Operation**
+1. Start application with debug logging
+2. Perform several recording operations
+3. Verify no stall warnings in logs
+4. Verify heartbeat updates visible (debug level)
+5. Expected: Normal operation without watchdog intervention
 
-## Test 2: Audio Watchdog
+**Scenario B: Watchdog Monitoring**
+1. Start application with debug logging
+2. Verify watchdog initialization logged
+3. Record audio and check for heartbeat updates
+4. Expected: Watchdog actively monitoring
 
-### Setup
-- Run with `--log-level DEBUG` to see watchdog activity
-- Monitor logs: `tail -f ~/.whisper-dictation.log`
+### Test 3: Microphone Access
 
-### Scenario A: Normal Recording (No Stall)
-1. Start app
-2. Record for 5 seconds
-3. Verify "Audio OK" or no stall warnings
-4. Verify logs show heartbeat updates
-5. ✅ PASS
+**Scenario A: Microphone Available**
+1. Start application normally
+2. Verify microphone check passes
+3. Verify recording functionality works
+4. Expected: Normal microphone operation
 
-### Scenario B: Watchdog Monitoring
-1. Start app with DEBUG level
-2. Look for "Watchdog thread started" in logs
-3. Record brief audio
-4. Look for "Heartbeat updated" entries
-5. ✅ PASS
+**Scenario B: Permission Denied**
+1. Revoke microphone permissions via system settings
+2. Start application
+3. Verify access test failure logged
+4. Re-enable permissions
+5. Restart and verify recovery
+6. Expected: Graceful handling of permission issues
 
-### Scenario C: Stall Detection (Simulated)
-[This would require code instrumentation]
-1. Patch recorder to not update heartbeat
-2. Let watchdog run >10 seconds
-3. Verify "Audio system stalled" warning
-4. Verify restart attempted
-5. ✅ PASS
+### Test 4: Logging System
 
----
+**Scenario A: Log File Creation**
+1. Remove existing log file
+2. Start application
+3. Verify log file created in expected location
+4. Verify startup message present
+5. Expected: Log file created and populated
 
-## Test 3: Microphone Check
+**Scenario B: Log Rotation**
+1. Generate high volume of log entries
+2. Monitor log file size
+3. Verify rotation occurs at size limit
+4. Verify backup files created
+5. Verify old backups deleted
+6. Expected: Rotation prevents unbounded growth
 
-### Setup
-- None required
-
-### Scenario A: Microphone Available
-1. Start app normally
-2. Verify "Microphone access OK" in logs
-3. Recording works
-4. ✅ PASS
-
-### Scenario B: Microphone Permission Denied
-[Requires System Preferences change]
-1. System Preferences → Security & Privacy → Microphone
-2. Remove whisper-dictation from approved list
-3. Start app
-4. Verify "Microphone access test failed" in logs
-5. Re-enable permissions
-6. Restart app
-7. ✅ PASS
-
----
-
-## Test 4: Logging System
-
-### Scenario A: Log File Creation
-1. Delete existing log: `rm ~/.whisper-dictation.log`
-2. Start app
-3. Verify log file created: `ls -la ~/.whisper-dictation.log`
-4. Verify contains start message: `grep "Application started" ~/.whisper-dictation.log`
-5. ✅ PASS
-
-### Scenario B: Log Rotation
-1. Generate large log: Fill with 20+ recordings
-2. Monitor log file size: `ls -lah ~/.whisper-dictation.log*`
-3. Verify max size ~5MB
-4. Verify backup files created: `~/.whisper-dictation.log.1`, `.log.2`, etc.
-5. Verify old logs deleted (max 5 backups)
-6. ✅ PASS
-
-### Scenario C: Log Levels
-1. `--log-level DEBUG`: Verify very verbose output
-2. `--log-level WARNING`: Verify only warnings/errors shown
-3. ✅ PASS
-```
+**Scenario C: Log Level Filtering**
+1. Test with DEBUG level (very verbose)
+2. Test with WARNING level (errors/warnings only)
+3. Verify appropriate filtering
+4. Expected: Log levels control verbosity correctly
 
 ---
 
-## Test Fixtures (conftest.py)
+## Test Fixtures Strategy
 
-```python
-"""Shared pytest fixtures"""
-import pytest
-import tempfile
-from pathlib import Path
+### Shared Test Infrastructure
 
-@pytest.fixture
-def temp_log_dir():
-    """Temporary directory for test logs"""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
+**Temporary Directory Fixtures:**
+- Provide isolated directories for log files during testing
+- Ensure no contamination of user's home directory
+- Automatic cleanup after test completion
 
-@pytest.fixture
-def mock_pyaudio():
-    """Mock PyAudio for testing without audio hardware"""
-    from unittest.mock import MagicMock
-    with patch('pyaudio.PyAudio') as mock:
-        mock.return_value.open.return_value = MagicMock()
-        yield mock
+**Mock Audio Fixtures:**
+- Mock audio hardware interfaces for testing without physical devices
+- Provide configurable mock responses
+- Simulate success and failure scenarios
 
-@pytest.fixture
-def mock_recorder():
-    """Mock audio recorder"""
-    from unittest.mock import MagicMock
-    recorder = MagicMock()
-    recorder.record.return_value = b'\x00' * 1024
-    return recorder
+**Cleanup Fixtures:**
+- Clean lock files before and after tests
+- Clean log files before and after tests
+- Prevent test contamination
+- Ensure repeatable test execution
 
-@pytest.fixture
-def clean_lock_file():
-    """Ensure lock file is clean before/after test"""
-    from pathlib import Path
-    lock_file = Path.home() / ".whisper-dictation.lock"
-    if lock_file.exists():
-        lock_file.unlink()
-    yield
-    if lock_file.exists():
-        lock_file.unlink()
+### Fixture Categories
 
-@pytest.fixture
-def clean_log_file():
-    """Ensure log file is clean before/after test"""
-    from pathlib import Path
-    log_file = Path.home() / ".whisper-dictation.log"
-    if log_file.exists():
-        log_file.unlink()
-    yield
-    if log_file.exists():
-        log_file.unlink()
-```
+**Resource Isolation:**
+- Temporary directories
+- Mock hardware interfaces
+- Isolated configuration
+
+**State Management:**
+- Pre-test cleanup
+- Post-test cleanup
+- State verification
+
+**Test Utilities:**
+- Common assertion helpers
+- Data generation utilities
+- Mock configuration helpers
 
 ---
 
-## pytest Configuration (pytest.ini)
+## Test Framework Configuration
 
-```ini
-[pytest]
-testpaths = tests
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
-addopts =
-    -v
-    --tb=short
-    --strict-markers
-    -ra
-    --cov=.
-    --cov-report=html
-    --cov-report=term-missing
-markers =
-    unit: Unit tests (fast, mocked)
-    integration: Integration tests (slower, real objects)
-    manual: Manual test scenarios
-    whisper_cpp: Tests specific to C++ version
-```
+### Test Discovery
+- Test files should follow naming convention
+- Test classes should follow naming convention
+- Test functions should follow naming convention
+- Tests organized in designated test directory
+
+### Execution Options
+- Verbose output for detailed feedback
+- Short traceback format for readability
+- Strict marker enforcement
+- Summary of all test results
+- Coverage reporting in multiple formats
+
+### Test Markers
+- **unit**: Fast tests with mocked dependencies
+- **integration**: Slower tests with real components
+- **manual**: Manual test scenarios requiring human verification
+- **whisper_cpp**: Tests specific to C++ implementation
+
+### Coverage Configuration
+- HTML reports for detailed analysis
+- Terminal reports for immediate feedback
+- Coverage of application code (excluding tests)
 
 ---
 
-## Running Tests
+## Test Execution Methods
 
-### All Tests
-```bash
-poetry run pytest
-```
+### Test Scope Options
+- **All tests**: Run entire test suite
+- **Unit tests only**: Run fast, isolated tests
+- **Integration tests only**: Run end-to-end scenarios
+- **Specific test file**: Run tests for single module
+- **Specific test class/function**: Run individual test
 
-### Unit Tests Only
-```bash
-poetry run pytest -m unit
-```
+### Coverage Options
+- **With coverage**: Generate coverage reports
+- **HTML reports**: Detailed interactive coverage analysis
+- **Terminal reports**: Immediate coverage feedback
+- **Coverage thresholds**: Fail if coverage drops below target
 
-### Integration Tests Only
-```bash
-poetry run pytest -m integration
-```
-
-### With Coverage
-```bash
-poetry run pytest --cov=whisper_dictation --cov-report=html
-```
-
-### Specific Test File
-```bash
-poetry run pytest tests/test_lock_file.py
-```
-
-### Watch Mode (on change, rerun tests)
-```bash
-poetry run pytest-watch
-```
+### Development Workflows
+- **Watch mode**: Automatically rerun tests on file changes
+- **Parallel execution**: Run tests concurrently for speed
+- **Verbose mode**: Detailed output for debugging
+- **Quiet mode**: Minimal output for CI/CD
 
 ---
 
@@ -511,46 +391,43 @@ poetry run pytest-watch
 
 ---
 
-## CI/CD Integration
+## CI/CD Integration Strategy
 
-### GitHub Actions Workflow: `.github/workflows/tests.yml`
+### Continuous Integration Requirements
 
-```yaml
-name: Tests
+**Build Pipeline:**
+- Checkout source code
+- Set up Python environment
+- Install dependencies via package manager
+- Run test suite
+- Generate coverage reports
+- Upload coverage data
 
-on: [push, pull_request]
+**Test Execution:**
+- Run unit tests (fast feedback)
+- Run integration tests (comprehensive validation)
+- Fail build on test failures
+- Fail build on coverage regression
 
-jobs:
-  test:
-    runs-on: macos-latest
+**Artifact Management:**
+- Store coverage reports
+- Store test results
+- Archive build artifacts
+- Publish coverage trends
 
-    steps:
-    - uses: actions/checkout@v2
+### CI/CD Platform Configuration
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+**Platform Requirements:**
+- macOS runner for platform-specific testing
+- Python environment support
+- Coverage reporting integration
+- Artifact storage
 
-    - name: Install dependencies
-      run: |
-        poetry install
-
-    - name: Run unit tests
-      run: |
-        poetry run pytest -m unit -v
-
-    - name: Run integration tests
-      run: |
-        poetry run pytest -m integration -v
-
-    - name: Coverage report
-      run: |
-        poetry run pytest --cov=. --cov-report=xml
-
-    - name: Upload coverage
-      uses: codecov/codecov-action@v2
-```
+**Quality Gates:**
+- All tests must pass
+- Coverage must meet threshold
+- No critical issues in static analysis
+- Build must complete successfully
 
 ---
 
@@ -580,25 +457,35 @@ jobs:
 
 ## Brittleness Analysis
 
-### Failure Mode 1: Tests Too Tightly Coupled to Implementation
-**Prevention**: Test behavior, not implementation details
-**Mitigation**: Use mocks at boundaries, not internal functions
+### Failure Mode 1: Tests Coupled to Implementation Details
+**What Happens**: Tests break when internal implementation changes, even though behavior unchanged
+**Impact**: High maintenance burden, resistance to refactoring
+**Prevention**: Test observable behavior and public interfaces, not internal mechanics
+**Recovery**: Decouple tests by using boundary mocks and behavioral assertions
 
-### Failure Mode 2: Flaky Tests (Non-Deterministic)
-**Prevention**: Use fixed delays instead of timeouts, seed randomness
-**Mitigation**: Mark flaky tests with @pytest.mark.flaky, retry
+### Failure Mode 2: Non-Deterministic Test Results
+**What Happens**: Tests pass or fail randomly due to timing, race conditions, or uncontrolled state
+**Impact**: Loss of confidence in test suite, wasted debugging time
+**Prevention**: Use deterministic delays, seed random generators, isolate test state
+**Recovery**: Mark flaky tests, implement retry logic, fix root cause
 
-### Failure Mode 3: Tests Contaminating Filesystem
-**Prevention**: Use temp directories, clean up before/after
-**Mitigation**: Fixtures with cleanup (clean_lock_file, clean_log_file)
+### Failure Mode 3: Filesystem Contamination
+**What Happens**: Tests modify user files or leave artifacts that affect subsequent tests
+**Impact**: Tests fail when run in different order, user data corruption risk
+**Prevention**: Use temporary directories, implement cleanup fixtures
+**Recovery**: Pre/post-test cleanup, isolated test environments
 
-### Failure Mode 4: Test Suite Takes Too Long
-**Prevention**: Keep unit tests fast (<1s), integration tests separate
-**Mitigation**: Run unit tests in CI, integration tests only in nightly
+### Failure Mode 4: Slow Test Execution
+**What Happens**: Test suite takes too long, slowing development feedback loop
+**Impact**: Developers skip running tests, CI/CD pipeline bottleneck
+**Prevention**: Keep unit tests fast, separate slow integration tests
+**Recovery**: Parallel execution, selective test running, optimization
 
-### Failure Mode 5: Mock Diverges from Reality
-**Prevention**: Compare mock behavior to real objects periodically
-**Mitigation**: Integration tests with real objects, documentation
+### Failure Mode 5: Mock-Reality Divergence
+**What Happens**: Mocks behave differently than real components they replace
+**Impact**: Tests pass but production code fails, false confidence
+**Prevention**: Regularly verify mock behavior matches reality
+**Recovery**: Integration tests with real components, contract testing
 
 ---
 
@@ -613,27 +500,35 @@ jobs:
 
 ---
 
-## Rollout Strategy
+## Implementation Approach
 
-### Phase 1: Foundation Tests
-1. Write lock file tests
-2. Write microphone check tests
-3. Run and pass
+### Foundation Phase
+**Goal**: Establish basic test infrastructure and simple tests
+- Implement shared fixtures and utilities
+- Write tests for straightforward components (lock file, microphone check)
+- Verify test execution and reporting works
+- Achieve initial coverage baseline
 
-### Phase 2: Complex Tests
-1. Write watchdog tests (with mocks)
-2. Write logging tests
-3. Run and pass
+### Complex Component Phase
+**Goal**: Test concurrent and stateful components
+- Write tests for watchdog (threading, timing)
+- Write tests for logging (rotation, levels)
+- Use mocking for complex dependencies
+- Increase coverage of critical paths
 
-### Phase 3: Integration
-1. Write end-to-end integration tests
-2. Document manual test scenarios
-3. Verify all pass
+### Integration Phase
+**Goal**: Validate end-to-end functionality
+- Implement integration tests for key workflows
+- Document manual test scenarios
+- Verify all automated tests pass
+- Execute manual test scenarios
 
-### Phase 4: CI/CD
-1. Set up GitHub Actions workflow
-2. Require tests to pass before merge
-3. Monitor coverage trends
+### Continuous Integration Phase
+**Goal**: Automate test execution in CI/CD pipeline
+- Configure CI/CD platform workflow
+- Implement quality gates (test pass, coverage threshold)
+- Monitor coverage trends over time
+- Require passing tests for merge approval
 
 ---
 
@@ -642,17 +537,39 @@ jobs:
 - [ ] All TDD test cases written (unit + integration)
 - [ ] Unit tests all pass
 - [ ] Integration tests all pass
-- [ ] Coverage >85%
+- [ ] Coverage exceeds target threshold
 - [ ] Manual test scenarios documented
 - [ ] CI/CD workflow configured
 - [ ] No regressions in existing tests
 
 ---
 
-## References
+## Implementation Context (Not Part of Spec)
 
-- pytest documentation: https://docs.pytest.org/
-- Coverage.py: https://coverage.readthedocs.io/
-- GitHub Actions: https://docs.github.com/en/actions
-- TDD Best Practices: https://kent.doddad.com/blog/make-your-test-useful
+**Current Testing Framework:**
+The project currently uses pytest as the test framework with some existing tests in the `tests/` directory for audio and transcription functionality.
+
+**Example Test Structure:**
+Tests would be organized with files like `test_lock_file.py`, `test_audio_watchdog.py`, `test_logging.py`, etc. Each test file would contain classes like `TestLockFileBasics`, `TestHeartbeatTracking`, etc., with individual test methods following the pattern `test_<behavior>`.
+
+**Fixture Implementation:**
+A `conftest.py` file would provide shared fixtures:
+- `temp_log_dir`: Creates temporary directory for test logs
+- `mock_pyaudio`: Mocks PyAudio for hardware-independent testing
+- `clean_lock_file`: Ensures lock file is cleaned before/after tests
+- `clean_log_file`: Ensures log file is cleaned before/after tests
+
+**pytest.ini Configuration:**
+Configuration would specify test discovery patterns (`test_*.py`), markers (unit, integration, manual, whisper_cpp), and coverage reporting options (HTML and terminal output).
+
+**CI/CD Workflow:**
+A GitHub Actions workflow file (`.github/workflows/tests.yml`) would run on push and pull requests, executing tests on macOS runners with Python environment setup, dependency installation via poetry, test execution, and coverage reporting.
+
+**Example Commands:**
+- Run all tests: `poetry run pytest`
+- Run unit tests only: `poetry run pytest -m unit`
+- Run with coverage: `poetry run pytest --cov=whisper_dictation --cov-report=html`
+- Run specific file: `poetry run pytest tests/test_lock_file.py`
+
+**Note**: This implementation context documents current patterns which may evolve. The specification above focuses on WHAT testing should achieve, not HOW to implement it.
 
