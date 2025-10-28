@@ -18,3 +18,5 @@ This file defines the structure of the Memory Bank for the whisper-dictation pro
   - User Stories ([XX-YY-00])
   - Tasks ([XX-YY-ZZ])
 - **lessons_learned/**: Lessons learned and recommendations from previous implementations
+  - **recommendations_from_macos_dictate.md**: Lock file, watchdog, signal handling, logging
+  - **confluence_mermaid_diagrams.md**: How to add Mermaid diagrams to Confluence Cloud pages
