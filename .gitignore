@@ -10,4 +10,4 @@ build/
 *.egg-info/docs/.temp/
 docs/*_log_*.md
 .warp-cli.profile_id
-tests/audio/*.txt
+tests/audio/*.txttmp_rovodev_*

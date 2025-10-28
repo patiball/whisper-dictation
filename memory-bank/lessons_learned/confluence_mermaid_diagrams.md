@@ -154,6 +154,22 @@ curl -X PUT \
 **Result**: Macro doesn't render
 **Solution**: Use exact name `mermaid-cloud`
 
+### ❌ Pitfall 5: Multiple Diagrams Show Same Source in Edit Mode
+**Problem**: Multiple diagrams render correctly as different PNGs in view mode, but clicking to edit shows the same Mermaid source for all diagrams
+**Root Cause**: One or more macros reference attachments with `.mmd` extension (e.g., `architecture-diagram.mmd`)
+**Symptom**: Confluence gets confused about which attachment source to load in the editor
+**Result**: All diagrams appear to use the same source code when editing, even though they render as different images
+**Solution**: Update all macro `filename` parameters to remove `.mmd` extension
+**Fix Example**:
+```bash
+# Before (incorrect)
+<ac:parameter ac:name="filename">architecture-diagram.mmd</ac:parameter>
+
+# After (correct)
+<ac:parameter ac:name="filename">architecture-diagram</ac:parameter>
+```
+**Note**: This issue can occur even if some diagrams were uploaded correctly without extension. Having even one macro with `.mmd` extension can cause confusion for all diagrams on the page.
+
 ---
 
 ## Updating Diagrams
