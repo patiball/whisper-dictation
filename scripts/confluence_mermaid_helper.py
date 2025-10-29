@@ -150,7 +150,8 @@ class ConfluenceMermaidHelper:
     
     def add_mermaid_diagram(self, page_id: str, page_title: str,
                            diagram_path: str, attachment_name: str,
-                           insert_after_pattern: str, clean_existing: bool = False) -> dict:
+                           insert_after_pattern: str, clean_existing: bool = False,
+                           auto_prefix: bool = True) -> dict:
         """
         Complete workflow: upload diagram and add macro to page.
         
@@ -161,7 +162,17 @@ class ConfluenceMermaidHelper:
             attachment_name: Name for attachment (without extension)
             insert_after_pattern: HTML pattern to insert after
             clean_existing: If True, delete existing attachment with same name first
+            auto_prefix: If True, automatically prefix generic names to avoid conflicts
         """
+        # Auto-prefix generic names to avoid conflicts
+        generic_names = ['diagram', 'chart', 'image', 'graph', 'figure', 'visual']
+        if auto_prefix and attachment_name.lower() in generic_names:
+            import hashlib
+            pattern_hash = hashlib.md5(insert_after_pattern.encode()).hexdigest()[:8]
+            original_name = attachment_name
+            attachment_name = f"{attachment_name}-{pattern_hash}"
+            print(f"⚠️  Generic name '{original_name}' auto-prefixed to '{attachment_name}' to avoid conflicts")
+        
         # Clean up existing attachment if requested
         if clean_existing:
             print(f"Checking for existing '{attachment_name}' attachment...")

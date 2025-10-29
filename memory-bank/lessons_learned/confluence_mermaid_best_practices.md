@@ -34,38 +34,52 @@ helper.add_mermaid_diagram(
 
 ## Essential Rules
 
-### Rule 1: File Names Must Be Unique and Descriptive
-✅ **DO**: Use specific, unique names per page
+### Rule 1: Generic Names Are Automatically Prefixed ⭐
+
+**The helper automatically handles generic names!**
+
+✅ **YOU CAN USE**: Generic names like "diagram", "chart", etc.
 ```python
-attachment_name="architecture-overview"    # Good - specific
-attachment_name="dataflow-sequence"        # Good - specific
-attachment_name="section3-components"      # Good - identifies location
+attachment_name="diagram"  # Helper auto-prefixes to "diagram-24737279"
+attachment_name="chart"    # Helper auto-prefixes to "chart-ef9f8c33"
 ```
 
-❌ **DON'T**: Use generic names or extensions
+**Auto-prefix behavior:**
+- Generic names (`diagram`, `chart`, `image`, `graph`, `figure`, `visual`) get unique suffix
+- Suffix based on `insert_after_pattern` (ensures same section = same name)
+- Prevents conflicts across different sections automatically
+- Non-generic names pass through unchanged
+
+✅ **EVEN BETTER**: Use descriptive names (no prefix needed)
 ```python
-attachment_name="diagram"           # BAD - too generic, conflicts likely
-attachment_name="chart"             # BAD - too generic
+attachment_name="architecture-overview"    # Used as-is
+attachment_name="dataflow-sequence"        # Used as-is
+attachment_name="section3-components"      # Used as-is
+```
+
+❌ **DON'T**: Include file extensions
+```python
 attachment_name="architecture.mmd"  # BAD - extension causes 404
 ```
 
-**Why this matters with `clean_existing=True`:**
-- Deletes attachment with **exact same name** on the **same page**
-- If multiple sections use `attachment_name="diagram"`, they'll conflict
-- Each `add_mermaid_diagram(..., clean_existing=True)` will delete the previous one!
-
-**Naming Convention:**
+**Examples:**
 ```python
-# Pattern: {topic}-{type} or {section}-{purpose}
-"architecture-layers"      # ✅ Clear what it shows
-"sequence-error-handling"  # ✅ Clear what it shows
-"section3-overview"        # ✅ Ties to specific section
-"api-interfaces"           # ✅ Describes content
+# Section 3 - both use "diagram"
+helper.add_mermaid_diagram(..., attachment_name="diagram", 
+                          insert_after_pattern="<h2>Architecture</h2>")
+# → Creates: "diagram-24737279"
 
-# NOT:
-"diagram"                  # ❌ Too generic
-"chart1"                   # ❌ Non-descriptive
-"temp"                     # ❌ Looks temporary
+# Section 7 - also uses "diagram" 
+helper.add_mermaid_diagram(..., attachment_name="diagram",
+                          insert_after_pattern="<h2>Data Flow</h2>")
+# → Creates: "diagram-a1b2c3d4"
+# ✅ No conflict! Different hash for different section
+```
+
+**Disable auto-prefix if needed:**
+```python
+helper.add_mermaid_diagram(..., attachment_name="my-unique-name", 
+                          auto_prefix=False)
 ```
 
 ### Rule 2: One Diagram = One Clean Upload
@@ -160,53 +174,39 @@ The helper will:
 ## Safety Note: `clean_existing=True`
 
 ### What It Does
-Deletes **only** the attachment with the **exact same name** on the **same page** before uploading.
+Deletes the attachment with the **exact same name** on the **same page** before uploading.
 
-### Safe Usage
-✅ **Safe when:**
+### With Auto-Prefix (Default)
+✅ **SAFE** - Generic names are automatically made unique:
 ```python
-# Different diagrams have unique names
-helper.add_mermaid_diagram(..., attachment_name="architecture-diagram", clean_existing=True)
-helper.add_mermaid_diagram(..., attachment_name="dataflow-diagram", clean_existing=True)
-# ✅ No conflict - different names
-```
-
-### Dangerous Usage
-⚠️ **DANGER when:**
-```python
-# Multiple sections use the same generic name
 # Section 3
-helper.add_mermaid_diagram(..., attachment_name="diagram", clean_existing=True)  # Creates "diagram"
+helper.add_mermaid_diagram(..., attachment_name="diagram", clean_existing=True)
+# → Creates "diagram-24737279"
 
-# Section 7
-helper.add_mermaid_diagram(..., attachment_name="diagram", clean_existing=True)  # Deletes "diagram" from section 3!
-# ❌ Section 3 now broken!
+# Section 7  
+helper.add_mermaid_diagram(..., attachment_name="diagram", clean_existing=True)
+# → Creates "diagram-a1b2c3d4"
+# ✅ Different names = no conflict!
 ```
 
-### Protection Strategy
-**Use descriptive, unique names based on content or location:**
+### Without Auto-Prefix
+⚠️ **CAREFUL** when `auto_prefix=False`:
 ```python
-# Strategy 1: By content
-"architecture-layers"
-"sequence-main-flow"
-"components-overview"
+# Section 3
+helper.add_mermaid_diagram(..., attachment_name="diagram", 
+                          clean_existing=True, auto_prefix=False)
 
-# Strategy 2: By section
-"section3-architecture"
-"section7-dataflow"
-"section9-deployment"
-
-# Strategy 3: Hybrid
-"architecture-section3"
-"dataflow-section7"
+# Section 7 - same name!
+helper.add_mermaid_diagram(..., attachment_name="diagram",
+                          clean_existing=True, auto_prefix=False)
+# ⚠️ Deletes "diagram" from section 3!
 ```
 
-### When NOT to Use `clean_existing=True`
-- ❌ Testing multiple diagram names
-- ❌ Unsure if name is used elsewhere on page
-- ❌ Using generic names like "diagram", "chart", "image"
-
-**Default recommendation**: Always use `clean_existing=True` with descriptive names.
+### Recommendation
+✅ **Use default settings** (`auto_prefix=True` + `clean_existing=True`)
+- Handles generic names safely
+- Cleans up old uploads automatically
+- Works for teams without naming conventions
 
 ---
 
