@@ -4,16 +4,26 @@ This directory contains lessons learned from working with various tools and work
 
 ## Available Documents
 
-### 1. [Confluence Mermaid Diagrams](confluence_mermaid_diagrams.md)
-**Focus**: Adding Mermaid diagrams to Confluence Cloud pages
+### 1. [Confluence Mermaid Best Practices](confluence_mermaid_best_practices.md) ⭐
+**Focus**: How to add Mermaid diagrams correctly the first time
 
-**Key Learnings**:
-- File naming is critical (no `.mmd` extension)
-- Must use `mermaid-cloud` macro with HTML storage format
-- Revision parameter must match attachment version
-- 5 common pitfalls with solutions
+**Key Principles**:
+- Use the helper script with `clean_existing=True`
+- Exact file names (no extensions, no random suffixes)
+- One diagram = one clean upload
+- HTML storage format only
 
-**When to read**: Before adding any Mermaid diagrams to Confluence
+**When to read**: Before adding Mermaid diagrams (prevents issues)
+
+### 1a. [Confluence Mermaid Diagrams - Troubleshooting](confluence_mermaid_diagrams.md)
+**Focus**: Detailed technical reference and troubleshooting
+
+**Contents**:
+- Step-by-step manual process
+- 6 common pitfalls with fixes
+- API reference and parameters
+
+**When to read**: When debugging issues or working without helper
 
 ---
 
