@@ -1,9 +1,11 @@
 # Feature: Add Timestamps to Transcription Flow
 
-**Status**: Ready
+**Status**: In Progress
 **Priority**: High
 **Complexity**: Simple
 **Estimate**: 30-45 minutes
+**Jira Epic**: [MSB-1](https://metal-scribe.atlassian.net/browse/MSB-1) - CLI-Jira-Confluence Integration MVP
+**Jira Story**: [MSB-2](https://metal-scribe.atlassian.net/browse/MSB-2) - Add Timestamps to Transcription Flow
 
 ## Problem
 
