@@ -1,12 +1,29 @@
 # Multilingual Dictation App based on OpenAI Whisper
 Multilingual dictation app based on the powerful OpenAI Whisper ASR model(s) to provide accurate and efficient speech-to-text conversion in any application. The app runs in the background and is triggered through a keyboard shortcut. It is also entirely offline, so no data will be shared. It allows users to set up their own keyboard combinations and choose from different Whisper models, and languages.
 
-## Prerequisites
-The PortAudio and llvm library is required for this app to work. You can install it on macOS using the following command:
+## Table of Contents
+- [Prerequisites](#prerequisites)
+- [Permissions](#permissions)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Setting the App as a Startup Item](#setting-the-app-as-a-startup-item)
+- [Test Files](#test-files)
+- [Running Tests](#running-tests)
 
+## Prerequisites
+
+### For All Versions
 ```bash
 brew install portaudio llvm
 ```
+
+### Additional for C++ Version (GPU Acceleration)
+```bash
+# Install whisper.cpp for M1/M2 GPU support
+brew install whisper-cpp
+```
+
+**Note:** Models are automatically downloaded to `~/.whisper-models/` on first use.
 
 ## Permissions
 The app requires accessibility permissions to register global hotkeys and permission to access your microphone for speech recognition.
@@ -84,15 +101,8 @@ poetry run python whisper-dictation-fast.py -m medium --k_double_cmd --allowed_l
 - Language detection fixed (proper Polish → Polish transcription)
 - Translation mode verified (defaults to transcription, not translation)
 
-### **Prerequisites for C++ Version**
-```bash
-# Install whisper.cpp (if not already installed)
-brew install whisper-cpp
-```
 
-**Note:** Models are automatically downloaded to `~/.whisper-models/` on first use.
-
-### **Standard Usage (Python Version)**
+### Standard Usage (Python Version)
 ```bash
 poetry run python whisper-dictation.py -m large -k cmd_r+shift -l en
 ```
@@ -149,7 +159,7 @@ The repository contains test audio files for debugging and performance testing i
 | Stability | ✅ Production ready | ✅ Production ready (Oct 2025) |
 | Best For | Intel Macs, maximum accuracy | M1/M2 Macs, GPU speed |
 
-### Running Tests
+## Running Tests
 
 ```bash
 # Run all tests with pytest
