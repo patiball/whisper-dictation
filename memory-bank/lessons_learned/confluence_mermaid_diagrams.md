@@ -170,6 +170,57 @@ curl -X PUT \
 ```
 **Note**: This issue can occur even if some diagrams were uploaded correctly without extension. Having even one macro with `.mmd` extension can cause confusion for all diagrams on the page.
 
+### ❌ Pitfall 6: Persistent 404 Errors Despite Correct Configuration
+**Problem**: Macro shows "Could not load diagram. Error code: 404" even though:
+- Attachment exists and has correct name
+- Macro references correct filename
+- Revision parameter matches attachment version
+- File content is valid
+
+**Root Cause**: Orphaned/corrupt attachments from previous failed uploads or multiple uploads with temp file suffixes (e.g., `system-overviewpmwwn21i`)
+
+**Symptom**: 
+- Everything looks correct in API responses
+- File downloads correctly via curl
+- But macro editor can't load the diagram
+
+**Solution**: Nuclear option - clean slate approach
+1. Remove ALL mermaid macros from the section
+2. Delete ALL related attachments (including old/test ones)
+3. Wait 2-3 seconds for Confluence to process deletions
+4. Upload fresh attachment with exact name
+5. Add macro with correct parameters
+
+**Clean Slate Script**:
+```python
+# 1. Remove macros
+section_content = re.sub(
+    r'<ac:structured-macro ac:name="mermaid-cloud"[^>]*>.*?</ac:structured-macro>',
+    '', section_content, flags=re.DOTALL
+)
+
+# 2. Delete attachments
+for att in get_attachments():
+    if 'diagram' in att['title'].lower():
+        delete_attachment(att['id'])
+
+time.sleep(2)  # Important!
+
+# 3. Upload fresh
+upload_diagram(page_id, file_path, exact_name)
+
+# 4. Add macro
+add_macro_to_section(...)
+```
+
+**Prevention**:
+- Always use exact names (no temp file suffixes)
+- Delete failed uploads immediately
+- Avoid multiple upload attempts without cleanup
+- Use `NamedTemporaryFile` with exact name, not random suffix
+
+**Time Cost**: This issue took 14 iterations to debug and fix. Clean slate from the start would have taken 2 iterations.
+
 ---
 
 ## Updating Diagrams

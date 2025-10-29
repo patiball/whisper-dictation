@@ -10,6 +10,7 @@ import json
 import re
 import subprocess
 import tempfile
+import time
 from typing import Optional
 
 class ConfluenceMermaidHelper:
@@ -83,11 +84,12 @@ class ConfluenceMermaidHelper:
     
     def upload_diagram(self, page_id: str, diagram_path: str, attachment_name: str) -> dict:
         """Upload diagram as attachment (without .mmd extension)."""
-        # Copy to temp file without extension
-        with tempfile.NamedTemporaryFile(mode='w', suffix='', delete=False, prefix=attachment_name) as tmp:
-            with open(diagram_path, 'r') as src:
-                tmp.write(src.read())
-            tmp_path = tmp.name
+        # Create temp file with exact name (no extension, no random suffix)
+        tmp_path = f'/tmp/{attachment_name}'
+        
+        with open(diagram_path, 'r') as src:
+            with open(tmp_path, 'w') as dst:
+                dst.write(src.read())
         
         # Upload using curl directly
         cmd = [
@@ -148,7 +150,7 @@ class ConfluenceMermaidHelper:
     
     def add_mermaid_diagram(self, page_id: str, page_title: str,
                            diagram_path: str, attachment_name: str,
-                           insert_after_pattern: str) -> dict:
+                           insert_after_pattern: str, clean_existing: bool = False) -> dict:
         """
         Complete workflow: upload diagram and add macro to page.
         
@@ -158,7 +160,26 @@ class ConfluenceMermaidHelper:
             diagram_path: Path to .mmd file
             attachment_name: Name for attachment (without extension)
             insert_after_pattern: HTML pattern to insert after
+            clean_existing: If True, delete existing attachment with same name first
         """
+        # Clean up existing attachment if requested
+        if clean_existing:
+            print(f"Checking for existing '{attachment_name}' attachment...")
+            cmd = ['curl', '-s', '-u', self.auth_str,
+                   f'{self.url}/rest/api/content/{page_id}/child/attachment?filename={attachment_name}']
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            data = json.loads(result.stdout)
+            
+            if data.get('results'):
+                att_id = data['results'][0]['id']
+                print(f"  Deleting existing attachment (id: {att_id})...")
+                cmd_del = ['curl', '-s', '-X', 'DELETE', '-u', self.auth_str,
+                          f'{self.url}/rest/api/content/{att_id}']
+                subprocess.run(cmd_del, capture_output=True, text=True)
+                print(f"  ✅ Deleted")
+                import time
+                time.sleep(1)  # Wait for deletion to process
+        
         print(f"Uploading diagram: {attachment_name}")
         attachment = self.upload_diagram(page_id, diagram_path, attachment_name)
         
