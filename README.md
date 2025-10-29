@@ -6,6 +6,8 @@ Multilingual dictation app based on the powerful OpenAI Whisper ASR model(s) to 
 - [Permissions](#permissions)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Keyboard Shortcuts](#️-keyboard-shortcuts)
+  - [Two Whisper Implementations](#-two-whisper-implementations-available)
 - [Setting the App as a Startup Item](#setting-the-app-as-a-startup-item)
 - [Test Files](#test-files)
 - [Running Tests](#running-tests)
@@ -58,6 +60,30 @@ pip install -r requirements.txt
 
 ## Usage
 
+### ⌨️ **Keyboard Shortcuts**
+
+**Default shortcut: Double-tap Right Command**
+```bash
+# Use --k_double_cmd for double-tap Right Command trigger
+python whisper-dictation.py --k_double_cmd
+python whisper-dictation-fast.py --k_double_cmd
+```
+
+**Custom keyboard combinations:**
+```bash
+# Right Command + Shift
+python whisper-dictation.py -k cmd_r+shift
+
+# Other examples
+python whisper-dictation.py -k ctrl+shift+space
+python whisper-dictation.py -k cmd+f1
+```
+
+**💡 Tip: Replace macOS built-in dictation**
+1. Go to System Settings → Keyboard → Disable Dictation
+2. Use `--k_double_cmd` to trigger with double-tap Right Command
+3. Single Right Command tap stops recording
+
 ### 🔄 **Two Whisper Implementations Available**
 
 This project includes **two different Whisper implementations** with different trade-offs:
@@ -109,12 +135,6 @@ poetry run python whisper-dictation.py -m large -k cmd_r+shift -l en
 
 The models are multilingual, and you can specify a two-letter language code (e.g., "no" for Norwegian) with the `-l` or `--language` option. Specifying the language can improve recognition accuracy, especially for smaller model sizes.
 
-#### Replace macOS default dictation trigger key
-You can use this app to replace macOS built-in dictation. Trigger to begin recording with a double click of Right Command key and stop recording with a single click of Right Command key.
-```bash
-python whisper-dictation.py -m large --k_double_cmd -l en
-```
-To use this trigger, go to System Settings -> Keyboard, disable Dictation. If you double click Right Command key on any text field, macOS will ask whether you want to enable Dictation, so select Don't Ask Again.
 
 ## Setting the App as a Startup Item
 To have the app run automatically when your computer starts, follow these steps:
