@@ -18,10 +18,12 @@ def get_timestamp():
     return datetime.now().strftime("[%H:%M:%S.%f")[:-3] + "]"
 
 class SpeechTranscriber:
-    def __init__(self, model_path, allowed_languages=None):
+    def __init__(self, model_path, allowed_languages=None, model_name='base', max_recording_time=120):
         self.model_path = model_path
         self.pykeyboard = keyboard.Controller()
         self.allowed_languages = allowed_languages
+        self.model_name = model_name
+        self.max_recording_time = max_recording_time
         print(f"Używam whisper.cpp z modelem: {model_path}")
 
     def transcribe(self, audio_data, language=None):
@@ -67,7 +69,10 @@ class SpeechTranscriber:
             
             # Domyślnie whisper-cli używa GPU na M1 jeśli dostępny
             
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=150)
+            # Calculate dynamic timeout based on model and recording time
+            timeout = calculate_whisper_timeout(self.model_name, self.max_recording_time)
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
             if result.returncode == 0:
                 print(f'{get_timestamp()} Transcription complete')
@@ -267,6 +272,24 @@ class StatusBarApp(rumps.App):
         else:
             self.start_app(None)
 
+def calculate_whisper_timeout(model_name, max_recording_time):
+    """Calculate timeout for whisper-cli based on model size and recording time"""
+    # Model processing time multipliers (smaller models are faster)
+    model_multipliers = {
+        'tiny': 0.5,   # Very fast
+        'base': 1.0,   # Baseline
+        'small': 1.5,  # Slower
+        'medium': 2.0, # Much slower
+        'large': 3.0   # Slowest
+    }
+    
+    base_timeout = max_recording_time * 2  # Base: 2x recording time
+    model_multiplier = model_multipliers.get(model_name, 1.0)
+    
+    # Final timeout with minimum of 30s
+    timeout = max(30, int(base_timeout * model_multiplier))
+    return timeout
+
 def download_model(model_name):
     """Pobierz model dla whisper.cpp jeśli nie istnieje"""
     models_dir = os.path.expanduser("~/.whisper-models")
@@ -323,7 +346,7 @@ if __name__ == "__main__":
     # Pobierz model jeśli nie istnieje
     model_path = download_model(args.model_name)
     
-    transcriber = SpeechTranscriber(model_path, args.allowed_languages)
+    transcriber = SpeechTranscriber(model_path, args.allowed_languages, args.model_name, args.max_time)
     recorder = Recorder(transcriber)
     
     app = StatusBarApp(recorder, args.language, args.max_time)
