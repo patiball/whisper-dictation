@@ -46,9 +46,27 @@ attachment_name="chart"    # Helper auto-prefixes to "chart-ef9f8c33"
 
 **Auto-prefix behavior:**
 - Generic names (`diagram`, `chart`, `image`, `graph`, `figure`, `visual`) get unique suffix
-- Suffix based on `insert_after_pattern` (ensures same section = same name)
-- Prevents conflicts across different sections automatically
+- Suffix based on `insert_after_pattern` hash
+- **Same pattern = same name** (allows updates)
+- **Different patterns = different names** (prevents conflicts across sections)
 - Non-generic names pass through unchanged
+
+**Important:** If you have multiple diagrams in the **same section** (same `insert_after_pattern`), use different base names:
+```python
+# ❌ WRONG - both use same pattern and same name
+helper.add_mermaid_diagram(..., attachment_name="diagram", 
+                          insert_after_pattern="<h2>Architecture</h2>")
+helper.add_mermaid_diagram(..., attachment_name="diagram",  # Same!
+                          insert_after_pattern="<h2>Architecture</h2>")  # Same!
+# Result: Second call deletes first diagram
+
+# ✅ CORRECT - different names or patterns
+helper.add_mermaid_diagram(..., attachment_name="overview-diagram",  # Specific
+                          insert_after_pattern="<h2>Architecture</h2>")
+helper.add_mermaid_diagram(..., attachment_name="detail-diagram",   # Different
+                          insert_after_pattern="<h2>Architecture</h2>")
+# Result: Both diagrams exist
+```
 
 ✅ **EVEN BETTER**: Use descriptive names (no prefix needed)
 ```python
@@ -207,6 +225,76 @@ helper.add_mermaid_diagram(..., attachment_name="diagram",
 - Handles generic names safely
 - Cleans up old uploads automatically
 - Works for teams without naming conventions
+
+---
+
+## Common Use Cases
+
+### Use Case 1: Updating Existing Diagram ✅
+**Scenario**: You want to replace a diagram with a new version
+
+```python
+# Day 1: Add diagram
+helper.add_mermaid_diagram(
+    page_id="131083",
+    attachment_name="diagram",
+    insert_after_pattern="<h2>Architecture</h2>",
+    clean_existing=True
+)
+# → Creates: diagram-24737279
+
+# Day 2: Update with new version (same name, same pattern)
+helper.add_mermaid_diagram(
+    page_id="131083",
+    attachment_name="diagram",  # Same name
+    insert_after_pattern="<h2>Architecture</h2>",  # Same pattern
+    clean_existing=True
+)
+# → Deletes diagram-24737279, creates new diagram-24737279
+# ✅ CORRECT: Old version replaced with new
+```
+
+### Use Case 2: Multiple Diagrams in Different Sections ✅
+**Scenario**: Each section has its own diagram
+
+```python
+# Section 3: Architecture
+helper.add_mermaid_diagram(..., attachment_name="diagram",
+                          insert_after_pattern="<h2>Architecture</h2>")
+# → diagram-24737279
+
+# Section 7: Data Flow  
+helper.add_mermaid_diagram(..., attachment_name="diagram",
+                          insert_after_pattern="<h2>Data Flow</h2>")
+# → diagram-079a89d6 (different hash)
+# ✅ CORRECT: Different sections = different names = no conflict
+```
+
+### Use Case 3: Multiple Diagrams in Same Section ⚠️
+**Scenario**: You want 2+ diagrams after the same heading
+
+```python
+# ❌ WRONG: Same name + same pattern = conflict
+helper.add_mermaid_diagram(..., attachment_name="diagram",
+                          insert_after_pattern="<h2>Architecture</h2>")
+helper.add_mermaid_diagram(..., attachment_name="diagram",  # Same!
+                          insert_after_pattern="<h2>Architecture</h2>")  # Same!
+# → Second call deletes first diagram
+
+# ✅ SOLUTION 1: Use specific names
+helper.add_mermaid_diagram(..., attachment_name="layers-diagram",
+                          insert_after_pattern="<h2>Architecture</h2>")
+helper.add_mermaid_diagram(..., attachment_name="components-diagram",
+                          insert_after_pattern="<h2>Architecture</h2>")
+# → Both exist: layers-diagram, components-diagram
+
+# ✅ SOLUTION 2: Use different patterns (more specific)
+helper.add_mermaid_diagram(..., attachment_name="diagram",
+                          insert_after_pattern="<h2>Architecture</h2>")
+helper.add_mermaid_diagram(..., attachment_name="diagram",
+                          insert_after_pattern="<h3>Components</h3>")  # Different!
+# → Different hashes: diagram-24737279, diagram-abc12345
+```
 
 ---
 
