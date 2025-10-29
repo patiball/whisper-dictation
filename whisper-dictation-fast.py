@@ -67,7 +67,7 @@ class SpeechTranscriber:
             
             # Domyślnie whisper-cli używa GPU na M1 jeśli dostępny
             
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=150)
 
             if result.returncode == 0:
                 print(f'{get_timestamp()} Transcription complete')
@@ -304,8 +304,8 @@ def parse_args():
                         help='Kod języka (np. "en" dla angielskiego)')
     parser.add_argument('--allowed_languages', type=str, default=None,
                         help='Lista dozwolonych języków, np. "en,pl"')
-    parser.add_argument('-t', '--max_time', type=float, default=30,
-                        help='Maksymalny czas nagrywania w sekundach. Default: 30.')
+    parser.add_argument('-t', '--max_time', type=float, default=120,
+                        help='Maksymalny czas nagrywania w sekundach. Default: 120.')
 
     args = parser.parse_args()
 

@@ -355,9 +355,9 @@ def parse_args():
     parser.add_argument('--allowed_languages', type=str, default=None,
                         help='Comma-separated list of allowed languages (e.g., "en,pl"). '
                         'If specified, language detection will be constrained to these languages only.')
-    parser.add_argument('-t', '--max_time', type=float, default=30,
+    parser.add_argument('-t', '--max_time', type=float, default=120,
                         help='Specify the maximum recording time in seconds. The app will automatically stop recording after this duration. '
-                        'Default: 30 seconds.')
+                        'Default: 120 seconds.')
     parser.add_argument('--frames-per-buffer', dest='frames_per_buffer', type=int, choices=[256,512,1024], default=512,
                         help='Frames per buffer for audio input. Default: 512. Can be overridden by env WHISPER_FRAMES_PER_BUFFER.')
     parser.add_argument('--warmup-buffers', dest='warmup_buffers', type=int, default=2,
