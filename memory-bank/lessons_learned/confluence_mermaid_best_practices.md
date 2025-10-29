@@ -34,17 +34,38 @@ helper.add_mermaid_diagram(
 
 ## Essential Rules
 
-### Rule 1: File Names Must Be Exact
-✅ **DO**: Use exact names without extensions
+### Rule 1: File Names Must Be Unique and Descriptive
+✅ **DO**: Use specific, unique names per page
 ```python
-attachment_name="system-overview"  # Correct
+attachment_name="architecture-overview"    # Good - specific
+attachment_name="dataflow-sequence"        # Good - specific
+attachment_name="section3-components"      # Good - identifies location
 ```
 
-❌ **DON'T**: Include extensions or allow random suffixes
+❌ **DON'T**: Use generic names or extensions
 ```python
-attachment_name="system-overview.mmd"  # Wrong - causes 404
-# or
-temp_file = tempfile.NamedTemporaryFile(prefix="system-overview")  # Wrong - adds random suffix
+attachment_name="diagram"           # BAD - too generic, conflicts likely
+attachment_name="chart"             # BAD - too generic
+attachment_name="architecture.mmd"  # BAD - extension causes 404
+```
+
+**Why this matters with `clean_existing=True`:**
+- Deletes attachment with **exact same name** on the **same page**
+- If multiple sections use `attachment_name="diagram"`, they'll conflict
+- Each `add_mermaid_diagram(..., clean_existing=True)` will delete the previous one!
+
+**Naming Convention:**
+```python
+# Pattern: {topic}-{type} or {section}-{purpose}
+"architecture-layers"      # ✅ Clear what it shows
+"sequence-error-handling"  # ✅ Clear what it shows
+"section3-overview"        # ✅ Ties to specific section
+"api-interfaces"           # ✅ Describes content
+
+# NOT:
+"diagram"                  # ❌ Too generic
+"chart1"                   # ❌ Non-descriptive
+"temp"                     # ❌ Looks temporary
 ```
 
 ### Rule 2: One Diagram = One Clean Upload
@@ -133,6 +154,59 @@ The helper will:
 1. Delete old attachment
 2. Upload new version
 3. Update macro revision parameter
+
+---
+
+## Safety Note: `clean_existing=True`
+
+### What It Does
+Deletes **only** the attachment with the **exact same name** on the **same page** before uploading.
+
+### Safe Usage
+✅ **Safe when:**
+```python
+# Different diagrams have unique names
+helper.add_mermaid_diagram(..., attachment_name="architecture-diagram", clean_existing=True)
+helper.add_mermaid_diagram(..., attachment_name="dataflow-diagram", clean_existing=True)
+# ✅ No conflict - different names
+```
+
+### Dangerous Usage
+⚠️ **DANGER when:**
+```python
+# Multiple sections use the same generic name
+# Section 3
+helper.add_mermaid_diagram(..., attachment_name="diagram", clean_existing=True)  # Creates "diagram"
+
+# Section 7
+helper.add_mermaid_diagram(..., attachment_name="diagram", clean_existing=True)  # Deletes "diagram" from section 3!
+# ❌ Section 3 now broken!
+```
+
+### Protection Strategy
+**Use descriptive, unique names based on content or location:**
+```python
+# Strategy 1: By content
+"architecture-layers"
+"sequence-main-flow"
+"components-overview"
+
+# Strategy 2: By section
+"section3-architecture"
+"section7-dataflow"
+"section9-deployment"
+
+# Strategy 3: Hybrid
+"architecture-section3"
+"dataflow-section7"
+```
+
+### When NOT to Use `clean_existing=True`
+- ❌ Testing multiple diagram names
+- ❌ Unsure if name is used elsewhere on page
+- ❌ Using generic names like "diagram", "chart", "image"
+
+**Default recommendation**: Always use `clean_existing=True` with descriptive names.
 
 ---
 
