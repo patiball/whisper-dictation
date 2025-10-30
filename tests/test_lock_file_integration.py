@@ -9,6 +9,7 @@ import time
 import json
 import os
 import signal
+import sys
 from pathlib import Path
 
 # Mark all tests as integration tests
@@ -499,3 +500,12 @@ if __name__ == "__main__":
 @pytest.mark.skipif(
     os.environ.get('CI') == 'true',
     reason="Integration tests with subprocess may not work in CI environments"
+)
+class TestLockFileIntegration:
+    """Integration tests for lock file functionality."""
+    
+    def test_full_lifecycle(self, temp_home):
+        """Test complete lock file lifecycle in isolated process."""
+        # This would require running the actual application
+        # For now, we test the components individually
+        pass

@@ -66,6 +66,132 @@ def setup_logging(log_level='INFO', log_file=None):
         )
         return False
 
+# Lock file mechanism to prevent multiple instances
+_cleanup_done = False
+
+def setup_lock_file():
+    """Setup lock file to prevent multiple simultaneous instances."""
+    global _cleanup_done
+    lock_file = Path.home() / ".whisper-dictation.lock"
+    
+    try:
+        if lock_file.exists():
+            # Read existing PID
+            try:
+                with open(lock_file, 'r') as f:
+                    pid_str = f.read().strip()
+                
+                if pid_str:
+                    try:
+                        existing_pid = int(pid_str)
+                        if psutil.pid_exists(existing_pid):
+                            logging.error(f"Another instance is already running (PID: {existing_pid})")
+                            print(f"Error: Another instance of whisper-dictation is already running (PID: {existing_pid})")
+                            print("Please stop the other instance before starting a new one.")
+                            exit(1)
+                        else:
+                            logging.warning(f"Found stale lock file with dead PID: {existing_pid}")
+                            lock_file.unlink()
+                    except ValueError:
+                        logging.warning(f"Invalid PID in lock file: {pid_str}")
+                        lock_file.unlink()
+                else:
+                    logging.warning("Empty lock file found")
+                    lock_file.unlink()
+                    
+            except (OSError, IOError) as e:
+                logging.warning(f"Could not read lock file: {e}")
+                # Try to continue anyway
+        
+        # Write current PID to lock file
+        current_pid = os.getpid()
+        with open(lock_file, 'w') as f:
+            f.write(str(current_pid))
+        
+        logging.info(f"Lock file created with PID: {current_pid}")
+        
+        # Register cleanup
+        _cleanup_done = False
+        atexit.register(cleanup_lock_file)
+        
+        return True
+        
+    except (OSError, IOError) as e:
+        logging.error(f"Failed to create lock file: {e}")
+        print(f"Warning: Could not create lock file: {e}")
+        print("Multiple instance protection disabled.")
+        return False
+
+def cleanup_lock_file():
+    """Remove lock file during shutdown."""
+    global _cleanup_done
+    if _cleanup_done:
+        return
+    
+    lock_file = Path.home() / ".whisper-dictation.lock"
+    
+    try:
+        if lock_file.exists():
+            lock_file.unlink()
+            logging.info("Lock file removed during shutdown")
+    except (OSError, IOError) as e:
+        logging.warning(f"Could not remove lock file during cleanup: {e}")
+    finally:
+        _cleanup_done = True
+
+# Signal handlers for graceful shutdown
+cleanup_in_progress = False
+shutdown_requested = False
+
+def signal_handler(signum, frame):
+    """Handle termination signals for graceful shutdown."""
+    global cleanup_in_progress, shutdown_requested
+    
+    if cleanup_in_progress:
+        logging.warning("Shutdown already in progress, ignoring signal")
+        return
+    
+    cleanup_in_progress = True
+    shutdown_requested = True
+    
+    signal_name = signal.Signals(signum).name
+    logging.info(f"Received signal {signal_name} ({signum}), initiating graceful shutdown")
+    
+    try:
+        # Stop recording operations if active
+        if 'app' in globals() and hasattr(app, 'recorder'):
+            if hasattr(app.recorder, 'stop'):
+                app.recorder.stop()
+                logging.info("Recording operations stopped")
+        
+        # Close audio stream if active
+        if 'app' in globals() and hasattr(app, 'recorder'):
+            if hasattr(app.recorder, 'close'):
+                app.recorder.close()
+                logging.info("Audio stream closed")
+        
+        # Remove lock file
+        cleanup_lock_file()
+        
+        logging.info("Graceful shutdown completed")
+        
+    except Exception as e:
+        logging.error(f"Error during shutdown: {e}")
+    finally:
+        # Force exit to ensure no hanging
+        os._exit(0)
+
+def register_signal_handlers():
+    """Register signal handlers for graceful shutdown."""
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        logging.info("Signal handlers registered for SIGINT and SIGTERM")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to register signal handlers: {e}")
+        return False
+
 class SpeechTranscriber:
     def __init__(self, model, allowed_languages=None, device_manager=None):
         self.model = model
@@ -459,6 +585,14 @@ if __name__ == "__main__":
     logging.info(f"Log level: {args.log_level}")
     if log_file:
         logging.info(f"Log file: {log_file}")
+
+    # Setup lock file to prevent multiple instances
+    setup_lock_file()
+    logging.info("Lock file mechanism initialized")
+
+    # Register signal handlers for graceful shutdown
+    register_signal_handlers()
+    logging.info("Signal handlers registered")
 
     # Import DeviceManager for intelligent device handling
     from device_manager import DeviceManager, OperationType
