@@ -2,7 +2,7 @@
 
 **ID**: 13-05-03
 **User Story**: [13-05-00] Lessons Learned Tests Suite
-**Complexity**: Simple
+**Status**: ✅ **COMPLETED**
 **Estimate**: 5 minutes
 
 ---

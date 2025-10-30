@@ -4,7 +4,10 @@ import pytest
 import time
 import os
 import sys
+import tempfile
+import shutil
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 # Add parent directory to path to import whisper-dictation modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -93,3 +96,112 @@ def similar_text(text1, text2, threshold=0.6):
 def text_similarity_checker():
     """Fixture for text similarity checking."""
     return similar_text
+
+# Lessons Learned Test Infrastructure Fixtures
+
+@pytest.fixture
+def temp_home(tmp_path):
+    """Temporary home directory for lock files and user data."""
+    home_dir = tmp_path / "home"
+    home_dir.mkdir()
+    # Override HOME environment variable for this test
+    original_home = os.environ.get('HOME')
+    os.environ['HOME'] = str(home_dir)
+    yield home_dir
+    # Restore original HOME
+    if original_home:
+        os.environ['HOME'] = original_home
+    elif 'HOME' in os.environ:
+        del os.environ['HOME']
+
+@pytest.fixture
+def temp_log_dir(tmp_path):
+    """Temporary directory for test logs."""
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+    return log_dir
+
+@pytest.fixture
+def clean_lock_file(temp_home):
+    """Ensure lock file is cleaned before and after tests."""
+    lock_file = temp_home / ".whisper-dictation.lock"
+    if lock_file.exists():
+        lock_file.unlink()
+    yield lock_file
+    if lock_file.exists():
+        lock_file.unlink()
+
+@pytest.fixture
+def clean_log_file(temp_home):
+    """Ensure log file is cleaned before and after tests."""
+    log_file = temp_home / ".whisper-dictation.log"
+    if log_file.exists():
+        log_file.unlink()
+    yield log_file
+    if log_file.exists():
+        log_file.unlink()
+
+@pytest.fixture
+def mock_pyaudio():
+    """Mock PyAudio for hardware-independent testing."""
+    with patch('pyaudio.PyAudio') as mock_py_audio:
+        mock_instance = Mock()
+        mock_py_audio.return_value = mock_instance
+        
+        # Mock device info
+        mock_instance.get_device_info_by_index.return_value = {
+            'maxInputChannels': 2,
+            'name': 'Test Microphone'
+        }
+        mock_instance.get_device_count.return_value = 2
+        
+        yield mock_instance
+
+@pytest.fixture
+def mock_sounddevice():
+    """Mock sounddevice for microphone tests."""
+    with patch('sounddevice.query_devices') as mock_query:
+        mock_query.return_value = [
+            {'name': 'Test Device 1', 'max_input_channels': 2},
+            {'name': 'Test Device 2', 'max_input_channels': 0}
+        ]
+        yield mock_query
+
+@pytest.fixture
+def mock_subprocess():
+    """Mock subprocess for process management tests."""
+    with patch('subprocess.Popen') as mock_popen, \
+         patch('subprocess.run') as mock_run:
+        mock_process = Mock()
+        mock_process.pid = 12345
+        mock_process.poll.return_value = None
+        mock_process.wait.return_value = 0
+        mock_popen.return_value = mock_process
+        mock_run.return_value = Mock(returncode=0)
+        yield mock_popen, mock_run
+
+@pytest.fixture
+def sample_lock_file_content():
+    """Sample valid lock file content."""
+    return {
+        'pid': os.getpid(),
+        'start_time': time.time(),
+        'version': '1.0.0'
+    }
+
+@pytest.fixture
+def heartbeat_tracker():
+    """Mock heartbeat tracking for watchdog tests."""
+    heartbeat_data = {'last_update': 0}
+    
+    def update_heartbeat():
+        heartbeat_data['last_update'] = time.time()
+    
+    def get_last_update():
+        return heartbeat_data['last_update']
+    
+    return {
+        'update': update_heartbeat,
+        'get_last': get_last_update,
+        'data': heartbeat_data
+    }

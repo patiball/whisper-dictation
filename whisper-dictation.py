@@ -11,10 +11,60 @@ import subprocess
 import os
 import torch
 from datetime import datetime
+import signal
+import atexit
+import json
+import psutil
+from pathlib import Path
+import logging
+from logging.handlers import RotatingFileHandler
 
 def get_timestamp():
     """Returns formatted timestamp [HH:MM:SS.mmm]"""
     return datetime.now().strftime("[%H:%M:%S.%f")[:-3] + "]"
+
+def setup_logging(log_level='INFO', log_file=None):
+    """Configure centralized logging with rotation and console output."""
+    if log_file is None:
+        log_file = Path.home() / ".whisper-dictation.log"
+    
+    try:
+        # Clear any existing handlers
+        logger = logging.getLogger()
+        logger.handlers.clear()
+        
+        # Create formatter
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        
+        # File handler with rotation
+        file_handler = RotatingFileHandler(
+            log_file, 
+            maxBytes=5*1024*1024,  # 5MB
+            backupCount=5
+        )
+        file_handler.setLevel(getattr(logging, log_level))
+        file_handler.setFormatter(formatter)
+        
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(getattr(logging, log_level))
+        console_handler.setFormatter(formatter)
+        
+        # Configure root logger
+        logger.setLevel(getattr(logging, log_level))
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+        
+        return True
+    except Exception as e:
+        # Fallback to console-only if file logging fails
+        print(f"Warning: Could not set up file logging: {e}")
+        logging.basicConfig(
+            level=getattr(logging, log_level),
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[logging.StreamHandler()]
+        )
+        return False
 
 class SpeechTranscriber:
     def __init__(self, model, allowed_languages=None, device_manager=None):
@@ -30,13 +80,18 @@ class SpeechTranscriber:
             self.device = "cpu"
         
         print(f"SpeechTranscriber: Używam urządzenia {self.device}")
+        logging.debug(f"SpeechTranscriber initialized with device: {self.device}")
 
     def transcribe(self, audio_data, language=None):
+        start_time = time.time()
+        logging.debug(f"Starting transcription, language: {language or 'auto'}")
+        
         # Get optimized options from device manager if available
         if self.device_manager:
             options = self.device_manager.get_optimized_settings(self.device, "base")  # Default to base model
             if language:
                 options["language"] = language
+            logging.debug("Using device manager optimized settings")
         else:
             # Fallback to original options
             options = {
@@ -47,24 +102,33 @@ class SpeechTranscriber:
                 "logprob_threshold": -1.0,
                 "compression_ratio_threshold": 2.4
             }
+            logging.debug("Using fallback transcription options")
         
         # If we have allowed languages and no specific language is set, detect and constrain
         if self.allowed_languages and language is None:
+            logging.debug("Detecting language with allowed constraints")
             # First, detect the language without constraining
             result = self.model.transcribe(audio_data, **{k: v for k, v in options.items() if k != "language"})
             detected_lang = result.get('language', 'en')
+            logging.debug(f"Detected language: {detected_lang}")
             
             # If detected language is not in allowed list, use the first allowed language
             if detected_lang not in self.allowed_languages:
                 options["language"] = self.allowed_languages[0]
+                logging.info(f"Constraining to allowed language: {self.allowed_languages[0]} (detected: {detected_lang})")
             else:
                 options["language"] = detected_lang
+                logging.debug(f"Using detected language: {detected_lang}")
             
             # Re-transcribe with the constrained language
             result = self.model.transcribe(audio_data, **options)
         else:
             result = self.model.transcribe(audio_data, **options)
 
+        duration = time.time() - start_time
+        text = result.get('text', '').strip()
+        logging.info(f"Transcription complete in {duration:.2f}s, text length: {len(text)}")
+        
         print(f'{get_timestamp()} Transcription complete')
         print(f'{get_timestamp()} Typing text...')
         is_first = True
@@ -76,8 +140,11 @@ class SpeechTranscriber:
             try:
                 self.pykeyboard.type(element)
                 time.sleep(0.0025)
-            except:
+            except Exception as e:
+                logging.warning(f"Failed to type character '{element}': {e}")
                 pass
+
+        return result
 
 class SoundPlayer:
     """Klasa do odtwarzania dźwięków systemowych macOS"""
@@ -364,6 +431,10 @@ def parse_args():
                         help='Number of warm-up buffers to discard right after opening the stream. Default: 2.')
     parser.add_argument('--debug-recorder', dest='debug_recorder', action='store_true',
                         help='Enable verbose debug logs for Recorder (startup timing, escalation).')
+    parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], 
+                        default='INFO', help='Set logging level. Default: INFO.')
+    parser.add_argument('--log-file', type=str, default=None,
+                        help='Override default log file location. Default: ~/.whisper-dictation.log')
 
     args = parser.parse_args()
 
@@ -378,6 +449,16 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    
+    # Initialize logging early
+    log_file = Path(args.log_file) if args.log_file else None
+    setup_logging(args.log_level, log_file)
+    
+    # Log application startup
+    logging.info(f"Application starting up, PID={os.getpid()}")
+    logging.info(f"Log level: {args.log_level}")
+    if log_file:
+        logging.info(f"Log file: {log_file}")
 
     # Import DeviceManager for intelligent device handling
     from device_manager import DeviceManager, OperationType
@@ -385,40 +466,48 @@ if __name__ == "__main__":
     
     # Initialize Enhanced DeviceManager
     device_manager = EnhancedDeviceManager()
+    logging.info("Device manager initialized")
     
     # Get optimal device for model loading
     device = device_manager.get_device_for_operation(OperationType.MODEL_LOADING, args.model_name)
-    print(f"DeviceManager: Wybrałem {device} dla modelu {args.model_name}")
+    logging.info(f"DeviceManager: Selected {device} for model {args.model_name}")
 
     print("Loading model...")
     model_name = args.model_name
+    logging.info(f"Loading model: {model_name} on device: {device}")
     
     try:
         model = load_model(model_name, device=device)
         print(f"✅ {model_name} model loaded successfully on {device}")
+        logging.info(f"Model loaded successfully: {model_name} on {device}")
         
         # Apply device optimizations
         device_manager.optimize_model(model, device)
+        logging.debug("Model optimizations applied")
         
         # Register successful loading
         device_manager.base_manager.register_operation_success(device, OperationType.MODEL_LOADING)
         
     except Exception as e:
+        logging.error(f"Model loading failed on {device}: {e}")
         if device_manager.base_manager.should_retry_with_fallback(e):
             fallback_device, user_message = device_manager.handle_device_error_enhanced(
                 e, OperationType.MODEL_LOADING, device
             )
             print(f"🔄 {user_message}")
             print(f"Szczegóły: Przełączam z {device} na {fallback_device}")
+            logging.warning(f"Retrying with fallback device: {fallback_device}")
             
             device = fallback_device
             model = load_model(model_name, device=device)
             device_manager.optimize_model(model, device)
             print(f"✅ {model_name} model loaded successfully on fallback device: {device}")
+            logging.info(f"Model loaded on fallback device: {model_name} on {device}")
             
             # Register successful fallback
             device_manager.base_manager.register_operation_success(device, OperationType.MODEL_LOADING)
         else:
+            logging.error(f"Model loading failed completely: {e}")
             raise e
     
     # Parse allowed languages if specified
@@ -426,23 +515,42 @@ if __name__ == "__main__":
     if args.allowed_languages:
         allowed_languages = [lang.strip() for lang in args.allowed_languages.split(',')]
         print(f"Language detection constrained to: {allowed_languages}")
+        logging.info(f"Language detection constrained to: {allowed_languages}")
     
     transcriber = SpeechTranscriber(model, allowed_languages, device_manager)
+    logging.info("Speech transcriber initialized")
+    
     recorder = Recorder(
         transcriber,
         frames_per_buffer=args.frames_per_buffer,
         warmup_buffers=args.warmup_buffers,
         debug=bool(args.debug_recorder or os.getenv('WHISPER_DEBUG_RECORDER')),
     )
+    logging.info(f"Recorder initialized with frames_per_buffer={args.frames_per_buffer}, warmup_buffers={args.warmup_buffers}")
     
     app = StatusBarApp(recorder, args.language, args.max_time)
+    logging.info("Status bar app initialized")
+    
     if args.k_double_cmd:
         key_listener = DoubleCommandKeyListener(app)
+        logging.info("Using double command key listener")
     else:
         key_listener = GlobalKeyListener(app, args.key_combination)
+        logging.info(f"Using global key listener with combination: {args.key_combination}")
+        
     listener = keyboard.Listener(on_press=key_listener.on_key_press, on_release=key_listener.on_key_release)
     listener.start()
+    logging.info("Keyboard listener started")
 
     print("Running... ")
-    app.run()
+    logging.info("Application ready - entering main loop")
+    try:
+        app.run()
+    except KeyboardInterrupt:
+        logging.info("Shutdown signal received")
+    except Exception as e:
+        logging.error(f"Application error: {e}")
+        raise
+    finally:
+        logging.info("Application shutdown complete")
 

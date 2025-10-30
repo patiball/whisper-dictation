@@ -26,6 +26,17 @@ Ten epic implementuje 5 filarów stabilności i profesjonalizmu oprogramowania z
 
 ## User Stories & Tasks Hierarchy
 
+### [13-05-00] Lessons Learned Tests Suite
+- [x] [13-05-01] Unit Tests - Comprehensive unit test coverage ✅
+- [x] [13-05-02] Integration Tests - End-to-end testing ✅
+- [x] [13-05-03] Manual Tests - Documentation for human verification ✅
+- [x] [13-05-04] Test Infrastructure - Fixtures, CI/CD, configuration ✅
+
+### [13-04-00] Enhanced Logging & Diagnostics
+- [x] [13-04-01] Logging Setup - RotatingFileHandler configuration ✅
+- [x] [13-04-02] Logging Events - Key events and log levels ✅
+- [x] [13-04-03] Logging Tests - Test suite ✅
+
 ### [13-01-00] Lock File + Signal Handling
 - [ ] [13-01-01] Lock File Mechanism - Create/validate/cleanup lock files
 - [ ] [13-01-02] Signal Handlers - Register and execute graceful shutdown
