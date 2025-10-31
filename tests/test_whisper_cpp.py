@@ -291,11 +291,14 @@ def test_language_detection_polish_with_confidence(whisper_cli_binary, whisper_m
     except ValueError:
         pytest.fail(f"Could not parse confidence from output: {output_lines[-2]}")
 
-            print(f"Detected Polish language: {detected_language}, Confidence: {detected_confidence}")
-        
-            assert detected_language == expected_language, f"Expected language '{expected_language}', but detected '{detected_language}'"
-            assert detected_confidence >= min_confidence, f"Expected confidence >= {min_confidence}, but got {detected_confidence}"        
-        def test_whisper_cli_internal_timeout(whisper_cli_binary, whisper_model_path, english_audio_file, tmp_path: Path):    """
+    print(f"Detected Polish language: {detected_language}, Confidence: {detected_confidence}")
+
+    assert detected_language == expected_language, f"Expected language '{expected_language}', but detected '{detected_language}'"
+    assert detected_confidence >= min_confidence, f"Expected confidence >= {min_confidence}, but got {detected_confidence}"
+
+
+def test_whisper_cli_internal_timeout(whisper_cli_binary, whisper_model_path, english_audio_file, tmp_path: Path):
+    """
     Test: Sprawdza, czy wewnętrzny mechanizm timeoutu whisper-cli działa poprawnie
     kontrolowany przez WHISPER_CLI_TIMEOUT_SEC.
     """

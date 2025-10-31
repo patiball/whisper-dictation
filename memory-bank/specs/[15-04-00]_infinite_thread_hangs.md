@@ -4,7 +4,7 @@
 **Epic**: [15-00-00] Test Infrastructure Repair
 **Priority**: CRITICAL
 **Complexity**: Simple
-**Estimate**: 30 minutes
+**Estimate**: 35 minutes (30 min thread timeouts + 5 min missing import fix)
 
 ## User Story
 
@@ -12,9 +12,10 @@ As a test runner, I want thread.join() calls to have explicit timeouts so that t
 
 ## Acceptance Criteria
 
+- [ ] `import sys` is available in test_integration_recording.py for sys.exit() calls
 - [ ] All thread.join() calls have explicit timeout <= 5.0 seconds
 - [ ] test_integration_recording.py completes in < 15 seconds
-- [ ] All 7 integration recording tests pass
+- [ ] All 7 integration recording tests pass (currently 4 failures due to missing import)
 - [ ] No infinite waits in test code
 
 ## Behavior Examples
@@ -35,6 +36,7 @@ Thread created → thread.join(timeout=5.0) → Test completes or logs timeout w
 
 - [15-04-01] Add timeouts to thread.join() in test_integration_recording.py
 - [15-04-02] Verify test_integration_recording.py passes
+- [15-04-03] Add missing `import sys` to test_integration_recording.py
 
 ## Implementation Context (Not Part of Spec)
 

@@ -4,7 +4,7 @@
 **Epic**: [15-00-00] Test Infrastructure Repair
 **Priority**: CRITICAL
 **Complexity**: Medium
-**Estimate**: 50 minutes
+**Estimate**: 60 minutes (50 min handler isolation + 10 min file persistence)
 
 ## User Story
 
@@ -15,6 +15,8 @@ As a test runner, I want logging configuration to reset between tests so that ea
 - [ ] Logging handlers are cleared before each test in test_logging.py
 - [ ] All 13 logging tests pass without interference
 - [ ] File handles don't leak across tests
+- [ ] RotatingFileHandler properly flushes/closes to persist logs to disk
+- [ ] Log file assertions pass (8 tests that verify file content)
 - [ ] Test completion time < 20 seconds
 - [ ] Tests can run in any order with same results
 
@@ -37,6 +39,7 @@ Test 1 configures logging, cleanup → Test 2 configures fresh logging, cleanup 
 - [15-02-01] Create logging reset fixture
 - [15-02-02] Apply fixture to test_logging.py
 - [15-02-03] Verify test_logging.py passes
+- [15-02-04] Fix logging file persistence (RotatingFileHandler flush/close)
 
 ## Implementation Context (Not Part of Spec)
 

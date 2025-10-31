@@ -4,7 +4,7 @@
 **Epic**: [15-00-00] Test Infrastructure Repair
 **Priority**: CRITICAL
 **Complexity**: Medium
-**Estimate**: 40 minutes
+**Estimate**: 45 minutes (40 min cleanup + 5 min missing import fix)
 
 ## User Story
 
@@ -12,10 +12,11 @@ As a test runner, I want subprocess resources to be guaranteed cleanup on test c
 
 ## Acceptance Criteria
 
+- [ ] `import sys` is available in test_lock_file_integration.py for sys.exit() calls
 - [ ] All subprocess.Popen() calls have guaranteed cleanup (try/finally blocks)
 - [ ] test_lock_file_integration.py completes in < 25 seconds
 - [ ] No zombie processes left after tests complete
-- [ ] All 5 integration tests pass
+- [ ] All 5 integration tests pass (currently 6 failures due to missing import)
 - [ ] subprocess.communicate() calls have appropriate timeouts
 
 ## Behavior Examples
@@ -37,6 +38,7 @@ Subprocess spawned in try block → communicate(timeout=5) called → Cleanup in
 - [15-03-01] Add try/finally cleanup to subprocess tests
 - [15-03-02] Reduce concurrent process count in test_multiple_concurrent_instances
 - [15-03-03] Verify test_lock_file_integration.py passes
+- [15-03-04] Add missing `import sys` to test_lock_file_integration.py
 
 ## Implementation Context (Not Part of Spec)
 

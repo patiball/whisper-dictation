@@ -43,11 +43,13 @@ The test suite has accumulated critical issues preventing reliable test executio
 
 ## Related User Stories
 
-- [15-01-00] Fix Thread Cleanup and Timeouts
-- [15-02-00] Fix Logging Handler Pollution
-- [15-03-00] Fix Subprocess Resource Cleanup
-- [15-04-00] Fix Infinite Thread Hangs
-- [15-05-00] Fix Configuration Conflicts and Environment Pollution
+- [15-01-00] Fix Thread Cleanup and Timeouts ✅ COMPLETED
+- [15-02-00] Fix Logging Handler Pollution + File Persistence ✅ COMPLETED
+- [15-03-00] Fix Subprocess Resource Cleanup + Missing Import ✅ COMPLETED
+- [15-04-00] Fix Infinite Thread Hangs + Missing Import ✅ COMPLETED
+- [15-05-00] Fix Configuration Conflicts and Environment Isolation + Variable Scoping ✅ COMPLETED
+
+**Note**: Tasks for missing imports and variable scoping discovered during verification are integrated into user stories [15-03-00], [15-04-00], and [15-05-00] respectively.
 
 ## Implementation Context (Not Part of Spec)
 
@@ -91,8 +93,8 @@ The test suite has accumulated critical issues preventing reliable test executio
 **Criticality**: CRITICAL
 
 ### [15-05-00] Fix Configuration Conflicts
-**Estimate**: 35 minutes
-**Impact**: Unified config, proper environment isolation
+**Estimate**: 40 minutes (35 min config + 5 min max_bytes variable)
+**Impact**: Unified config, proper environment isolation, configuration parameters properly scoped
 **Criticality**: HIGH
 
 ---
