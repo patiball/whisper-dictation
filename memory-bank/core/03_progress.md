@@ -1,6 +1,6 @@
 Last Update: 2025-10-31
 
-**Current Status:** ✅ **Production Ready** - Enhanced stability with lock file, signal handling, logging, microphone checks & audio watchdog
+**Current Status:** 🔴 **CRITICAL BLOCKING ISSUE** - Test suite hangs due to infrastructure issues. Stability features complete but test infrastructure must be repaired first.
 
 ## Recent Completed Milestones
 
@@ -59,24 +59,47 @@ Core issues addressed:
 
 For implementation details see: `specs/[02-00-00]_whisper_cpp_quality_fix.md` and `specs/[08-00-00]_audio_clipping_warmup_fix.md`
 
-## Current Sprint: Lessons Learned Foundation (2025-10-25)
+### 🔴 Test Infrastructure Issues Discovered (2025-10-31) - IN PROGRESS
 
-**Priority**: CRITICAL
-**Focus**: Stability and reliability foundation from macos-dictate
+**Critical Issues Blocking All Development:**
+- Thread cleanup anti-patterns cause 80+ second test hangs
+- Logging handler pollution causes 11 tests to interfere with each other
+- Subprocess resource leaks cause 50+ second hangs
+- Infinite thread.join() calls can hang tests indefinitely
+- Conflicting pytest.ini and pyproject.toml configuration
+- Test suite takes 160+ seconds or hangs indefinitely (unacceptable)
+
+**Impact**: Cannot reliably run tests for new features. Test infrastructure must be fixed first.
+
+**Action Plan**: Implement [15-00-00] Test Infrastructure Repair Epic
+- [15-01-00] Thread Cleanup Fix (2/3 difficulty)
+- [15-02-00] Logging Handler Pollution Fix (2/3 difficulty)
+- [15-03-00] Subprocess Resource Cleanup (1/3 difficulty)
+- [15-04-00] Infinite Thread Hangs Fix (1/3 difficulty)
+- [15-05-00] Configuration & Environment Isolation (1/3 difficulty)
+- Estimate: 240 minutes (4 hours)
+
+**Analysis**: See `memory-bank/lessons_learned/test_infrastructure_conflicts_analysis.md` for comprehensive report
+
+## Current Sprint: Test Infrastructure Repair (2025-10-31)
+
+**Priority**: CRITICAL (BLOCKING)
+**Focus**: Fix test suite hangs and configuration conflicts
 
 ### Sprint Goals:
-- **Lessons Learned Foundation Epic** - specs/[13-00-00]_lessons_learned_foundation.md
-  - Status: Epic specification ready for implementation
-  - Scope: 5 User Stories (Lock file, Signal handling, Microphone check, Watchdog, Logging, Tests)
-  - Approach: TDD-first implementation in 5 phases
-  - Changes: Both whisper-dictation.py and whisper-dictation-fast.py
-  - Estimate: 135-170 minutes (2.5-3 hours)
+- **Test Infrastructure Repair Epic** - specs/[15-00-00]_test_infrastructure_repair.md
+  - Status: Specifications ready for implementation
+  - Scope: 5 User Stories (Thread cleanup, Logging isolation, Subprocess cleanup, Thread joins, Config)
+  - Approach: Fix each critical issue in priority order
+  - Changes: Test files only (conftest.py, test_*.py, pytest.ini, pyproject.toml)
+  - Estimate: 240 minutes (4 hours total)
+  - Difficulty Breakdown: 2 Medium (45+50 min), 3 Easy (30+40+35 min)
 
 ## Backlog (Priority Order)
 
 | # | Item | Spec | Priority | Estimate |
 |---|------|------|----------|----------|
-| 1 | **CURRENT** Lessons Learned Foundation - Stability improvements | [13-00-00] | Critical | 2.5-3 hours |
+| 1 | **CURRENT** Test Infrastructure Repair - Fix hangs & config | [15-00-00] | CRITICAL | 4 hours |
 | 2 | Transcription Timestamps - User feedback clarity | [10-00-00] | High | 30-45 min |
 | 3 | macOS Portability - Intel Mac support for C++ | [09-00-00] | High | 30-45 min |
 | 4 | Documentation - English translation of /docs | N/A | Medium | Deferred |
