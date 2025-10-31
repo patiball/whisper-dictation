@@ -2,7 +2,7 @@
 
 **ID**: 13-03-04
 **User Story**: [13-03-00] Audio Stream Watchdog
-**Complexity**: Medium
+**Status**: ✅ **COMPLETED**
 **Estimate**: 13 minutes
 
 ---
