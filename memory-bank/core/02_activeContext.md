@@ -1,61 +1,31 @@
 # Active Context
 
-**Current Focus:** 🎉 **EPIC 15 COMPLETE - Ready for Next Development Phase**
+**Current Focus:** 🟠 **EPIC 16 ACTIVE - Stabilizing Test Infrastructure**
 
-**Status:** 🟢 **EPIC 15 FULLY COMPLETED - ALL TASKS IMPLEMENTED & COMMITTED**
-- **Priority:** COMPLETE - Epic 15 Test Infrastructure Repair finished successfully
-- **5 User Stories:** ✅ ALL COMPLETED - All infrastructure fixes verified and implemented
-  - [15-01-00] Thread Cleanup and Timeouts - ✅ COMPLETED - No hangs, 17/17 tests pass
-  - [15-02-00] Logging Handler Pollution + File Persistence - ✅ COMPLETED + [15-02-04] task done
-  - [15-03-00] Subprocess Resource Cleanup + Missing Import - ✅ COMPLETED + [15-03-04] task done
-  - [15-04-00] Infinite Thread Hangs + Missing Import - ✅ COMPLETED + [15-04-03] task done
-  - [15-05-00] Configuration & Environment Isolation + Variable Scoping - ✅ COMPLETED + [15-05-04] task done
-- **Final Implementation (15 minutes actual, 20-30 planned):**
-  - ✅ Fixed: Missing imports in integration tests (10 failures resolved)
-  - ✅ Fixed: Logging file persistence issue (8 failures resolved) 
-  - ✅ Fixed: max_bytes variable scoping issue (1 failure resolved)
-  - ✅ All 4 critical tasks implemented and committed
-- **Final Results:** Total 255 minutes actual (vs 240 planned), commit f4f9b8d
-- **Status:** 🎉 EPIC 15 COMPLETE - Test infrastructure now stable and ready
+**Status:** 🔴 **CRITICAL ISSUES IDENTIFIED** - Analysis of the last test run (`test_results.log`) revealed that Epic 15 was not successful. While tests no longer hang mid-execution, the process fails to terminate due to lingering threads. Additionally, 14 tests are failing, and code coverage is below the required threshold.
 
-**Completed Components:**
-1. ✅ **[13-05-00]** Lessons Learned Tests Suite (30-40 min) - ALL TASKS DONE
-2. ✅ **[13-04-00]** Enhanced Logging & Diagnostics (15-20 min) - ALL TASKS DONE
-3. ✅ **[13-01-00]** Lock File + Signal Handling (20-25 min) - ALL TASKS DONE
-4. ✅ **[13-02-00]** Microphone Proactive Check (10-15 min) - ALL TASKS DONE
-5. ✅ **[13-03-00]** Audio Stream Watchdog (30-40 min) - ALL TASKS DONE
-6. ✅ **[15-01-00] through [15-05-00]** Test Infrastructure Repair (255 min total) - ALL TASKS DONE
+**Active Epic:** [16-00-00] Post-Epic 15 Test Infrastructure & Functional Fixes
+- **Priority:** High
+- **Goal:** To resolve all outstanding issues from Epic 15 and achieve a stable, reliable, and fully functional test infrastructure.
+- **Justification:** The application cannot be reliably tested or developed further until the test suite is stable and trustworthy.
 
-**🎉 EPIC COMPLETION: Lessons Learned Foundation - 100% DONE!**
-**🎉 EPIC COMPLETION: Test Infrastructure Repair - 100% DONE!**
-**Total: 25 of 25 tasks completed (100%)**
-**Application now has production-grade stability and reliable test infrastructure!**
-
-**Next Development Phase (Ready to Start):**
-1. ⏱️ **Transcription Timestamps** (specs/[10-00-00]_transcription_timestamps.md)
-   - Add timestamps to all messages for clearer UX feedback
-   - Priority: High, Estimate: 30-45 minutes
-   - Status: 🟢 READY TO START
-
-2. 🔧 **macOS Portability** (specs/[09-00-00]_macos_portability_improvements.md)
-   - C++ version support for Intel Macs (hard-coded Apple Silicon paths)
-   - Priority: High, Estimate: 30-45 minutes
-   - Status: 🟡 QUEUED
-
-3. 📝 **Documentation Translation** (English)
-   - Status: Deferred (will prioritize after core features)
-   - Scope: ~10 files (130KB), focus on README and architecture
-   - Status: ⚪ BACKLOG
+**Immediate Priorities (from Epic 16):**
+1.  **[16-01-00] Thread Cleanup Fix** (Priority: Critical)
+    -   **Problem:** `pytest` process hangs for over 10 minutes after tests complete due to lingering threads from `test_audio_watchdog`.
+2.  **[16-02-00] Sys Import Regression Fix** (Priority: High)
+    -   **Problem:** A test is failing with `NameError: name 'sys' is not defined`, a regression that was supposedly fixed.
+3.  **[16-03-00] Stabilize Logging Tests** (Priority: High)
+    -   **Problem:** Multiple logging tests are failing due to issues with log capture.
+4.  **[16-04-00] Whisper.cpp Integration Fixes** (Priority: High)
+    -   **Problem:** Core C++ backend functionality like language detection and transcription accuracy is failing in tests.
+5.  **[16-07-00] Verify and Enforce GPU Usage in C++ Tests** (Priority: High)
+    -   **Problem:** User observation suggests tests may be incorrectly using the CPU instead of the GPU.
 
 **Analysis Artifacts:**
-- See: `memory-bank/lessons_learned/test_infrastructure_conflicts_analysis.md` - Comprehensive report of all 7 critical issues
-- See: `memory-bank/specs/[15-00-00]_test_infrastructure_repair.md` - Epic overview with 5 related user stories
-- See: Commit f4f9b8d - Complete Epic 15 Test Infrastructure Repair
+- See: `test_results.log` for the full output of the last failed test run.
+- See: `memory-bank/specs/[16-00-00]_post_epic_15_fixes.md` for the full plan for the active epic.
 
 ---
 
-**Poprzedni kontekst (zakończony):**
-- ✅ Audio quality fixes for C++ (Oct 2025)
-- ✅ Spec consolidation and memory bank reorganization
-- ✅ Recommendations from macos-dictate analyzed
-- ✅ Test Infrastructure Repair Epic 15 (2025-10-31)
+**Previous Context (Superseded):**
+- The belief that Epic 15 was complete has been proven incorrect by test results. The "Next Development Phase" is now superseded by the critical fixes required in Epic 16.
