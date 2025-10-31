@@ -13,59 +13,76 @@ from unittest.mock import Mock, patch, mock_open
 # Mark all tests as unit tests
 pytestmark = pytest.mark.unit
 
+@pytest.fixture
+def isolated_logger():
+    """Provide a clean logger for each test to prevent handler pollution."""
+    # Get a unique logger name for this test
+    logger_name = f"test_logger_{id(object())}"
+    logger = logging.getLogger(logger_name)
+    
+    # Ensure logger has no handlers from previous tests
+    for handler in logger.handlers[:]:
+        handler.close()
+        logger.removeHandler(handler)
+    
+    # Set up clean configuration
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False  # Don't propagate to root logger
+    
+    yield logger
+    
+    # Cleanup after test
+    for handler in logger.handlers[:]:
+        handler.close()
+        logger.removeHandler(handler)
+
 class TestLoggingSetup:
     """Test logging file creation, level configuration, and fallback."""
 
-    def test_logging_file_creation(self, temp_home, temp_log_dir):
+    def test_logging_file_creation(self, temp_home, temp_log_dir, isolated_logger):
         """Test log file is created in expected location."""
-        # Logging setup function (to be implemented)
-        def setup_logging(log_file_path, level=logging.INFO):
-            # Create directory if it doesn't exist
-            log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Configure logging
-            logging.basicConfig(
-                level=level,
-                format='%(asctime)s - %(levelname)s - %(message)s',
-                handlers=[
-                    logging.FileHandler(log_file_path),
-                    logging.StreamHandler()  # Also log to console
-                ]
-            )
-            
-            return log_file_path
-        
         log_file = temp_home / ".whisper-dictation.log"
-        setup_logging(log_file)
         
-        # Log file should be created
+        # Create directory if it doesn't exist
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Add file handler to isolated logger
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        isolated_logger.addHandler(file_handler)
+        
+        # Log a test message
+        isolated_logger.info("Test log message")
+        
+        # Flush handler to ensure content is written
+        file_handler.flush()
+        
+        # Log file should be created and contain content
         assert log_file.exists()
         assert log_file.stat().st_size > 0
 
-    def test_logging_level_configuration(self, temp_home):
+    def test_logging_level_configuration(self, temp_home, isolated_logger):
         """Test different log levels work correctly."""
         log_file = temp_home / ".whisper-dictation.log"
         
-        def setup_logging_with_level(log_file_path, level):
-            log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Clear existing handlers
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            # Configure with specific level
-            logging.basicConfig(
-                level=level,
-                format='%(asctime)s - %(levelname)s - %(message)s',
-                handlers=[logging.FileHandler(log_file_path)]
-            )
+        # Create directory if it doesn't exist
+        log_file.parent.mkdir(parents=True, exist_ok=True)
         
-        # Test DEBUG level
-        setup_logging_with_level(log_file, logging.DEBUG)
-        logger = logging.getLogger()
-        logger.debug("Debug message")
-        logger.info("Info message")
-        logger.warning("Warning message")
+        # Add file handler to isolated logger
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        isolated_logger.addHandler(file_handler)
+        
+        # Set logger to DEBUG level
+        isolated_logger.setLevel(logging.DEBUG)
+        
+        # Test different log levels
+        isolated_logger.debug("Debug message")
+        isolated_logger.info("Info message")
+        isolated_logger.warning("Warning message")
+        
+        # Flush handler to ensure content is written
+        file_handler.flush()
         
         with open(log_file, 'r') as f:
             log_content = f.read()

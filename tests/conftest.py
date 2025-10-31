@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 import shutil
+import logging
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -205,3 +206,22 @@ def heartbeat_tracker():
         'get_last': get_last_update,
         'data': heartbeat_data
     }
+
+@pytest.fixture(autouse=True)
+def reset_logging_state():
+    """Reset logging configuration before each test to prevent handler pollution."""
+    # Store original state
+    root_logger = logging.getLogger()
+    original_handlers = root_logger.handlers[:]
+    original_level = root_logger.level
+    
+    yield
+    
+    # Clean up all handlers and reset state
+    for handler in root_logger.handlers[:]:
+        handler.close()
+        root_logger.removeHandler(handler)
+    
+    # Reset to original configuration
+    root_logger.handlers = original_handlers
+    root_logger.level = original_level
