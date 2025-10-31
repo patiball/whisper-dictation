@@ -23,37 +23,20 @@ class TestLoggingSetup:
             # Create directory if it doesn't exist
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Clear any existing handlers and configure fresh
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            # Configure file handler
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setLevel(level)
-            
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            # Configure console handler
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(level)
-            console_handler.setFormatter(formatter)
-            
-            logger.setLevel(level)
-            logger.addHandler(file_handler)
-            logger.addHandler(console_handler)
+            # Configure logging
+            logging.basicConfig(
+                level=level,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[
+                    logging.FileHandler(log_file_path),
+                    logging.StreamHandler()  # Also log to console
+                ]
+            )
             
             return log_file_path
         
         log_file = temp_home / ".whisper-dictation.log"
         setup_logging(log_file)
-        
-        # Log a test message to ensure file has content
-        logging.info("Test message for file creation")
-        
-        # Flush handlers to ensure content is written
-        for handler in logging.getLogger().handlers:
-            handler.flush()
         
         # Log file should be created
         assert log_file.exists()
@@ -158,7 +141,7 @@ class TestLogRotation:
         log_file = temp_home / ".whisper-dictation.log"
         max_size = 1024  # 1KB for testing
         
-        def setup_rotating_logging(log_file_path, max_bytes=max_size, backup_count=3):
+        def setup_rotating_logging(log_file_path, max_bytes=max_bytes, backup_count=3):
             import logging.handlers
             
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -291,25 +274,15 @@ class TestLogFormat:
         def setup_formatted_logging(log_file_path):
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Clear any existing handlers and configure fresh
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setLevel(logging.INFO)
-            
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            logger.setLevel(logging.INFO)
-            logger.addHandler(file_handler)
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[logging.FileHandler(log_file_path)]
+            )
         
         setup_formatted_logging(log_file)
         logger = logging.getLogger()
         logger.info("Test message with timestamp")
-        
-        # Flush any pending log messages
-        logger.handlers[0].flush()
         
         with open(log_file, 'r') as f:
             log_content = f.read()
@@ -327,18 +300,11 @@ class TestLogFormat:
         def setup_level_logging(log_file_path):
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Clear any existing handlers and configure fresh
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setLevel(logging.DEBUG)
-            
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            logger.setLevel(logging.DEBUG)
-            logger.addHandler(file_handler)
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[logging.FileHandler(log_file_path)]
+            )
         
         setup_level_logging(log_file)
         logger = logging.getLogger()
@@ -347,9 +313,6 @@ class TestLogFormat:
         logger.info("Info message")
         logger.warning("Warning message")
         logger.error("Error message")
-        
-        # Flush any pending log messages
-        logger.handlers[0].flush()
         
         with open(log_file, 'r') as f:
             log_content = f.read()
@@ -397,18 +360,11 @@ class TestEventLogging:
         def setup_event_logging(log_file_path):
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Clear any existing handlers and configure fresh
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setLevel(logging.INFO)
-            
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            logger.setLevel(logging.INFO)
-            logger.addHandler(file_handler)
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[logging.FileHandler(log_file_path)]
+            )
         
         def log_startup_events():
             logger = logging.getLogger()
@@ -420,9 +376,6 @@ class TestEventLogging:
         
         setup_event_logging(log_file)
         log_startup_events()
-        
-        # Flush any pending log messages
-        logging.getLogger().handlers[0].flush()
         
         with open(log_file, 'r') as f:
             log_content = f.read()
@@ -440,18 +393,11 @@ class TestEventLogging:
         def setup_error_logging(log_file_path):
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Clear any existing handlers and configure fresh
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setLevel(logging.ERROR)
-            
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            logger.setLevel(logging.ERROR)
-            logger.addHandler(file_handler)
+            logging.basicConfig(
+                level=logging.ERROR,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[logging.FileHandler(log_file_path)]
+            )
         
         def log_error_events():
             logger = logging.getLogger()
@@ -461,9 +407,6 @@ class TestEventLogging:
         
         setup_error_logging(log_file)
         log_error_events()
-        
-        # Flush any pending log messages
-        logging.getLogger().handlers[0].flush()
         
         with open(log_file, 'r') as f:
             log_content = f.read()
@@ -480,18 +423,11 @@ class TestEventLogging:
         def setup_recording_logging(log_file_path):
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Clear any existing handlers and configure fresh
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setLevel(logging.DEBUG)
-            
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            logger.setLevel(logging.DEBUG)
-            logger.addHandler(file_handler)
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[logging.FileHandler(log_file_path)]
+            )
         
         def log_recording_events():
             logger = logging.getLogger()
@@ -503,9 +439,6 @@ class TestEventLogging:
         
         setup_recording_logging(log_file)
         log_recording_events()
-        
-        # Flush any pending log messages
-        logging.getLogger().handlers[0].flush()
         
         with open(log_file, 'r') as f:
             log_content = f.read()
@@ -553,18 +486,11 @@ class TestLoggingEdgeCases:
         def setup_concurrent_logging(log_file_path):
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Clear any existing handlers and configure fresh
-            logger = logging.getLogger()
-            logger.handlers.clear()
-            
-            file_handler = logging.FileHandler(log_file_path)
-            file_handler.setLevel(logging.INFO)
-            
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            
-            logger.setLevel(logging.INFO)
-            logger.addHandler(file_handler)
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(levelname)s - %(message)s',
+                handlers=[logging.FileHandler(log_file_path)]
+            )
         
         def concurrent_logger(thread_id):
             logger = logging.getLogger()
@@ -586,9 +512,6 @@ class TestLoggingEdgeCases:
         # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
-        # Flush any pending log messages
-        logging.getLogger().handlers[0].flush()
         
         # Verify all messages were logged
         with open(log_file, 'r') as f:

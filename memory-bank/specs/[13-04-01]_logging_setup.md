@@ -2,7 +2,7 @@
 
 **ID**: 13-04-01
 **User Story**: [13-04-00] Enhanced Logging & Diagnostics
-**Status**: ✅ **COMPLETED**
+**Complexity**: Simple
 **Estimate**: 7 minutes
 
 ---

@@ -2,7 +2,7 @@
 
 **ID**: 13-01-00
 **Epic**: [13-00-00] Lessons Learned Foundation
-**Status**: ✅ **COMPLETED**
+**Status**: Draft
 **Priority**: High
 **Complexity**: Medium
 **Estimate**: 20-25 minutes

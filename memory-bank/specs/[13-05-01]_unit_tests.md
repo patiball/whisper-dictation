@@ -2,7 +2,7 @@
 
 **ID**: 13-05-01
 **User Story**: [13-05-00] Lessons Learned Tests Suite
-**Status**: ✅ **COMPLETED**
+**Complexity**: Medium
 **Estimate**: 12 minutes
 
 ---

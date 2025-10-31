@@ -544,3 +544,6 @@ if __name__ == "__main__":
     os.environ.get('CI') == 'true',
     reason="Integration tests with subprocess may not work in CI environments"
 )
+
+class TestErrorRecovery:
+    """Test error recovery and graceful degradation scenarios."""

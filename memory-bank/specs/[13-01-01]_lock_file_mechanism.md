@@ -2,7 +2,7 @@
 
 **ID**: 13-01-01
 **User Story**: [13-01-00] Lock File + Signal Handling
-**Status**: ✅ **COMPLETED**
+**Complexity**: Medium
 **Estimate**: 10 minutes
 
 ---
