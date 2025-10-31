@@ -8,6 +8,7 @@ import subprocess
 import time
 import json
 import os
+import logging
 from pathlib import Path
 
 # Mark all tests as integration tests
@@ -298,9 +299,11 @@ def simulate_recording_with_resources():
         for i in range(100):
             objects.append({'data': f'test_{i}', 'timestamp': time.time()})
         
-        # Wait for threads to complete
+        # Wait for threads to complete with timeout
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5.0)
+            if thread.is_alive():
+                logging.warning(f"Thread {thread.name} did not exit after 5.0s timeout in resource leak test")
         
         # Clean up objects
         objects.clear()
