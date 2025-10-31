@@ -101,19 +101,14 @@ def text_similarity_checker():
 # Lessons Learned Test Infrastructure Fixtures
 
 @pytest.fixture
-def temp_home(tmp_path):
+def temp_home(tmp_path, monkeypatch):
     """Temporary home directory for lock files and user data."""
     home_dir = tmp_path / "home"
     home_dir.mkdir()
-    # Override HOME environment variable for this test
-    original_home = os.environ.get('HOME')
-    os.environ['HOME'] = str(home_dir)
+    # Override HOME environment variable for this test using monkeypatch
+    monkeypatch.setenv('HOME', str(home_dir))
     yield home_dir
-    # Restore original HOME
-    if original_home:
-        os.environ['HOME'] = original_home
-    elif 'HOME' in os.environ:
-        del os.environ['HOME']
+    # monkeypatch automatically restores environment after test
 
 @pytest.fixture
 def temp_log_dir(tmp_path):
