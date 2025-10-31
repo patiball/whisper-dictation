@@ -8,6 +8,7 @@ import time
 import threading
 import sys
 import os
+import logging
 from unittest.mock import Mock, patch, MagicMock
 
 # Add project root to path for imports
@@ -28,40 +29,34 @@ def track_thread(thread):
 def cleanup_threads():
     """Automatically clean up any tracked threads after each test."""
     yield
-    # Cleanup any tracked threads
+    # Cleanup any tracked threads with 1.0 second timeout
     for thread in _active_threads[:]:
         if thread.is_alive():
-            thread.join(timeout=2.0)
+            thread.join(timeout=1.0)
+            if thread.is_alive():
+                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout")
         _active_threads.remove(thread)
     
-    # Force cleanup any remaining daemon threads
+    # Log warnings for any remaining daemon threads (don't force-stop)
     import threading
     for thread in threading.enumerate():
         if thread.name.startswith('Thread-') and thread.is_alive() and thread != threading.main_thread():
-            # Force stop daemon threads
             if thread.daemon:
-                try:
-                    thread._stop()
-                except:
-                    pass
+                logging.warning(f"Daemon thread {thread.name} did not exit after cleanup")
 
 @pytest.fixture(scope="session", autouse=True)
 def final_cleanup():
     """Final cleanup after all tests complete."""
     yield
-    # Kill any remaining threads
+    # Log any remaining threads (don't force-stop)
     import threading
     import time
     time.sleep(0.1)  # Brief pause for natural cleanup
     
-    # Force terminate any remaining non-main threads
+    # Log warnings for any remaining non-main threads
     for thread in threading.enumerate():
         if thread != threading.main_thread() and thread.is_alive():
-            if hasattr(thread, '_stop'):
-                try:
-                    thread._stop()
-                except:
-                    pass
+            logging.warning(f"Thread {thread.name} still running after test session completion")
 
 class TestHeartbeatTracking:
     """Test heartbeat update mechanism and timestamp validation."""
@@ -133,7 +128,9 @@ class TestHeartbeatTracking:
         
         # Wait for all threads to complete
         for thread in threads:
-            thread.join(timeout=5.0)
+            thread.join(timeout=1.0)
+            if thread.is_alive():
+                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout in concurrent updates test")
         
         # Should have no errors
         assert len(errors) == 0
@@ -414,7 +411,9 @@ class TestThreadSafety:
         
         # Wait for completion
         for thread in threads:
-            thread.join(timeout=5.0)
+            thread.join(timeout=1.0)
+            if thread.is_alive():
+                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout in counter test")
         
         # Should have no errors and correct counter value
         assert len(global_state['errors']) == 0
@@ -447,7 +446,9 @@ class TestThreadSafety:
         
         # Wait for completion
         for thread in threads:
-            thread.join(timeout=5.0)
+            thread.join(timeout=1.0)
+            if thread.is_alive():
+                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout in race condition test")
         
         # Should have no race conditions
         assert len(shared_resource['errors']) == 0
