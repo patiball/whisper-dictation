@@ -9,6 +9,7 @@ import time
 import json
 import os
 import logging
+import sys
 from pathlib import Path
 
 # Mark all tests as integration tests

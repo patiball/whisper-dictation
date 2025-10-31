@@ -158,7 +158,7 @@ class TestLogRotation:
         log_file = temp_home / ".whisper-dictation.log"
         max_size = 1024  # 1KB for testing
         
-        def setup_rotating_logging(log_file_path, max_bytes=max_bytes, backup_count=3):
+        def setup_rotating_logging(log_file_path, max_bytes=1024, backup_count=3):
             import logging.handlers
             
             log_file_path.parent.mkdir(parents=True, exist_ok=True)
