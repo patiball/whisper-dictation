@@ -2,7 +2,7 @@
 
 **ID**: 13-02-01
 **User Story**: [13-02-00] Microphone Proactive Check
-**Complexity**: Simple
+**Status**: ✅ **COMPLETED**
 **Estimate**: 7 minutes
 
 ---
