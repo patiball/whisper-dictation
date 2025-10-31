@@ -6,10 +6,62 @@ Tests: Heartbeat tracking, stall detection, stream recovery, thread safety
 import pytest
 import time
 import threading
+import sys
+import os
 from unittest.mock import Mock, patch, MagicMock
+
+# Add project root to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Mark all tests as unit tests
 pytestmark = pytest.mark.unit
+
+# Global thread tracking for cleanup
+_active_threads = []
+
+def track_thread(thread):
+    """Track a thread for cleanup during teardown."""
+    _active_threads.append(thread)
+    return thread
+
+@pytest.fixture(autouse=True)
+def cleanup_threads():
+    """Automatically clean up any tracked threads after each test."""
+    yield
+    # Cleanup any tracked threads
+    for thread in _active_threads[:]:
+        if thread.is_alive():
+            thread.join(timeout=2.0)
+        _active_threads.remove(thread)
+    
+    # Force cleanup any remaining daemon threads
+    import threading
+    for thread in threading.enumerate():
+        if thread.name.startswith('Thread-') and thread.is_alive() and thread != threading.main_thread():
+            # Force stop daemon threads
+            if thread.daemon:
+                try:
+                    thread._stop()
+                except:
+                    pass
+
+@pytest.fixture(scope="session", autouse=True)
+def final_cleanup():
+    """Final cleanup after all tests complete."""
+    yield
+    # Kill any remaining threads
+    import threading
+    import time
+    time.sleep(0.1)  # Brief pause for natural cleanup
+    
+    # Force terminate any remaining non-main threads
+    for thread in threading.enumerate():
+        if thread != threading.main_thread() and thread.is_alive():
+            if hasattr(thread, '_stop'):
+                try:
+                    thread._stop()
+                except:
+                    pass
 
 class TestHeartbeatTracking:
     """Test heartbeat update mechanism and timestamp validation."""
@@ -75,13 +127,13 @@ class TestHeartbeatTracking:
         # Run multiple threads updating heartbeat
         threads = []
         for i in range(5):
-            thread = threading.Thread(target=concurrent_updates, args=(i,))
+            thread = track_thread(threading.Thread(target=concurrent_updates, args=(i,)))
             threads.append(thread)
             thread.start()
         
-        # Wait for completion
+        # Wait for all threads to complete
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5.0)
         
         # Should have no errors
         assert len(errors) == 0
@@ -115,10 +167,18 @@ class TestStallDetection:
         def is_stream_stalled(last_heartbeat, timeout_seconds):
             return (time.time() - last_heartbeat) > timeout_seconds
         
+        # Test with an old timestamp to ensure stall detection works
+        old_timestamp = time.time() - 1.0  # 1 second ago
+        
         # Test various timeout values
-        assert is_stream_stalled(current_time, 0.001) is True  # Very short timeout
-        assert is_stream_stalled(current_time, 1.0) is False   # 1 second timeout
-        assert is_stream_stalled(current_time, 60.0) is False  # 1 minute timeout
+        assert is_stream_stalled(old_timestamp, 0.001) is True  # Very short timeout
+        assert is_stream_stalled(old_timestamp, 2.0) is False   # 2 second timeout
+        assert is_stream_stalled(old_timestamp, 60.0) is False  # 1 minute timeout
+        
+        # Test with current timestamp (should not be stalled for reasonable timeouts)
+        time.sleep(0.01)  # Small delay to make current timestamp old enough
+        assert is_stream_stalled(current_time, 0.001) is True  # Now current time is > 0.001s old
+        assert is_stream_stalled(current_time, 1.0) is False   # 1 second timeout should not trigger
 
     def test_stall_detection_edge_cases(self):
         """Test edge cases in stall detection."""
@@ -162,7 +222,7 @@ class TestWatchdogThread:
             thread_stopped.set()
         
         stop_event = threading.Event()
-        watchdog_thread = threading.Thread(target=watchdog_monitor, args=(stop_event,))
+        watchdog_thread = track_thread(threading.Thread(target=watchdog_monitor, args=(stop_event,)))
         
         # Start thread
         watchdog_thread.start()
@@ -194,7 +254,7 @@ class TestWatchdogThread:
                 time.sleep(0.01)
         
         stop_event = threading.Event()
-        watchdog_thread = threading.Thread(target=watchdog_loop, args=(stop_event,))
+        watchdog_thread = track_thread(threading.Thread(target=watchdog_loop, args=(stop_event,)))
         
         # Start monitoring
         watchdog_thread.start()
@@ -220,7 +280,7 @@ class TestWatchdogThread:
                 exception_occurred.set()
         
         stop_event = threading.Event()
-        watchdog_thread = threading.Thread(target=faulty_watchdog, args=(stop_event,))
+        watchdog_thread = track_thread(threading.Thread(target=faulty_watchdog, args=(stop_event,)))
         
         # Start thread
         watchdog_thread.start()
@@ -348,13 +408,13 @@ class TestThreadSafety:
         # Run multiple threads
         threads = []
         for i in range(5):
-            thread = threading.Thread(target=increment_counter, args=(i,))
+            thread = track_thread(threading.Thread(target=increment_counter, args=(i,)))
             threads.append(thread)
             thread.start()
         
         # Wait for completion
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5.0)
         
         # Should have no errors and correct counter value
         assert len(global_state['errors']) == 0
@@ -381,13 +441,13 @@ class TestThreadSafety:
         # Run multiple threads appending data
         threads = []
         for i in range(10):
-            thread = threading.Thread(target=append_data, args=(i, i))
+            thread = track_thread(threading.Thread(target=append_data, args=(i, i)))
             threads.append(thread)
             thread.start()
         
         # Wait for completion
         for thread in threads:
-            thread.join()
+            thread.join(timeout=5.0)
         
         # Should have no race conditions
         assert len(shared_resource['errors']) == 0
@@ -421,8 +481,8 @@ class TestThreadSafety:
                     deadlock_detected.set()
             
             # Start threads
-            t1 = threading.Thread(target=thread1)
-            t2 = threading.Thread(target=thread2)
+            t1 = track_thread(threading.Thread(target=thread1))
+            t2 = track_thread(threading.Thread(target=thread2))
             
             t1.start()
             t2.start()

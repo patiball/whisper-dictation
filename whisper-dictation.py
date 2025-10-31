@@ -164,6 +164,9 @@ def signal_handler(signum, frame):
                 app.recorder.stop()
                 logging.info("Recording operations stopped")
         
+        # Stop audio watchdog
+        stop_watchdog()
+        
         # Close audio stream if active
         if 'app' in globals() and hasattr(app, 'recorder'):
             if hasattr(app.recorder, 'close'):
@@ -191,6 +194,113 @@ def register_signal_handlers():
     except Exception as e:
         logging.error(f"Failed to register signal handlers: {e}")
         return False
+
+# Microphone access verification
+def test_microphone_access():
+    """Test microphone access capability on startup."""
+    try:
+        import sounddevice as sd
+        start_time = time.time()
+        
+        # Test microphone access
+        sd.check_input_settings()
+        
+        elapsed_ms = (time.time() - start_time) * 1000
+        logging.info(f"Microphone access test passed ({elapsed_ms:.1f}ms)")
+        print("Microphone access test passed.")
+        
+    except PermissionError as e:
+        logging.warning(f"Microphone access test failed: Permission denied - {e}")
+        print("WARNING: Microphone access test failed: Permission denied")
+        print("  Please check System Preferences → Privacy → Microphone")
+        
+    except RuntimeError as e:
+        if "No input device" in str(e):
+            logging.warning(f"Microphone access test failed: No audio input devices found - {e}")
+            print("WARNING: Microphone access test failed: No audio input devices found")
+        else:
+            logging.warning(f"Microphone access test failed: Audio system error - {e}")
+            print(f"WARNING: Microphone access test failed: {e}")
+            
+    except Exception as e:
+        logging.warning(f"Microphone access test failed: {e}")
+        print(f"WARNING: Microphone access test failed: {e}")
+        
+    # Function never raises exceptions - graceful degradation
+
+# Audio Stream Watchdog
+last_heartbeat = datetime.now()
+watchdog_active = False
+recording = False
+audio_timeout = 10  # seconds
+
+def update_heartbeat():
+    """Update the heartbeat timestamp after successful audio reads."""
+    global last_heartbeat
+    last_heartbeat = datetime.now()
+
+def watchdog_monitor():
+    """Background thread that monitors audio stream for stalls."""
+    global last_heartbeat, watchdog_active, recording
+    
+    while watchdog_active:
+        if recording:
+            time_since = (datetime.now() - last_heartbeat).total_seconds()
+            if time_since > audio_timeout:
+                logging.warning(f"Audio system stalled! No heartbeat for {time_since:.1f}s")
+                restart_audio_stream()
+        time.sleep(1)
+
+def restart_audio_stream():
+    """Restart the audio stream after a stall is detected."""
+    global app, last_heartbeat
+    
+    try:
+        logging.info("Restarting audio stream...")
+        
+        # Stop and close current stream
+        if hasattr(app, 'recorder') and hasattr(app.recorder, 'stream'):
+            app.recorder.stream.stop_stream()
+            app.recorder.stream.close()
+            
+            # Reinitialize stream with same parameters
+            app.recorder.stream = app.recorder.p.open(
+                format=app.recorder.FORMAT,
+                channels=app.recorder.CHANNELS,
+                rate=app.recorder.RATE,
+                input=True,
+                frames_per_buffer=app.recorder.FRAMES_PER_BUFFER
+            )
+            app.recorder.stream.start_stream()
+            
+            # Reset heartbeat
+            last_heartbeat = datetime.now()
+            logging.info("Audio stream restarted successfully")
+        else:
+            logging.error("Cannot restart stream: recorder or stream not available")
+            
+    except Exception as e:
+        logging.error(f"Failed to restart audio stream: {e}")
+
+def start_watchdog():
+    """Start the audio watchdog thread."""
+    global watchdog_active
+    
+    if not watchdog_active:
+        watchdog_active = True
+        watchdog_thread = threading.Thread(target=watchdog_monitor, daemon=True)
+        watchdog_thread.start()
+        logging.info("Watchdog thread started")
+
+def stop_watchdog():
+    """Stop the audio watchdog thread."""
+    global watchdog_active
+    
+    if watchdog_active:
+        watchdog_active = False
+        # Give thread time to exit
+        time.sleep(2)
+        logging.info("Watchdog thread stopped")
 
 class SpeechTranscriber:
     def __init__(self, model, allowed_languages=None, device_manager=None):
@@ -304,6 +414,14 @@ class Recorder:
         self.frames_per_buffer = frames_per_buffer
         self.warmup_buffers = warmup_buffers
         self.debug = debug
+        
+        # Store audio parameters for watchdog restart
+        self.p = None
+        self.stream = None
+        self.FORMAT = pyaudio.paInt16
+        self.CHANNELS = 1
+        self.RATE = 16000
+        self.FRAMES_PER_BUFFER = frames_per_buffer
 
     def start(self, language=None):
         thread = threading.Thread(target=self._record_impl, args=(language,))
@@ -311,11 +429,29 @@ class Recorder:
 
     def stop(self):
         self.recording = False
+        recording = False  # Reset global flag immediately
+
+    def close(self):
+        """Close audio resources for shutdown."""
+        if hasattr(self, 'stream') and self.stream:
+            try:
+                self.stream.stop_stream()
+                self.stream.close()
+            except Exception:
+                pass
+        if hasattr(self, 'p') and self.p:
+            try:
+                self.p.terminate()
+            except Exception:
+                pass
 
 
     def _record_impl(self, language):
         import os
+        global recording
+        
         self.recording = True
+        recording = True  # Set global flag for watchdog
         
         # Odtwórz dźwięk rozpoczęcia nagrywania
         self.sound_player.play_start_sound()
@@ -327,22 +463,23 @@ class Recorder:
         except Exception:
             frames_per_buffer = int(self.frames_per_buffer)
         
-        p = pyaudio.PyAudio()
+        self.p = pyaudio.PyAudio()
+        self.FRAMES_PER_BUFFER = frames_per_buffer
 
         def open_stream(fpb):
-            return p.open(format=pyaudio.paInt16,
-                          channels=1,
-                          rate=16000,
+            return self.p.open(format=self.FORMAT,
+                          channels=self.CHANNELS,
+                          rate=self.RATE,
                           frames_per_buffer=fpb,
                           input=True)
         
-        stream = open_stream(frames_per_buffer)
+        self.stream = open_stream(frames_per_buffer)
         frames = []
         
         # Warm-up: discard first N buffers to stabilize stream
         for _ in range(int(self.warmup_buffers)):
             try:
-                _ = stream.read(frames_per_buffer, exception_on_overflow=False)
+                _ = self.stream.read(frames_per_buffer, exception_on_overflow=False)
             except Exception:
                 pass
         
@@ -353,8 +490,10 @@ class Recorder:
         
         while self.recording:
             try:
-                data = stream.read(frames_per_buffer, exception_on_overflow=False)
+                data = self.stream.read(frames_per_buffer, exception_on_overflow=False)
                 frames.append(data)
+                # Update heartbeat after successful read
+                update_heartbeat()
             except Exception:
                 errors += 1
                 if self.debug:
@@ -367,14 +506,14 @@ class Recorder:
                 try:
                     if self.debug:
                         print(f"[Recorder] escalating frames_per_buffer {frames_per_buffer} -> 1024 and reopening stream")
-                    stream.stop_stream()
-                    stream.close()
+                    self.stream.stop_stream()
+                    self.stream.close()
                     frames_per_buffer = 1024
-                    stream = open_stream(frames_per_buffer)
+                    self.stream = open_stream(frames_per_buffer)
                     # Warm-up again after reopen
                     for _ in range(int(self.warmup_buffers)):
                         try:
-                            _ = stream.read(frames_per_buffer, exception_on_overflow=False)
+                            _ = self.stream.read(frames_per_buffer, exception_on_overflow=False)
                         except Exception:
                             pass
                     errors = 0
@@ -386,9 +525,13 @@ class Recorder:
                     # If escalation fails, continue with current settings
                     escalated = True
         
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
+        # Cleanup
+        self.stream.stop_stream()
+        self.stream.close()
+        self.p.terminate()
+        
+        # Reset global recording flag
+        recording = False
         
         # Odtwórz dźwięk zakończenia nagrywania
         self.sound_player.play_stop_sound()
@@ -593,6 +736,14 @@ if __name__ == "__main__":
     # Register signal handlers for graceful shutdown
     register_signal_handlers()
     logging.info("Signal handlers registered")
+
+    # Test microphone access on startup
+    test_microphone_access()
+    logging.info("Microphone check completed")
+
+    # Start audio watchdog thread
+    start_watchdog()
+    logging.info("Audio watchdog started")
 
     # Import DeviceManager for intelligent device handling
     from device_manager import DeviceManager, OperationType
