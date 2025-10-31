@@ -374,6 +374,7 @@ if __name__ == "__main__":
         recovery_script.write_text("""
 import json
 import os
+import sys
 from pathlib import Path
 
 def detect_stale_lock():
