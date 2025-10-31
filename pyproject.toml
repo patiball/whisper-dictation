@@ -30,6 +30,7 @@ librosa = "^0.11.0"
 psutil = "^7.0.0"
 pytest-cov = "^7.0.0"
 pytest-rerunfailures = "^16.1"
+pytest-timeout = "^2.4.0"
 
 [build-system]
 requires = ["poetry-core"]

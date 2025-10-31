@@ -1,8 +1,16 @@
 Last Update: 2025-10-31
 
-**Current Status:** 🟢 **EPIC 15 COMPLETE - READY FOR NEXT DEVELOPMENT PHASE** - All 4 critical tasks implemented and committed, Epic 15 Test Infrastructure Repair completed successfully.
+**Current Status:** 🟢 **EPIC 16 IN PROGRESS** - Hanging issue resolved. Moving on to remaining test failures.
 
 ## Recent Completed Milestones
+
+### ✅ EPIC 16: Post-Epic 15 Fixes (In Progress)
+
+**[16-01-00] Thread Cleanup Fix - COMPLETED**
+- **Problem**: `pytest` process would hang indefinitely after test completion.
+- **Root Cause**: A test designed to demonstrate a deadlock (`test_deadlock_prevention`) was creating an unrecoverable C-level deadlock in the `threading` module, preventing the process from exiting.
+- **Solution**: The test was refactored to use non-blocking, timed lock acquisitions (`lock.acquire(timeout=...)`), which allows the threads to terminate gracefully while still confirming that a deadlock condition is detected.
+- **Status**: ✅ **COMPLETED** - The test suite no longer hangs.
 
 ### ✅ Lessons Learned Foundation - Stability & Reliability (2025-10-31) - COMPLETED
 
@@ -120,9 +128,17 @@ For implementation details see: `specs/[02-00-00]_whisper_cpp_quality_fix.md` an
 
 | # | Item | Spec | Priority | Estimate |
 |---|------|------|----------|----------|
-| 1 | **NEXT** Transcription Timestamps - User feedback clarity | [10-00-00] | High | 30-45 min |
-| 2 | macOS Portability - Intel Mac support for C++ | [09-00-00] | High | 30-45 min |
-| 3 | Documentation - English translation of /docs | N/A | Medium | Deferred |
-| 4 | File Renaming - fast.py → metal.py | [11-00-00] | Low | 15-20 min |
+| 1 | **NEXT** Sys Import Regression Fix | [16-02-00] | High | 10-15 min |
+| 2 | Stabilize Logging Tests | [16-03-00] | High | 30-45 min |
+| 3 | Whisper.cpp Integration Fixes | [16-04-00] | High | 45-60 min |
+| 4 | Verify and Enforce GPU Usage | [16-07-00] | High | 30-45 min |
+| 5 | Review Audio Quality Metrics | [16-05-00] | Medium | 20-30 min |
+| 6 | Increase Code Coverage to 70% | [16-06-00] | Medium | 60-90 min |
+| 7 | Transcription Timestamps | [10-00-00] | Medium | 30-45 min |
+| 8 | macOS Portability - Intel Mac support | [09-00-00] | Medium | 30-45 min |
+| 9 | Documentation - English translation | N/A | Low | Deferred |
+| 10 | File Renaming - fast.py → metal.py | [11-00-00] | Low | 15-20 min |
+| 11 | Categorize Unmarked Tests | N/A | Low | 20-30 min |
+
 
 **For detailed backlog see:** `memory-bank/issues-backlog.md`

@@ -17,46 +17,54 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Mark all tests as unit tests
 pytestmark = pytest.mark.unit
 
-# Global thread tracking for cleanup
-_active_threads = []
 
-def track_thread(thread):
-    """Track a thread for cleanup during teardown."""
-    _active_threads.append(thread)
-    return thread
+@pytest.fixture
+def watchdog_test_harness():
+    """Provides a harness for testing thread lifecycle and cleanup."""
+    stop_event = threading.Event()
+    thread = None
 
-@pytest.fixture(autouse=True)
-def cleanup_threads():
-    """Automatically clean up any tracked threads after each test."""
-    yield
-    # Cleanup any tracked threads with 1.0 second timeout
-    for thread in _active_threads[:]:
+    def _start_thread(target_func, *args):
+        nonlocal thread
+        thread = threading.Thread(target=target_func, args=(stop_event, *args))
+        thread.start()
+        return thread
+
+    yield _start_thread, stop_event
+
+    # Teardown
+    if thread and thread.is_alive():
+        stop_event.set()
+        thread.join(timeout=2.0)
         if thread.is_alive():
-            thread.join(timeout=1.0)
-            if thread.is_alive():
-                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout")
-        _active_threads.remove(thread)
-    
-    # Log warnings for any remaining daemon threads (don't force-stop)
-    import threading
-    for thread in threading.enumerate():
-        if thread.name.startswith('Thread-') and thread.is_alive() and thread != threading.main_thread():
-            if thread.daemon:
-                logging.warning(f"Daemon thread {thread.name} did not exit after cleanup")
+            pytest.fail(f"Thread {thread.name} failed to terminate cleanly.")
 
-@pytest.fixture(scope="session", autouse=True)
-def final_cleanup():
-    """Final cleanup after all tests complete."""
-    yield
-    # Log any remaining threads (don't force-stop)
-    import threading
-    import time
-    time.sleep(0.1)  # Brief pause for natural cleanup
+
+@pytest.fixture
+def thread_manager():
+    """A fixture to manage and clean up multiple threads created during a test."""
+    active_threads = []
     
-    # Log warnings for any remaining non-main threads
-    for thread in threading.enumerate():
-        if thread != threading.main_thread() and thread.is_alive():
-            logging.warning(f"Thread {thread.name} still running after test session completion")
+    def _thread_starter(target, args=()):
+        thread = threading.Thread(target=target, args=args)
+        thread.start()
+        active_threads.append(thread)
+        return thread
+
+    yield _thread_starter
+    
+    # Teardown
+    for thread in active_threads:
+        if thread.is_alive():
+            thread.join(timeout=2.0)
+            if thread.is_alive():
+                pytest.fail(f"Thread {thread.name} did not terminate cleanly.")
+
+
+
+
+
+
 
 class TestHeartbeatTracking:
     """Test heartbeat update mechanism and timestamp validation."""
@@ -107,7 +115,7 @@ class TestHeartbeatTracking:
         assert timestamp < time.time() + 1  # Should not be in future
         assert time.time() - timestamp < 10  # Should be recent
 
-    def test_heartbeat_thread_safety(self, heartbeat_tracker):
+    def test_heartbeat_thread_safety(self, heartbeat_tracker, thread_manager):
         """Test heartbeat updates are thread-safe."""
         errors = []
         
@@ -120,17 +128,11 @@ class TestHeartbeatTracking:
                 errors.append(f"Thread {thread_id}: {e}")
         
         # Run multiple threads updating heartbeat
-        threads = []
-        for i in range(5):
-            thread = track_thread(threading.Thread(target=concurrent_updates, args=(i,)))
-            threads.append(thread)
-            thread.start()
+        threads = [thread_manager(target=concurrent_updates, args=(i,)) for i in range(5)]
         
         # Wait for all threads to complete
         for thread in threads:
-            thread.join(timeout=1.0)
-            if thread.is_alive():
-                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout in concurrent updates test")
+            thread.join(timeout=2.0)
         
         # Should have no errors
         assert len(errors) == 0
@@ -207,87 +209,68 @@ class TestStallDetection:
 class TestWatchdogThread:
     """Test watchdog thread lifecycle and monitoring logic."""
 
-    def test_watchdog_thread_creation(self):
+    def test_watchdog_thread_creation(self, watchdog_test_harness):
         """Test watchdog thread can be created and started."""
+        start_thread, stop_event = watchdog_test_harness
         thread_started = threading.Event()
-        thread_stopped = threading.Event()
         
-        def watchdog_monitor(stop_event):
+        def watchdog_monitor(stop_event_inner):
             thread_started.set()
-            while not stop_event.is_set():
-                time.sleep(0.01)
-            thread_stopped.set()
+            stop_event_inner.wait()  # Wait until stop is signaled by fixture
+
+        watchdog_thread = start_thread(watchdog_monitor)
         
-        stop_event = threading.Event()
-        watchdog_thread = track_thread(threading.Thread(target=watchdog_monitor, args=(stop_event,)))
-        
-        # Start thread
-        watchdog_thread.start()
-        
-        # Wait for thread to start
+        # Assert thread starts and is alive
         assert thread_started.wait(timeout=1.0)
         assert watchdog_thread.is_alive()
         
-        # Stop thread
-        stop_event.set()
-        watchdog_thread.join(timeout=1.0)
-        
-        # Thread should be stopped
-        assert thread_stopped.is_set()
-        assert not watchdog_thread.is_alive()
+        # Teardown and thread stop is handled by the fixture
 
-    def test_watchdog_monitoring_loop(self, heartbeat_tracker):
+    def test_watchdog_monitoring_loop(self, watchdog_test_harness, heartbeat_tracker):
         """Test watchdog monitoring loop behavior."""
+        start_thread, stop_event = watchdog_test_harness
         monitoring_active = threading.Event()
         stall_detected = threading.Event()
         
-        def watchdog_loop(stop_event):
+        def watchdog_loop(stop_event_inner):
             monitoring_active.set()
-            while not stop_event.is_set():
+            while not stop_event_inner.is_set():
                 last_update = heartbeat_tracker['get_last']()
                 if time.time() - last_update > 0.1:  # 100ms timeout for testing
                     stall_detected.set()
                     break
                 time.sleep(0.01)
         
-        stop_event = threading.Event()
-        watchdog_thread = track_thread(threading.Thread(target=watchdog_loop, args=(stop_event,)))
-        
-        # Start monitoring
-        watchdog_thread.start()
+        start_thread(watchdog_loop)
         assert monitoring_active.wait(timeout=1.0)
         
         # Wait for stall detection (no heartbeat updates)
         assert stall_detected.wait(timeout=2.0)
         
-        # Clean up
-        stop_event.set()
-        watchdog_thread.join(timeout=1.0)
+        # Teardown is handled by the fixture
 
-    def test_watchdog_thread_exception_handling(self):
+    def test_watchdog_thread_exception_handling(self, watchdog_test_harness):
         """Test watchdog thread handles exceptions gracefully."""
+        start_thread, stop_event = watchdog_test_harness
         exception_occurred = threading.Event()
         
-        def faulty_watchdog(stop_event):
+        def faulty_watchdog(stop_event_inner):
             try:
-                while not stop_event.is_set():
-                    # Simulate an exception
+                # The fixture will stop this loop
+                if not stop_event_inner.is_set():
                     raise RuntimeError("Simulated watchdog error")
             except Exception:
                 exception_occurred.set()
-        
-        stop_event = threading.Event()
-        watchdog_thread = track_thread(threading.Thread(target=faulty_watchdog, args=(stop_event,)))
-        
-        # Start thread
-        watchdog_thread.start()
+            finally:
+                # Keep thread alive until fixture's teardown signals stop
+                stop_event_inner.wait()
+
+        start_thread(faulty_watchdog)
         
         # Exception should be caught and handled
         assert exception_occurred.wait(timeout=1.0)
         
-        # Clean up
-        stop_event.set()
-        watchdog_thread.join(timeout=1.0)
+        # Teardown is handled by the fixture
 
 class TestStreamRestart:
     """Test stream stop/close/reinit sequence."""
@@ -388,7 +371,7 @@ class TestStreamRestart:
 class TestThreadSafety:
     """Test thread safety of global variable access and race conditions."""
 
-    def test_global_variable_access(self):
+    def test_global_variable_access(self, thread_manager):
         """Test safe access to global variables across threads."""
         global_state = {'counter': 0, 'errors': []}
         lock = threading.Lock()
@@ -403,23 +386,17 @@ class TestThreadSafety:
                 global_state['errors'].append(f"Thread {thread_id}: {e}")
         
         # Run multiple threads
-        threads = []
-        for i in range(5):
-            thread = track_thread(threading.Thread(target=increment_counter, args=(i,)))
-            threads.append(thread)
-            thread.start()
+        threads = [thread_manager(target=increment_counter, args=(i,)) for i in range(5)]
         
         # Wait for completion
         for thread in threads:
-            thread.join(timeout=1.0)
-            if thread.is_alive():
-                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout in counter test")
+            thread.join(timeout=2.0)
         
         # Should have no errors and correct counter value
         assert len(global_state['errors']) == 0
         assert global_state['counter'] == 5000  # 5 threads * 1000 increments
 
-    def test_race_condition_prevention(self):
+    def test_race_condition_prevention(self, thread_manager):
         """Test race conditions are prevented with proper synchronization."""
         shared_resource = {'data': [], 'errors': []}
         lock = threading.Lock()
@@ -438,63 +415,59 @@ class TestThreadSafety:
                 shared_resource['errors'].append(f"Race condition in thread {thread_id}: {e}")
         
         # Run multiple threads appending data
-        threads = []
-        for i in range(10):
-            thread = track_thread(threading.Thread(target=append_data, args=(i, i)))
-            threads.append(thread)
-            thread.start()
+        threads = [thread_manager(target=append_data, args=(i, i)) for i in range(10)]
         
         # Wait for completion
         for thread in threads:
-            thread.join(timeout=1.0)
-            if thread.is_alive():
-                logging.warning(f"Thread {thread.name} did not exit after 1.0s timeout in race condition test")
+            thread.join(timeout=2.0)
         
         # Should have no race conditions
         assert len(shared_resource['errors']) == 0
         assert len(shared_resource['data']) == 10
 
-    def test_deadlock_prevention(self):
-        """Test deadlock prevention in watchdog operations."""
+    def test_deadlock_prevention(self, thread_manager):
+        """Test that a deadlock scenario is detected without hanging."""
         deadlock_detected = threading.Event()
-        
-        def operation_with_timeout():
-            """Operation that should complete without deadlock."""
-            lock1 = threading.Lock()
-            lock2 = threading.Lock()
-            
-            def thread1():
-                try:
-                    with lock1:
-                        time.sleep(0.01)
-                        with lock2:  # Potential deadlock if not careful
-                            pass
-                except Exception:
-                    deadlock_detected.set()
-            
-            def thread2():
-                try:
-                    with lock2:
-                        time.sleep(0.01)
-                        with lock1:  # Potential deadlock if not careful
-                            pass
-                except Exception:
-                    deadlock_detected.set()
-            
-            # Start threads
-            t1 = track_thread(threading.Thread(target=thread1))
-            t2 = track_thread(threading.Thread(target=thread2))
-            
-            t1.start()
-            t2.start()
-            
-            # Wait for completion with timeout
-            t1.join(timeout=1.0)
-            t2.join(timeout=1.0)
-            
-            return not deadlock_detected.is_set()
-        
-        # This test demonstrates the need for careful lock ordering
-        # In real implementation, we would avoid this pattern
-        result = operation_with_timeout()
-        # Note: This might deadlock in testing - real code should use consistent lock ordering
+        lock1 = threading.Lock()
+        lock2 = threading.Lock()
+
+        def thread1():
+            try:
+                with lock1:
+                    time.sleep(0.01)
+                    # Attempt to acquire lock2 with a timeout
+                    if not lock2.acquire(timeout=0.5):
+                        deadlock_detected.set()
+                        return  # Exit thread
+                    try:
+                        pass  # Should not be reached in a deadlock
+                    finally:
+                        lock2.release()
+            except Exception:
+                deadlock_detected.set()
+
+        def thread2():
+            try:
+                with lock2:
+                    time.sleep(0.01)
+                    # Attempt to acquire lock1 with a timeout
+                    if not lock1.acquire(timeout=0.5):
+                        deadlock_detected.set()
+                        return  # Exit thread
+                    try:
+                        pass  # Should not be reached in a deadlock
+                    finally:
+                        lock1.release()
+            except Exception:
+                deadlock_detected.set()
+
+        # Start threads
+        t1 = thread_manager(target=thread1)
+        t2 = thread_manager(target=thread2)
+
+        # Wait for completion
+        t1.join(timeout=2.0)
+        t2.join(timeout=2.0)
+
+        # Assert that the deadlock was detected by one of the threads timing out
+        assert deadlock_detected.is_set()
