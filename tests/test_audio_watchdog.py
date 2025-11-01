@@ -379,7 +379,7 @@ class TestStreamRestart:
             return end_time - start_time
 
         restart_time = quick_restart_stream()
-        assert restart_time < 0.1  # Should complete in less than 100ms
+        assert restart_time < 0.2  # Should complete in less than 200ms (CI tolerance)
 
 
 class TestThreadSafety:

@@ -10,6 +10,11 @@
 
 > Aktualizacja (2025-11-01): Dodano sekcje `[tool.black]` i `[tool.isort]` w `pyproject.toml`, wykonano `isort .` i `black .`; lokalnie `black --check .` przechodzi. Oczekiwany zielony lint w CI. — MP
 
+> Bezpieczeństwo (2025-11-01): Zmiany w testach (stabilność i portabilność):
+> - test_logging.py: import logging.handlers na poziomie modułu; usunięto import wewnątrz funkcji (naprawa AttributeError/UnboundLocalError)
+> - test_audio_watchdog.py: próg czasu restartu podniesiony do 200ms ze względu na zmienność środowiska CI
+> Zakres: tylko testy, brak zmian funkcjonalnych w kodzie aplikacji. — MP
+
 **Active Epic:** [16-00-00] Post-Epic 15 Test Infrastructure & Functional Fixes
 - **Priority:** High
 - **Goal:** To resolve all outstanding issues from Epic 15 and achieve a stable, reliable, and fully functional test infrastructure.

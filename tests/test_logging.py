@@ -4,6 +4,7 @@ Tests: File creation, level configuration, rotation, event logging
 """
 
 import logging
+import logging.handlers
 import os
 import time
 from pathlib import Path
@@ -278,8 +279,6 @@ class TestLogRotation:
             root_logger = logging.getLogger()
             root_logger.handlers.clear()
             root_logger.propagate = False
-
-            import logging.handlers
 
             handler = logging.handlers.RotatingFileHandler(
                 log_file_path, maxBytes=1024 * 1024, backupCount=3  # 1MB
