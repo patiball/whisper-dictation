@@ -10,16 +10,13 @@
 
 **Completed User Stories:**
 - ✅ **[16-01-00] Thread Cleanup Fix** (Priority: Critical) - **COMPLETED**
+- ✅ **[16-02-00] Sys Import Regression Fix** (Priority: High) - **COMPLETED**
 
 **Immediate Priorities (from Epic 16):**
-1.  **[16-02-00] Sys Import Regression Fix** (Priority: High)
-    -   **Problem:** A test is failing with `NameError: name 'sys' is not defined`.
+1.  **[16-03-00] Stabilize Logging Tests** (Priority: High)
+    -   **Problem:** Multiple logging tests are failing due to issues with log capture.
     -   **Status:** 🟡 **ACTIVE**
-2.  **[16-03-00] Stabilize Logging Tests** (Priority: High)
-    -   **Problem:** Multiple logging tests are failing.
-3.  **[16-04-00] Whisper.cpp Integration Fixes** (Priority: High)
+2.  **[16-04-00] Whisper.cpp Integration Fixes** (Priority: High)
     -   **Problem:** Core C++ backend functionality is failing in tests.
-
-**Analysis Artifacts:**
-- See: `memory-bank/lessons_learned/hanging_tests_isolation_analysis.md` for a full summary of the debugging process.
-- See: `memory-bank/specs/[16-00-00]_post_epic_15_fixes.md` for the full plan for the active epic.
+3.  **[16-07-00] Verify and Enforce GPU Usage in C++ Tests** (Priority: High)
+    -   **Problem:** User observation suggests tests may be incorrectly using the CPU instead of the GPU.

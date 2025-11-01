@@ -12,6 +12,12 @@ Last Update: 2025-10-31
 - **Solution**: The test was refactored to use non-blocking, timed lock acquisitions (`lock.acquire(timeout=...)`), which allows the threads to terminate gracefully while still confirming that a deadlock condition is detected.
 - **Status**: ✅ **COMPLETED** - The test suite no longer hangs.
 
+**[16-02-00] Sys Import Regression Fix - COMPLETED**
+- **Problem**: The `test_lock_file_cleanup_on_process_crash` test failed with `NameError: name 'sys' is not defined`.
+- **Root Cause**: A helper script defined as a multiline string within the test was missing the `import sys` statement.
+- **Solution**: Added `import sys` to the helper script string.
+- **Status**: ✅ **COMPLETED** - The test now passes.
+
 ### ✅ Lessons Learned Foundation - Stability & Reliability (2025-10-31) - COMPLETED
 
 **Enhanced Logging & Diagnostics:**

@@ -1,0 +1,91 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.12, pytest-8.4.1, pluggy-1.6.0 -- /Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/mprzybyszewski/dev/ai-projects/whisper-dictation
+configfile: pyproject.toml
+plugins: timeout-2.4.0, rerunfailures-16.1, cov-7.0.0
+collecting ... collected 17 items
+
+tests/test_audio_watchdog.py::TestHeartbeatTracking::test_heartbeat_update_mechanism PASSED
+tests/test_audio_watchdog.py::TestHeartbeatTracking::test_multiple_heartbeat_updates PASSED
+tests/test_audio_watchdog.py::TestHeartbeatTracking::test_heartbeat_timestamp_validation PASSED
+tests/test_audio_watchdog.py::TestHeartbeatTracking::test_heartbeat_thread_safety 
+--- TEARDOWN: thread_manager ---
+--- FINISHED TEARDOWN: thread_manager ---
+PASSED
+tests/test_audio_watchdog.py::TestStallDetection::test_stall_detection_basic PASSED
+tests/test_audio_watchdog.py::TestStallDetection::test_stall_detection_timeout_values PASSED
+tests/test_audio_watchdog.py::TestStallDetection::test_stall_detection_edge_cases PASSED
+tests/test_audio_watchdog.py::TestStallDetection::test_stall_detection_with_grace_period PASSED
+tests/test_audio_watchdog.py::TestWatchdogThread::test_watchdog_thread_creation 
+--- TEARDOWN: watchdog_test_harness ---
+Attempting to stop and join thread: Thread-6 (watchdog_monitor)
+Successfully joined thread: Thread-6 (watchdog_monitor)
+--- FINISHED TEARDOWN: watchdog_test_harness ---
+PASSED
+tests/test_audio_watchdog.py::TestWatchdogThread::test_watchdog_monitoring_loop 
+--- TEARDOWN: watchdog_test_harness ---
+--- FINISHED TEARDOWN: watchdog_test_harness ---
+PASSED
+tests/test_audio_watchdog.py::TestWatchdogThread::test_watchdog_thread_exception_handling 
+--- TEARDOWN: watchdog_test_harness ---
+Attempting to stop and join thread: Thread-8 (faulty_watchdog)
+Successfully joined thread: Thread-8 (faulty_watchdog)
+--- FINISHED TEARDOWN: watchdog_test_harness ---
+PASSED
+tests/test_audio_watchdog.py::TestStreamRestart::test_stream_stop_sequence PASSED
+tests/test_audio_watchdog.py::TestStreamRestart::test_stream_restart_with_error_handling PASSED
+tests/test_audio_watchdog.py::TestStreamRestart::test_stream_restart_timing PASSED
+tests/test_audio_watchdog.py::TestThreadSafety::test_global_variable_access 
+--- TEARDOWN: thread_manager ---
+--- FINISHED TEARDOWN: thread_manager ---
+PASSED
+tests/test_audio_watchdog.py::TestThreadSafety::test_race_condition_prevention 
+--- TEARDOWN: thread_manager ---
+--- FINISHED TEARDOWN: thread_manager ---
+PASSED
+tests/test_audio_watchdog.py::TestThreadSafety::test_deadlock_prevention 
+--- TEARDOWN: thread_manager ---
+Attempting to join thread: Thread-24 (thread1)
+!!! FAILED to join thread: Thread-24 (thread1)
+PASSED
+tests/test_audio_watchdog.py::TestThreadSafety::test_deadlock_prevention RERUN
+tests/test_audio_watchdog.py::TestThreadSafety::test_deadlock_prevention 
+--- TEARDOWN: thread_manager ---
+Attempting to join thread: Thread-26 (thread1)
+!!! FAILED to join thread: Thread-26 (thread1)
+PASSED
+tests/test_audio_watchdog.py::TestThreadSafety::test_deadlock_prevention ERROR/Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/lib/python3.11/site-packages/coverage/inorout.py:521: CoverageWarning: Module whisper-dictation was never imported. (module-not-imported); see https://coverage.readthedocs.io/en/7.11.0/messages.html#warning-module-not-imported
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-imported")
+/Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/lib/python3.11/site-packages/coverage/inorout.py:521: CoverageWarning: Module recorder was never imported. (module-not-imported); see https://coverage.readthedocs.io/en/7.11.0/messages.html#warning-module-not-imported
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-imported")
+/Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/lib/python3.11/site-packages/coverage/inorout.py:521: CoverageWarning: Module transcriber was never imported. (module-not-imported); see https://coverage.readthedocs.io/en/7.11.0/messages.html#warning-module-not-imported
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-imported")
+/Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/lib/python3.11/site-packages/coverage/inorout.py:521: CoverageWarning: Module device_manager was never imported. (module-not-imported); see https://coverage.readthedocs.io/en/7.11.0/messages.html#warning-module-not-imported
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-imported")
+/Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/lib/python3.11/site-packages/coverage/inorout.py:521: CoverageWarning: Module mps_optimizer was never imported. (module-not-imported); see https://coverage.readthedocs.io/en/7.11.0/messages.html#warning-module-not-imported
+  self.warn(f"Module {pkg} was never imported.", slug="module-not-imported")
+/Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/lib/python3.11/site-packages/coverage/control.py:946: CoverageWarning: No data was collected. (no-data-collected); see https://coverage.readthedocs.io/en/7.11.0/messages.html#warning-no-data-collected
+  self._warn("No data was collected.", slug="no-data-collected")
+/Users/mprzybyszewski/Library/Caches/pypoetry/virtualenvs/whisper-dictation-VQT0YMDX-py3.11/lib/python3.11/site-packages/pytest_cov/plugin.py:363: CovReportWarning: Failed to generate report: No data to report.
+
+  warnings.warn(CovReportWarning(message), stacklevel=1)
+
+WARNING: Failed to generate report: No data to report.
+
+
+ERROR: Coverage failure: total of 0 is less than fail-under=70
+
+
+==================================== ERRORS ====================================
+________ ERROR at teardown of TestThreadSafety.test_deadlock_prevention ________
+tests/test_audio_watchdog.py:70: in thread_manager
+    pytest.fail(f"Thread {thread.name} did not terminate cleanly.")
+E   Failed: Thread Thread-26 (thread1) did not terminate cleanly.
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.11.12-final-0 _______________
+
+FAIL Required test coverage of 70% not reached. Total coverage: 0.00%
+=========================== short test summary info ============================
+ERROR tests/test_audio_watchdog.py::TestThreadSafety::test_deadlock_prevention
+===================== 18 passed, 1 error, 1 rerun in 9.31s =====================

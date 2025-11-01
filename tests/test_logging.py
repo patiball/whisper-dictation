@@ -284,56 +284,48 @@ class TestLogRotation:
 class TestLogFormat:
     """Test log format includes timestamp, level, and message correctly."""
 
-    def test_log_format_includes_timestamp(self, temp_home):
+    def test_log_format_includes_timestamp(self, temp_home, isolated_logger):
         """Test log entries include timestamps."""
         log_file = temp_home / ".whisper-dictation.log"
-        
-        def setup_formatted_logging(log_file_path):
-            log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            logging.basicConfig(
-                level=logging.INFO,
-                format='%(asctime)s - %(levelname)s - %(message)s',
-                handlers=[logging.FileHandler(log_file_path)]
-            )
-        
-        setup_formatted_logging(log_file)
-        logger = logging.getLogger()
-        logger.info("Test message with timestamp")
-        
+
+        # Create and add a handler to the isolated logger
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+        isolated_logger.addHandler(file_handler)
+
+        isolated_logger.info("Test message with timestamp")
+
+        # Close the handler to ensure logs are flushed to disk before reading
+        file_handler.close()
+
         with open(log_file, 'r') as f:
             log_content = f.read()
-        
+
         # Should contain timestamp pattern
         import re
         timestamp_pattern = r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}'
         assert re.search(timestamp_pattern, log_content)
         assert "Test message with timestamp" in log_content
 
-    def test_log_format_includes_level(self, temp_home):
+    def test_log_format_includes_level(self, temp_home, isolated_logger):
         """Test log entries include log levels."""
         log_file = temp_home / ".whisper-dictation.log"
-        
-        def setup_level_logging(log_file_path):
-            log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            logging.basicConfig(
-                level=logging.DEBUG,
-                format='%(asctime)s - %(levelname)s - %(message)s',
-                handlers=[logging.FileHandler(log_file_path)]
-            )
-        
-        setup_level_logging(log_file)
-        logger = logging.getLogger()
-        
-        logger.debug("Debug message")
-        logger.info("Info message")
-        logger.warning("Warning message")
-        logger.error("Error message")
-        
+
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+        isolated_logger.addHandler(file_handler)
+        isolated_logger.setLevel(logging.DEBUG)
+
+        isolated_logger.debug("Debug message")
+        isolated_logger.info("Info message")
+        isolated_logger.warning("Warning message")
+        isolated_logger.error("Error message")
+
+        file_handler.close()
+
         with open(log_file, 'r') as f:
             log_content = f.read()
-        
+
         assert "DEBUG" in log_content
         assert "INFO" in log_content
         assert "WARNING" in log_content
@@ -370,96 +362,79 @@ class TestLogFormat:
 class TestEventLogging:
     """Test key events are logged at appropriate levels."""
 
-    def test_startup_event_logging(self, temp_home):
+    def test_startup_event_logging(self, temp_home, isolated_logger):
         """Test application startup events are logged."""
         log_file = temp_home / ".whisper-dictation.log"
-        
-        def setup_event_logging(log_file_path):
-            log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            logging.basicConfig(
-                level=logging.INFO,
-                format='%(asctime)s - %(levelname)s - %(message)s',
-                handlers=[logging.FileHandler(log_file_path)]
-            )
-        
+
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(message)s'))
+        isolated_logger.addHandler(file_handler)
+
         def log_startup_events():
-            logger = logging.getLogger()
-            logger.info("Application starting up")
-            logger.info("Lock file mechanism initialized")
-            logger.info("Signal handlers registered")
-            logger.info("Microphone check completed")
-            logger.info("Application ready")
-        
-        setup_event_logging(log_file)
+            isolated_logger.info("Application starting up")
+            isolated_logger.info("Lock file mechanism initialized")
+            isolated_logger.info("Signal handlers registered")
+            isolated_logger.info("Microphone check completed")
+            isolated_logger.info("Application ready")
+
         log_startup_events()
-        
+        file_handler.close()
+
         with open(log_file, 'r') as f:
             log_content = f.read()
-        
+
         assert "Application starting up" in log_content
         assert "Lock file mechanism initialized" in log_content
         assert "Signal handlers registered" in log_content
         assert "Microphone check completed" in log_content
         assert "Application ready" in log_content
 
-    def test_error_event_logging(self, temp_home):
+    def test_error_event_logging(self, temp_home, isolated_logger):
         """Test error events are logged at appropriate levels."""
         log_file = temp_home / ".whisper-dictation.log"
-        
-        def setup_error_logging(log_file_path):
-            log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            logging.basicConfig(
-                level=logging.ERROR,
-                format='%(asctime)s - %(levelname)s - %(message)s',
-                handlers=[logging.FileHandler(log_file_path)]
-            )
-        
+
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(message)s'))
+        isolated_logger.addHandler(file_handler)
+        isolated_logger.setLevel(logging.ERROR)
+
         def log_error_events():
-            logger = logging.getLogger()
-            logger.error("Failed to initialize audio device")
-            logger.error("Microphone permission denied")
-            logger.warning("Using fallback audio configuration")
-        
-        setup_error_logging(log_file)
+            isolated_logger.error("Failed to initialize audio device")
+            isolated_logger.error("Microphone permission denied")
+            isolated_logger.warning("Using fallback audio configuration")
+
         log_error_events()
-        
+        file_handler.close()
+
         with open(log_file, 'r') as f:
             log_content = f.read()
-        
+
         assert "Failed to initialize audio device" in log_content
         assert "Microphone permission denied" in log_content
         # Warning should not appear at ERROR level
         assert "Using fallback audio configuration" not in log_content
 
-    def test_recording_events_logging(self, temp_home):
+    def test_recording_events_logging(self, temp_home, isolated_logger):
         """Test recording-related events are logged."""
         log_file = temp_home / ".whisper-dictation.log"
-        
-        def setup_recording_logging(log_file_path):
-            log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            logging.basicConfig(
-                level=logging.DEBUG,
-                format='%(asctime)s - %(levelname)s - %(message)s',
-                handlers=[logging.FileHandler(log_file_path)]
-            )
-        
+
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter('%(message)s'))
+        isolated_logger.addHandler(file_handler)
+
         def log_recording_events():
-            logger = logging.getLogger()
-            logger.info("Recording started")
-            logger.debug("Audio stream initialized")
-            logger.debug("Heartbeat updated")
-            logger.info("Recording stopped")
-            logger.info("Transcription completed")
-        
-        setup_recording_logging(log_file)
+            isolated_logger.info("Recording started")
+            isolated_logger.debug("Audio stream initialized")
+            isolated_logger.debug("Heartbeat updated")
+            isolated_logger.info("Recording stopped")
+            isolated_logger.info("Transcription completed")
+
         log_recording_events()
-        
+        file_handler.close()
+
         with open(log_file, 'r') as f:
             log_content = f.read()
-        
+
         assert "Recording started" in log_content
         assert "Audio stream initialized" in log_content
         assert "Heartbeat updated" in log_content
