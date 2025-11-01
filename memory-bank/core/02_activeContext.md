@@ -13,6 +13,7 @@
 > Bezpieczeństwo (2025-11-01): Zmiany w testach (stabilność i portabilność):
 > - test_logging.py: import logging.handlers na poziomie modułu; usunięto import wewnątrz funkcji (naprawa AttributeError/UnboundLocalError)
 > - test_audio_watchdog.py: próg czasu restartu podniesiony do 200ms ze względu na zmienność środowiska CI
+> - Wszystkie pliki testów: dodano pytestmark = pytest.mark.unit do test_language_detection.py, test_performance.py, test_recording_quality.py; dodano pytest.mark.unit do listy w test_whisper_cpp.py. Przywraca kolekcję z 53 do 76 testów unit.
 > Zakres: tylko testy, brak zmian funkcjonalnych w kodzie aplikacji. — MP
 
 **Active Epic:** [16-00-00] Post-Epic 15 Test Infrastructure & Functional Fixes
