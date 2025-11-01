@@ -34,8 +34,8 @@ pytest-timeout = "^2.4"
 pytest-rerunfailures = "^16.1"
 sounddevice = "^0.4.6"
 flake8 = "^7.0"
-black = "^24.0"
-isort = "^5.13"
+black = "24.4.2"
+isort = "5.13.2"
 bandit = "^1.7"
 
 [build-system]
