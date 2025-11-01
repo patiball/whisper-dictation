@@ -26,12 +26,15 @@ torchaudio = "^2.1.0"
 whisper = "whisper-dictation:main"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.4.1"
-librosa = "^0.11.0"
-psutil = "^7.0.0"
-pytest-cov = "^7.0.0"
+pytest = "^8.0"
+pytest-cov = "^7.0"
+pytest-timeout = "^2.4"
 pytest-rerunfailures = "^16.1"
-pytest-timeout = "^2.4.0"
+sounddevice = "^0.4.6"
+flake8 = "^7.0"
+black = "^24.0"
+isort = "^5.13"
+bandit = "^1.7"
 
 [build-system]
 requires = ["poetry-core"]
