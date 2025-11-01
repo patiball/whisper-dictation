@@ -8,9 +8,12 @@ import sys
 import time
 from pathlib import Path
 
-import librosa
-import numpy as np
 import pytest
+
+# Mark all tests as unit tests
+pytestmark = pytest.mark.unit
+
+# Add parent directory to import whisper-dictation modules
 
 # Add parent directory to import whisper-dictation modules
 sys.path.insert(0, str(Path(__file__).parent.parent))

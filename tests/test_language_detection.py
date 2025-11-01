@@ -10,6 +10,9 @@ from pathlib import Path
 
 import pytest
 
+# Mark all tests as unit tests
+pytestmark = pytest.mark.unit
+
 # Add parent directory to import whisper-dictation modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -17,14 +20,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 try:
     import whisper
 
-    from transcriber import SpeechTranscriber  # This will need to be created/fixed
+    from transcriber import (
+        SpeechTranscriber  # This will need to be created/fixed
+    )
 except ImportError as e:
     print(f"⚠️  Expected import error in Red phase: {e}")
 
 
 class TestLanguageDetection:
-    """Test language detection accuracy and text completeness."""
-
     def test_language_detection_with_exact_text(
         self, test_audio_dir, sample_texts, text_similarity_checker
     ):
