@@ -15,7 +15,8 @@
 > - test_audio_watchdog.py: próg czasu restartu podniesiony do 200ms ze względu na zmienność środowiska CI
 > - Wszystkie pliki testów: dodano pytestmark = pytest.mark.unit do test_language_detection.py, test_performance.py, test_recording_quality.py; dodano pytest.mark.unit do listy w test_whisper_cpp.py. Przywraca kolekcję z 53 do 76 testów unit.
 > - Kategoryzacja 'slow' i 'manual': test_performance.py (unit+slow), test_recording_quality.py (unit+slow), test_language_detection.py (unit+slow+manual), test_whisper_cpp.py (whisper_cpp+unit+slow). Ułatwia selekcję profili CI.
-> Zakres: tylko testy, brak zmian funkcjonalnych w kodzie aplikacji. — MP
+> - Workflow CI: unit używa filtra 'unit and not slow and not manual'; integration używa 'integration and not slow and not manual'.
+> Zakres: tylko testy/CI, brak zmian funkcjonalnych w kodzie aplikacji. — MP
 
 **Active Epic:** [16-00-00] Post-Epic 15 Test Infrastructure & Functional Fixes
 - **Priority:** High
