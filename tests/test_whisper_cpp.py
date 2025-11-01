@@ -24,7 +24,13 @@ skip_if_env_var_set = pytest.mark.skipif(
 )
 
 # Zastosowanie markerów na poziomie modułu
-pytestmark = [skip_if_no_whisper_cpp, skip_if_env_var_set, pytest.mark.whisper_cpp, pytest.mark.unit, pytest.mark.slow]
+pytestmark = [
+    skip_if_no_whisper_cpp,
+    skip_if_env_var_set,
+    pytest.mark.whisper_cpp,
+    pytest.mark.unit,
+    pytest.mark.slow,
+]
 
 
 @pytest.fixture(scope="module")
