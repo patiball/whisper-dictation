@@ -345,7 +345,7 @@ class SpeechTranscriber:
         else:
             self.device = "cpu"
 
-        print(f"SpeechTranscriber: Używam urządzenia {self.device}")
+        print(f"SpeechTranscriber: Using device {self.device}")
         logging.debug(f"SpeechTranscriber initialized with device: {self.device}")
 
     def transcribe(self, audio_data, language=None):
@@ -363,10 +363,10 @@ class SpeechTranscriber:
         else:
             # Fallback to original options
             options = {
-                "fp16": self.device == "mps",  # Użyj half precision na GPU
+                "fp16": self.device == "mps",  # Use half precision on GPU
                 "language": language,
                 "task": "transcribe",
-                "no_speech_threshold": 0.6,  # Zwiększ próg dla lepszej wydajności
+                "no_speech_threshold": 0.6,  # Higher threshold for better performance
                 "logprob_threshold": -1.0,
                 "compression_ratio_threshold": 2.4,
             }
@@ -422,7 +422,7 @@ class SpeechTranscriber:
 
 
 class SoundPlayer:
-    """Klasa do odtwarzania dźwięków systemowych macOS"""
+    """Class for playing macOS system sounds"""
 
     @staticmethod
     def _play_sound(sound_path):
@@ -433,14 +433,14 @@ class SoundPlayer:
 
     @staticmethod
     def play_start_sound():
-        """Odtwarza dźwięk rozpoczęcia nagrywania (jak w systemowym rozpoznawaniu mowy)"""
+        """Play recording start sound (similar to system speech recognition)"""
         if platform.system() == "Darwin":  # macOS
             sound_path = "/System/Library/Sounds/Tink.aiff"
             threading.Thread(target=SoundPlayer._play_sound, args=(sound_path,)).start()
 
     @staticmethod
     def play_stop_sound():
-        """Odtwarza dźwięk zakończenia nagrywania"""
+        """Play recording stop sound"""
         if platform.system() == "Darwin":  # macOS
             sound_path = "/System/Library/Sounds/Pop.aiff"
             threading.Thread(target=SoundPlayer._play_sound, args=(sound_path,)).start()
@@ -495,7 +495,7 @@ class Recorder:
         self.recording = True
         recording = True  # Set global flag for watchdog
 
-        # Odtwórz dźwięk rozpoczęcia nagrywania
+        # Play recording start sound
         self.sound_player.play_start_sound()
 
         # Resolve frames_per_buffer from ENV override if provided
@@ -586,7 +586,7 @@ class Recorder:
         # Reset global recording flag
         recording = False
 
-        # Odtwórz dźwięk zakończenia nagrywania
+        # Play recording stop sound
         self.sound_player.play_stop_sound()
 
         audio_data = np.frombuffer(b"".join(frames), dtype=np.int16)
@@ -912,7 +912,7 @@ if __name__ == "__main__":
                 e, OperationType.MODEL_LOADING, device
             )
             print(f"🔄 {user_message}")
-            print(f"Szczegóły: Przełączam z {device} na {fallback_device}")
+            print(f"Details: Switching from {device} to {fallback_device}")
             logging.warning(f"Retrying with fallback device: {fallback_device}")
 
             device = fallback_device
