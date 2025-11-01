@@ -3,17 +3,19 @@ Integration Tests for Lock File Multi-Instance Behavior
 Tests: Second instance exits, lock file cleanup, stale lock recovery
 """
 
-import pytest
-import subprocess
-import time
 import json
 import os
 import signal
+import subprocess
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 # Mark all tests as integration tests
 pytestmark = pytest.mark.integration
+
 
 class TestMultiInstanceBehavior:
     """Test multi-instance scenarios with real processes."""
@@ -22,7 +24,8 @@ class TestMultiInstanceBehavior:
         """Test second instance exits gracefully when first instance is running."""
         # Create a simple test script that simulates lock file behavior
         test_script = temp_home / "test_lock_instance.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -74,38 +77,42 @@ if __name__ == "__main__":
     instance_id = sys.argv[1] if len(sys.argv) > 1 else "unknown"
     duration = int(sys.argv[2]) if len(sys.argv) > 2 else 5
     simulate_lock_file_behavior(instance_id, duration)
-""")
-        
+"""
+        )
+
         # Start first instance
         first_process = None
         try:
-            first_process = subprocess.Popen([
-                sys.executable, str(test_script), "first", "10"
-            ], env={**os.environ, 'HOME': str(temp_home)})
-            
+            first_process = subprocess.Popen(
+                [sys.executable, str(test_script), "first", "10"],
+                env={**os.environ, "HOME": str(temp_home)},
+            )
+
             # Give first instance time to start
             time.sleep(1)
-            
+
             # Try to start second instance
-            second_process = subprocess.Popen([
-                sys.executable, str(test_script), "second", "1"
-            ], env={**os.environ, 'HOME': str(temp_home)},
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
+            second_process = subprocess.Popen(
+                [sys.executable, str(test_script), "second", "1"],
+                env={**os.environ, "HOME": str(temp_home)},
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
             try:
                 # Wait for second instance to complete
                 stdout, stderr = second_process.communicate(timeout=5)
-                
+
                 # Second instance should exit with error code
                 assert second_process.returncode == 1
                 assert b"Another instance is running" in stdout
-                
+
             finally:
                 # Ensure second process is cleaned up
                 if second_process.poll() is None:
                     second_process.terminate()
                     second_process.wait(timeout=2)
-        
+
         finally:
             # Clean up first process
             if first_process and first_process.poll() is None:
@@ -116,7 +123,8 @@ if __name__ == "__main__":
     def test_lock_file_removed_on_ctrl_c(self, temp_home):
         """Test lock file is removed when process receives Ctrl+C."""
         test_script = temp_home / "test_signal_cleanup.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import signal
@@ -160,27 +168,30 @@ def simulate_signal_handling():
 
 if __name__ == "__main__":
     simulate_signal_handling()
-""")
-        
+"""
+        )
+
         # Start process
-        process = subprocess.Popen([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+        process = subprocess.Popen(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
         # Give process time to start and create lock file
         time.sleep(1)
-        
+
         # Verify lock file exists
         lock_file = temp_home / ".whisper-dictation.lock"
         assert lock_file.exists()
-        
+
         # Send SIGINT (Ctrl+C)
         process.send_signal(signal.SIGINT)
-        
+
         # Wait for process to finish
         stdout, stderr = process.communicate(timeout=5)
-        
+
         # Process should exit gracefully and lock file should be removed
         assert process.returncode == 0
         assert not lock_file.exists()
@@ -189,7 +200,8 @@ if __name__ == "__main__":
     def test_stale_lock_recovery_with_real_processes(self, temp_home):
         """Test stale lock recovery with real process simulation."""
         test_script = temp_home / "test_stale_lock.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -242,36 +254,40 @@ if __name__ == "__main__":
     else:
         print("Cannot create instance, lock is valid")
         sys.exit(1)
-""")
-        
+"""
+        )
+
         # Create a stale lock file with fake PID
         lock_file = temp_home / ".whisper-dictation.lock"
         stale_content = {
-            'pid': 99999,  # Fake PID that doesn't exist
-            'start_time': time.time() - 3600,  # 1 hour ago
-            'instance_id': 'stale'
+            "pid": 99999,  # Fake PID that doesn't exist
+            "start_time": time.time() - 3600,  # 1 hour ago
+            "instance_id": "stale",
         }
-        
-        with open(lock_file, 'w') as f:
+
+        with open(lock_file, "w") as f:
             json.dump(stale_content, f)
-        
+
         # Run recovery script
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+        )
+
         # Should successfully recover and create new instance
         assert result.returncode == 0
         assert "Process 99999 is dead" in result.stdout
         assert "New instance created" in result.stdout
-        
+
         # Verify lock file was updated with new PID
-        with open(lock_file, 'r') as f:
+        with open(lock_file, "r") as f:
             new_content = json.load(f)
-        
-        assert new_content['pid'] != 99999
-        assert new_content['instance_id'] == 'recovery'
+
+        assert new_content["pid"] != 99999
+        assert new_content["instance_id"] == "recovery"
+
 
 class TestLockFilePersistence:
     """Test lock file behavior across process lifecycle."""
@@ -279,7 +295,8 @@ class TestLockFilePersistence:
     def test_lock_file_content_persistence(self, temp_home):
         """Test lock file content persists correctly."""
         test_script = temp_home / "test_persistence.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -303,32 +320,36 @@ def create_persistent_lock():
 
 if __name__ == "__main__":
     create_persistent_lock()
-""")
-        
+"""
+        )
+
         # Create lock file
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+        )
+
         assert result.returncode == 0
-        
+
         # Verify lock file content
         lock_file = temp_home / ".whisper-dictation.lock"
         assert lock_file.exists()
-        
-        with open(lock_file, 'r') as f:
+
+        with open(lock_file, "r") as f:
             content = json.load(f)
-        
-        assert 'pid' in content
-        assert 'start_time' in content
-        assert 'version' in content
-        assert content['test_data'] == 'persistence_test'
+
+        assert "pid" in content
+        assert "start_time" in content
+        assert "version" in content
+        assert content["test_data"] == "persistence_test"
 
     def test_lock_file_cleanup_on_process_crash(self, temp_home):
         """Test lock file behavior when process crashes."""
         test_script = temp_home / "test_crash.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -354,24 +375,28 @@ def simulate_crash():
 
 if __name__ == "__main__":
     simulate_crash()
-""")
-        
+"""
+        )
+
         # Run crash simulation
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+        )
+
         # Process should crash
         assert result.returncode == 1
-        
+
         # Lock file should still exist (stale)
         lock_file = temp_home / ".whisper-dictation.lock"
         assert lock_file.exists()
-        
+
         # Next instance should detect stale lock
         recovery_script = temp_home / "test_crash_recovery.py"
-        recovery_script.write_text("""
+        recovery_script.write_text(
+            """
 import json
 import os
 import sys
@@ -399,16 +424,20 @@ if __name__ == "__main__":
     else:
         print("Lock is valid")
         sys.exit(1)
-""")
-        
+"""
+        )
+
         # Run stale lock detection
-        recovery_result = subprocess.run([
-            sys.executable, str(recovery_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True)
-        
+        recovery_result = subprocess.run(
+            [sys.executable, str(recovery_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+        )
+
         assert recovery_result.returncode == 0
         assert "Stale lock detected" in recovery_result.stdout
+
 
 class TestConcurrentAccess:
     """Test concurrent access scenarios."""
@@ -416,7 +445,8 @@ class TestConcurrentAccess:
     def test_multiple_concurrent_instances(self, temp_home):
         """Test behavior with multiple concurrent instances attempting to start."""
         test_script = temp_home / "test_concurrent.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -473,56 +503,63 @@ def attempt_instance_start(instance_id):
 if __name__ == "__main__":
     instance_id = sys.argv[1]
     attempt_instance_start(instance_id)
-""")
-        
+"""
+        )
+
         # Start multiple instances concurrently (reduced from 5 to 2 for performance)
         processes = []
         for i in range(2):
-            process = subprocess.Popen([
-                sys.executable, str(test_script), f"instance_{i}"
-            ], env={**os.environ, 'HOME': str(temp_home)},
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(
+                [sys.executable, str(test_script), f"instance_{i}"],
+                env={**os.environ, "HOME": str(temp_home)},
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
             processes.append(process)
-        
+
         # Wait for all processes to complete with shorter timeout
         results = []
         for i, process in enumerate(processes):
             try:
                 stdout, stderr = process.communicate(timeout=3)
-                results.append({
-                    'instance': f"instance_{i}",
-                    'returncode': process.returncode,
-                    'stdout': stdout.decode()
-                })
+                results.append(
+                    {
+                        "instance": f"instance_{i}",
+                        "returncode": process.returncode,
+                        "stdout": stdout.decode(),
+                    }
+                )
             except subprocess.TimeoutExpired:
                 process.terminate()
                 stdout, stderr = process.communicate(timeout=1)
-                results.append({
-                    'instance': f"instance_{i}",
-                    'returncode': process.returncode,
-                    'stdout': stdout.decode()
-                })
-        
+                results.append(
+                    {
+                        "instance": f"instance_{i}",
+                        "returncode": process.returncode,
+                        "stdout": stdout.decode(),
+                    }
+                )
+
         # Only one instance should succeed
-        successful_instances = [r for r in results if r['returncode'] == 0]
-        failed_instances = [r for r in results if r['returncode'] == 1]
-        
+        successful_instances = [r for r in results if r["returncode"] == 0]
+        failed_instances = [r for r in results if r["returncode"] == 1]
+
         assert len(successful_instances) == 1
         assert len(failed_instances) == 1
-        
+
         # Verify successful instance message
         success_result = successful_instances[0]
-        assert "Won race" in success_result['stdout']
-        
+        assert "Won race" in success_result["stdout"]
+
         # Verify failed instances messages
         for failed_result in failed_instances:
-            assert "Lost race" in failed_result['stdout']
+            assert "Lost race" in failed_result["stdout"]
+
 
 # Skip conditions for CI environments
 @pytest.mark.skipif(
-    os.environ.get('CI') == 'true',
-    reason="Integration tests with subprocess may not work in CI environments"
+    os.environ.get("CI") == "true",
+    reason="Integration tests with subprocess may not work in CI environments",
 )
-
 class TestErrorHandling:
     """Test error handling and edge cases in lock file integration."""

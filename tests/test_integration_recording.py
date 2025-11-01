@@ -3,17 +3,19 @@ Integration Tests for Full Recording Flow
 Tests: Complete recording, transcription, output cycle with all components
 """
 
-import pytest
-import subprocess
-import time
 import json
-import os
 import logging
+import os
+import subprocess
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 # Mark all tests as integration tests
 pytestmark = pytest.mark.integration
+
 
 class TestFullRecordingFlow:
     """Test complete recording, transcription, and output cycle."""
@@ -22,7 +24,8 @@ class TestFullRecordingFlow:
         """Test end-to-end recording cycle with all components."""
         # Create a test script that simulates the full recording flow
         test_script = temp_home / "test_full_cycle.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -119,41 +122,46 @@ def simulate_full_recording_flow():
 if __name__ == "__main__":
     success = simulate_full_recording_flow()
     sys.exit(0 if success else 1)
-""")
-        
+"""
+        )
+
         # Run the full recording cycle test
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True, timeout=30)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
         # Should complete successfully
         assert result.returncode == 0
         assert "Transcription: This is a test transcription" in result.stdout
-        
+
         # Verify log file was created and contains expected entries
         log_file = temp_home / ".whisper-dictation.log"
         assert log_file.exists()
-        
+
         log_content = log_file.read_text()
         expected_log_entries = [
             "Application starting up",
-            "Components initialized", 
+            "Components initialized",
             "Recording started",
             "Recording stopped",
             "Starting transcription",
             "Transcription completed",
             "Output generated",
-            "Application finished successfully"
+            "Application finished successfully",
         ]
-        
+
         for entry in expected_log_entries:
             assert entry in log_content
 
     def test_component_interaction_correctness(self, temp_home):
         """Test all components interact correctly."""
         test_script = temp_home / "test_component_interaction.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -232,21 +240,26 @@ def test_component_interactions():
 if __name__ == "__main__":
     success = test_component_interactions()
     sys.exit(0 if success else 1)
-""")
-        
+"""
+        )
+
         # Run component interaction test
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True, timeout=15)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+
         assert result.returncode == 0
         assert "Component interaction sequence is correct" in result.stdout
 
     def test_no_resource_leaks(self, temp_home):
         """Test no resource leaks or hangs after recording cycle."""
         test_script = temp_home / "test_resource_leaks.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -331,16 +344,21 @@ def simulate_recording_with_resources():
 if __name__ == "__main__":
     success = simulate_recording_with_resources()
     sys.exit(0 if success else 1)
-""")
-        
+"""
+        )
+
         # Run resource leak test
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True, timeout=20)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+
         assert result.returncode == 0
         assert "WARNING:" not in result.stdout  # No warnings about leaks
+
 
 class TestLoggingIntegration:
     """Test logging captures full sequence correctly."""
@@ -348,7 +366,8 @@ class TestLoggingIntegration:
     def test_logging_captures_full_sequence(self, temp_home):
         """Test logging captures the complete application sequence."""
         test_script = temp_home / "test_logging_sequence.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -419,21 +438,25 @@ def test_logging_sequence():
 if __name__ == "__main__":
     success = test_logging_sequence()
     sys.exit(0 if success else 1)
-""")
-        
+"""
+        )
+
         # Run logging sequence test
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True, timeout=15)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+
         assert result.returncode == 0
         assert "All events logged successfully" in result.stdout
-        
+
         # Verify log file contains all expected events
         log_file = temp_home / ".whisper-dictation.log"
         log_content = log_file.read_text()
-        
+
         expected_events = [
             "Application starting up",
             "Lock file mechanism initialized",
@@ -450,11 +473,12 @@ if __name__ == "__main__":
             "Output written to clipboard",
             "Application shutting down",
             "Lock file cleaned up",
-            "Application shutdown complete"
+            "Application shutdown complete",
         ]
-        
+
         for event in expected_events:
             assert event in log_content
+
 
 class TestErrorRecovery:
     """Test error recovery and graceful degradation."""
@@ -462,7 +486,8 @@ class TestErrorRecovery:
     def test_graceful_error_handling(self, temp_home):
         """Test graceful handling of errors during recording cycle."""
         test_script = temp_home / "test_error_handling.py"
-        test_script.write_text("""
+        test_script.write_text(
+            """
 import json
 import time
 import sys
@@ -524,30 +549,34 @@ def test_error_recovery():
 if __name__ == "__main__":
     success = test_error_recovery()
     sys.exit(0 if success else 1)
-""")
-        
+"""
+        )
+
         # Run error handling test
-        result = subprocess.run([
-            sys.executable, str(test_script)
-        ], env={**os.environ, 'HOME': str(temp_home)},
-        capture_output=True, text=True, timeout=15)
-        
+        result = subprocess.run(
+            [sys.executable, str(test_script)],
+            env={**os.environ, "HOME": str(temp_home)},
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+
         assert result.returncode == 0
-        
+
         # Verify error handling was logged
         log_file = temp_home / ".whisper-dictation.log"
         log_content = log_file.read_text()
-        
+
         assert "Recording error handled" in log_content
         assert "Recording recovered with fallback device" in log_content
         assert "Transcription error handled" in log_content
         assert "Application finished with error recovery" in log_content
 
+
 # Skip conditions for CI environments
 @pytest.mark.skipif(
-    os.environ.get('CI') == 'true',
-    reason="Integration tests with subprocess may not work in CI environments"
+    os.environ.get("CI") == "true",
+    reason="Integration tests with subprocess may not work in CI environments",
 )
-
 class TestErrorRecovery:
     """Test error recovery and graceful degradation scenarios."""
