@@ -428,8 +428,8 @@ class SoundPlayer:
     def _play_sound(sound_path):
         try:
             subprocess.run(["afplay", sound_path], check=False, capture_output=True)
-        except Exception:
-            pass  # Cicho ignorujemy błędy odtwarzania dźwięku
+        except Exception as e:
+            logging.warning(f"Failed to play sound: {e}")
 
     @staticmethod
     def play_start_sound():

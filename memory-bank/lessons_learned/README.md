@@ -50,6 +50,18 @@ This directory contains lessons learned from working with various tools and work
 
 ---
 
+### 4. [Code Review Summary (Pre-Merge)](code_review_summary.md)
+**Focus**: Analysis of changes made after a long break from coding.
+
+**Key Learnings**:
+- Overly broad exception handling can hide bugs.
+- Increased global state makes code harder to test.
+- Inconsistent standards (e.g., comments in multiple languages) hurt maintainability.
+
+**When to read**: Before a major merge, especially after time away from a project.
+
+---
+
 ## Quick Reference
 
 ### Updating a Confluence Section (Recommended) ⭐
