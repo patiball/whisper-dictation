@@ -252,7 +252,7 @@ def configured_logger(tmp_path):
 
     # Add a FileHandler to a temporary log file
     file_handler = logging.FileHandler(log_file)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
@@ -265,6 +265,7 @@ def configured_logger(tmp_path):
     if log_file.exists():
         log_file.unlink()
 
+
 @pytest.fixture(autouse=True)
 def reset_logging_state():
     """Reset logging configuration before each test to prevent handler pollution."""
@@ -272,14 +273,14 @@ def reset_logging_state():
     root_logger = logging.getLogger()
     original_handlers = root_logger.handlers[:]
     original_level = root_logger.level
-    
+
     yield
-    
+
     # Clean up all handlers and reset state
     for handler in root_logger.handlers[:]:
         handler.close()
         root_logger.removeHandler(handler)
-    
+
     # Reset to original configuration
     root_logger.handlers = original_handlers
     root_logger.level = original_level
