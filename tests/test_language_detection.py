@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-# Mark all tests as unit tests
-pytestmark = pytest.mark.unit
+# Mark all tests as unit tests (slow + manual due to model variability and audio)
+pytestmark = [pytest.mark.unit, pytest.mark.slow, pytest.mark.manual]
 
 # Add parent directory to import whisper-dictation modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
