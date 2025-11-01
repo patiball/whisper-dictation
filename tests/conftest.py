@@ -233,6 +233,38 @@ def heartbeat_tracker():
     }
 
 
+@pytest.fixture
+def configured_logger(tmp_path):
+    """
+    Provides a clean, isolated, and configured logger for tests.
+    Each test gets a unique logger with a FileHandler writing to a temporary file.
+    """
+    log_file = tmp_path / "test.log"
+    logger_name = f"test_logger_{id(configured_logger)}"
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False  # Prevent propagation to root logger
+
+    # Clear any existing handlers for this specific logger
+    for handler in logger.handlers[:]:
+        handler.close()
+        logger.removeHandler(handler)
+
+    # Add a FileHandler to a temporary log file
+    file_handler = logging.FileHandler(log_file)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    yield logger, log_file
+
+    # Teardown: Close handler and remove it from the logger
+    file_handler.close()
+    logger.removeHandler(file_handler)
+    # Optionally, remove the log file if it's not needed for inspection
+    if log_file.exists():
+        log_file.unlink()
+
 @pytest.fixture(autouse=True)
 def reset_logging_state():
     """Reset logging configuration before each test to prevent handler pollution."""
@@ -240,14 +272,14 @@ def reset_logging_state():
     root_logger = logging.getLogger()
     original_handlers = root_logger.handlers[:]
     original_level = root_logger.level
-
+    
     yield
-
+    
     # Clean up all handlers and reset state
     for handler in root_logger.handlers[:]:
         handler.close()
         root_logger.removeHandler(handler)
-
+    
     # Reset to original configuration
     root_logger.handlers = original_handlers
     root_logger.level = original_level
