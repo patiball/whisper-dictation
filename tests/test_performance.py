@@ -18,8 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 try:
     import whisper
 
-    from transcriber import \
-        SpeechTranscriber  # This will need to be created/fixed
+    from transcriber import SpeechTranscriber  # This will need to be created/fixed
 except ImportError as e:
     print(f"⚠️  Expected import error in Red phase: {e}")
 
