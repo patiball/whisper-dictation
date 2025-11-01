@@ -4,6 +4,8 @@
 
 **Status:** **CI pipeline and logging tests stabilized.** All dependency, formatting, and logging test issues are resolved. The CI pipeline is now more resilient.
 
+> Bezpieczeństwo (2025-11-01): Aktualizacja CI: usuwamy Python 3.9 z macOS matrix w testach i wymuszamy 'poetry env use' na interpreterze z setup-python, aby uniknąć fallbacku do 3.12 i błędów budowy (numpy/multidict). Zakres: konfiguracja CI, brak zmian kodu. — MP
+
 > Bezpieczeństwo (2025-11-01): Przed wprowadzeniem hotfixu formatowania standaryzujemy Black/isort w `pyproject.toml` i poprawiamy format w 2 testach tak, aby Black w CI przechodził. Zakres: wyłącznie format/konfiguracja — bez zmian funkcjonalnych. — MP
 
 > Aktualizacja (2025-11-01): Dodano sekcje `[tool.black]` i `[tool.isort]` w `pyproject.toml`, wykonano `isort .` i `black .`; lokalnie `black --check .` przechodzi. Oczekiwany zielony lint w CI. — MP
