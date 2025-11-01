@@ -6,6 +6,8 @@
 
 > Bezpieczeństwo (2025-11-01): Przed wprowadzeniem hotfixu formatowania standaryzujemy Black/isort w `pyproject.toml` i poprawiamy format w 2 testach tak, aby Black w CI przechodził. Zakres: wyłącznie format/konfiguracja — bez zmian funkcjonalnych. — MP
 
+> Aktualizacja (2025-11-01): Dodano sekcje `[tool.black]` i `[tool.isort]` w `pyproject.toml`, wykonano `isort .` i `black .`; lokalnie `black --check .` przechodzi. Oczekiwany zielony lint w CI. — MP
+
 **Active Epic:** [16-00-00] Post-Epic 15 Test Infrastructure & Functional Fixes
 - **Priority:** High
 - **Goal:** To resolve all outstanding issues from Epic 15 and achieve a stable, reliable, and fully functional test infrastructure.

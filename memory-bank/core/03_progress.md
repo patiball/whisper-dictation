@@ -3,6 +3,7 @@ Last Update: 2025-11-01
 **Current Status:** 🟢 **EPIC 16 IN PROGRESS** - CI and logging tests stabilized. Moving on to remaining test failures.
 
 > Pre-change safety note (2025-11-01): Standaryzujemy Black/isort w `pyproject.toml` i wykonujemy reformat wyłącznie w 2 testach blokujących Black w CI (bez zmian funkcjonalnych). — MP
+> Post-change update (2025-11-01): Konfiguracja Black/isort dodana; repo sformatowane (isort → black); lokalnie `black --check .` i `isort --check-only .` zielone. Oczekiwany sukces lint w CI. — MP
 ## Recent Completed Milestones
 
 ### ✅ CI Pipeline and Logging Test Stabilization (2025-11-01) - COMPLETED
