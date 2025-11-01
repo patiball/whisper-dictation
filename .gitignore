@@ -11,3 +11,5 @@ build/
 docs/*_log_*.md
 .warp-cli.profile_id
 tests/audio/*.txttmp_rovodev_*
+.vscode/
+test_results.log
