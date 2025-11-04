@@ -196,6 +196,78 @@
 
 ---
 
+### Enhancement 1b: VoiceInk Discovery & Lessons Learned Integration
+**Status**: NEW - Backlog  
+**Priority**: Medium  
+**Description**: Comprehensive discovery and comparison with VoiceInk (https://github.com/Beingpax/VoiceInk), a mature macOS voice-to-text app, to identify learnings and library integrations
+
+**Scope of Discovery**:
+1. **Architectural Comparison**
+   - [ ] Compare code structure and patterns
+   - [ ] Review app lifecycle and state management
+   - [ ] Analyze how VoiceInk handles edge cases vs our implementation
+   - [ ] Identify architectural improvements applicable to whisper-dictation
+
+2. **Lessons Learned ("Lessons on Slern")** 
+   - [ ] Document best practices from VoiceInk mature codebase
+   - [ ] Identify reliability patterns (error handling, recovery)
+   - [ ] Review performance optimization techniques
+   - [ ] Extract user experience insights
+   - [ ] Create Lessons Learned document: `memory-bank/lessons_learned/voiceink_architecture_review.md`
+
+3. **Library & Dependency Analysis**
+   - [ ] **KeyboardShortcuts** (MIT, sindresorhus) - Global hotkey management
+     - Current: Using pynput; VoiceInk uses native Swift wrapper
+     - Evaluation: Potential improvement for macOS-native hotkey handling
+   - [ ] **LaunchAtLogin** (MIT, sindresorhus) - Startup behavior
+     - Current: Manual scripts/shell integration
+     - Evaluation: Could simplify startup management
+   - [ ] **Zip** (MIT) - File compression utilities
+     - Current: Not used; VoiceInk uses for package bundling
+     - Evaluation: Needed if migrating to .app distribution
+   - [ ] **FluidAudio** (Apache 2.0) - Audio processing utilities
+     - Current: Using PyAudio; VoiceInk uses native Swift audio
+     - Evaluation: Could improve audio quality/compatibility
+   - [ ] **MediaRemoteAdapter** (BSD-3-Clause) - Media control integration
+     - Current: Not implemented; VoiceInk supports media playback control
+     - Evaluation: Enhancement for recording playback management
+   - [ ] **SelectedTextKit** (macOS library) - Selected text handling
+     - Current: Using clipboard directly
+     - Evaluation: Could improve reliability of text insertion
+
+4. **License Compatibility Review**
+   - [ ] Verify whisper-dictation current license (likely MIT or similar)
+   - [ ] Analyze each VoiceInk dependency license compatibility
+   - [ ] Ensure commercial/future use remains viable
+   - [ ] Document any license restrictions or requirements
+   - [ ] Check if forked dependencies have different terms
+   - Create License Compliance Matrix document
+
+5. **Implementation Priority Matrix**
+   - [ ] Rate each library for: usefulness, licensing risk, integration effort
+   - [ ] Identify quick wins (easy integrations with high value)
+   - [ ] Create roadmap for selective integrations
+   - [ ] Determine if Python or Swift migration would be prerequisite
+
+**Acceptance Criteria**:
+- [ ] VoiceInk codebase reviewed and documented
+- [ ] Lessons Learned document created and stored in memory-bank
+- [ ] Library analysis completed with pros/cons for each
+- [ ] License compatibility matrix established
+- [ ] Implementation recommendations prioritized
+- [ ] Future integration roadmap proposed
+
+**Deliverables**:
+1. `memory-bank/lessons_learned/voiceink_architecture_review.md`
+2. `memory-bank/specs/discovery-voiceink-library-analysis.md` (if detailed spec needed)
+3. Updated backlog with library integration priorities
+
+**Related Files**:
+- VoiceInk repo: https://github.com/Beingpax/VoiceInk
+- Our current dependencies: `pyproject.toml`, `requirements.txt`
+
+---
+
 ### Enhancement 2: Expandable Application Menu
 **Status**: NEW - Backlog
 **Priority**: Medium
