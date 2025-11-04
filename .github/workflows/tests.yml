@@ -151,7 +151,8 @@ jobs:
         path: bandit-report.json
         if-no-files-found: warn
 
-  build:
+  smoke:
+    name: CLI smoke tests
     runs-on: macos-latest
     needs: [test, lint]
     if: always()
