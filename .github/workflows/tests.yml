@@ -177,9 +177,9 @@ jobs:
       run: |
         poetry install
 
-    - name: Test application import
+    - name: Syntax check (no packaging)
       run: |
-        poetry run python -c "import whisper_dictation; print('Import successful')"
+        poetry run python -m py_compile whisper-dictation.py whisper-dictation-fast.py
 
     - name: Test CLI help
       run: |

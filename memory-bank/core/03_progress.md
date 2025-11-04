@@ -32,6 +32,9 @@ For detailed historical progress, see: [Archived Progress History](archive/progr
 > Pre-change safety note (2025-11-01): Standaryzujemy Black/isort w `pyproject.toml` i wykonujemy reformat wyłącznie w 2 testach blokujących Black w CI (bez zmian funkcjonalnych). — MP
 > Post-change update (2025-11-01): Konfiguracja Black/isort dodana; repo sformatowane (isort → black); lokalnie `black --check .` i `isort --check-only .` zielone. Oczekiwany sukces lint w CI. — MP
 
+> Pre-change safety note (2025-11-04): CI build job: replace failing 'import whisper_dictation' check with syntax smoke test using 'python -m py_compile whisper-dictation.py whisper-dictation-fast.py'. This avoids packaging assumptions and keeps CI non-invasive. — MP
+> Post-change update (2025-11-04): Workflow updated; CLI help checks remain. No packaging enabled. — MP
+
 ---
 ## Archived Progress Summaries
 
