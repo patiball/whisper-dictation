@@ -1,7 +1,7 @@
 # Issues & Backlog - Whisper Dictation C++ Version
 
-**Last Updated**: 2025-10-25  
-**Status**: Active Issues Identified  
+**Last Updated**: 2025-11-04  
+**Status**: Active Issues Identified
 
 ---
 
@@ -161,7 +161,42 @@
 
 ## 💡 FEATURE REQUESTS & ENHANCEMENTS
 
-### Enhancement 1: Expandable Application Menu
+### Enhancement 1: Sparkle Framework Integration for Automatic Updates
+**Status**: NEW - Backlog  
+**Priority**: Low  
+**Description**: Integrate Sparkle framework (https://sparkle-project.org/) for automatic macOS app updates
+
+**Benefits**:
+- **Seamless Updates**: True self-updating without user intervention
+- **Security**: Support for EdDSA signatures and Apple Code Signing  
+- **User Choice**: Users can choose automatic silent updates or manual control
+- **Delta Updates**: Smaller, faster incremental updates between versions
+- **Professional UX**: Custom branding, no "Sparkle" mentions visible to user
+
+**Technical Requirements**:
+- **Framework**: Sparkle 2 (supports macOS 10.13+, compatible with our 10.15+ target)
+- **Packaging**: Requires .app bundle distribution (not script-based)
+- **Signing**: Code signing certificate for update verification
+- **Infrastructure**: Web server to host appcast.xml and update files
+- **Build Process**: Automated release pipeline integration
+
+**Implementation Considerations**:
+- [ ] **App Bundle Migration**: Convert from script-based to .app bundle distribution
+- [ ] **Release Pipeline**: Integrate with GitHub Actions for automated releases
+- [ ] **Signing Infrastructure**: Set up Apple Developer certificate for code signing
+- [ ] **Update Server**: Configure hosting for appcast and release files
+- [ ] **User Migration**: Transition existing script users to app bundle
+
+**Integration Points**:
+- Works with existing Rumps-based status bar app architecture
+- Compatible with both Python and C++ implementations
+- No code changes required in core whisper-dictation logic
+
+**Future Benefit**: Professional deployment model suitable for wider distribution
+
+---
+
+### Enhancement 2: Expandable Application Menu
 **Status**: NEW - Backlog
 **Priority**: Medium
 **Description**: Add runtime configuration options to the application menu for better UX control
