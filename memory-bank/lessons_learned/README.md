@@ -62,6 +62,33 @@ This directory contains lessons learned from working with various tools and work
 
 ---
 
+### 5. [Test Infrastructure Analysis](test_infrastructure_conflicts_analysis.md)
+**Focus**: Thread management and resource cleanup issues in tests
+
+**Key Learnings**:
+- Systematic isolation strategy for identifying problematic tests
+- Thread cleanup and timeout management best practices
+- Infrastructure repair approach for test stability
+
+**When to read**: When dealing with hanging tests or thread management issues
+
+---
+
+### 6. [Test Status Comprehensive Analysis](test_status_comprehensive_analysis.md) ⭐
+**Focus**: Current complete test suite health assessment
+
+**Key Findings**:
+- ✅ 63/69 core infrastructure tests passing (Audio Watchdog, Lock Files, Logging, etc.)
+- ❌ 6 Whisper-CPP integration tests failing (language detection issues)
+- ⚠️ Test coverage at 0% due to configuration issues (requirement: 70%)
+- ⚠️ Some tests timeout on model operations
+
+**When to read**: For current test status overview and prioritizing fixes
+
+**Impact**: Core system stable, integration layer needs attention
+
+---
+
 ## Quick Reference
 
 ### Updating a Confluence Section (Recommended) ⭐
