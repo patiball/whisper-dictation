@@ -1,0 +1,20 @@
+@startuml whisper-dictation-use-cases
+left to right direction
+
+actor User
+
+rectangle "whisper-dictation" {
+  usecase UC1 as "Start/Stop Recording"
+  usecase UC2 as "Configure Settings via GUI"
+  usecase UC3 as "Manage Plugins"
+  usecase UC4 as "Apply Per-App Rules"
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+
+UC1 ..> UC4 : <<extends>>
+UC2 ..> UC3 : <<includes>>
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml whisper-dictation-deployment
+
+node "macOS Device" {
+  artifact "whisper-dictation.app" as MacApp
+  folder "~/Library/Application Support" {
+    file "config.json" as MacConfig
+    folder "plugins/" as MacPlugins
+  }
+  artifact "whisper-model.bin" as MacModel
+  
+  MacApp ..> MacConfig : reads/writes
+  MacApp ..> MacPlugins : loads
+  MacApp ..> MacModel : uses
+}
+
+node "Windows Device" {
+  artifact "whisper-dictation.exe" as WinApp
+  folder "%APPDATA%" {
+    file "config.json" as WinConfig
+    folder "plugins/" as WinPlugins
+  }
+  artifact "whisper-model.bin" as WinModel
+  
+  WinApp ..> WinConfig : reads/writes
+  WinApp ..> WinPlugins : loads
+  WinApp ..> WinModel : uses
+}
+
+@enduml
