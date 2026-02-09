@@ -1,0 +1,11 @@
+openai
+openai-whisper
+torch>=2.0.0
+pyaudio
+pynput
+keyboard
+argparse
+rumps; platform_system == "Darwin"
+pystray; platform_system == "Windows"
+pillow; platform_system == "Windows"
+numpy
