@@ -48,6 +48,15 @@ def get_timestamp():
     return datetime.now().strftime("[%H:%M:%S.%f")[:-3] + "]"
 
 
+def console_print(message: str) -> None:
+    """Print message without crashing on consoles with limited encoding support."""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        sanitized = message.encode("ascii", errors="replace").decode("ascii")
+        print(sanitized)
+
+
 def setup_logging(log_level="INFO", log_file=None):
     """Configure centralized logging with rotation and console output."""
     if log_file is None:
@@ -276,7 +285,7 @@ def test_microphone_access():
     except PermissionError as e:
         logging.warning(f"Microphone access test failed: Permission denied - {e}")
         print("WARNING: Microphone access test failed: Permission denied")
-        print("  Please check System Preferences → Privacy → Microphone")
+        print("  Please check System Preferences -> Privacy -> Microphone")
 
     except RuntimeError as e:
         if "No input device" in str(e):
@@ -1237,7 +1246,7 @@ if __name__ == "__main__":
 
         try:
             model = load_model(model_name, device=device)
-            print(f"✅ {model_name} model loaded successfully on {device}")
+            console_print(f"{model_name} model loaded successfully on {device}")
             logging.info(f"Model loaded successfully: {model_name} on {device}")
 
             device_manager.optimize_model(model, device)
@@ -1256,15 +1265,15 @@ if __name__ == "__main__":
                         e, OperationType.MODEL_LOADING, device
                     )
                 )
-                print(f"🔄 {user_message}")
+                console_print(user_message)
                 print(f"Details: Switching from {device} to {fallback_device}")
                 logging.warning(f"Retrying with fallback device: {fallback_device}")
 
                 device = fallback_device
                 model = load_model(model_name, device=device)
                 device_manager.optimize_model(model, device)
-                print(
-                    f"✅ {model_name} model loaded successfully on fallback device: {device}"
+                console_print(
+                    f"{model_name} model loaded successfully on fallback device: {device}"
                 )
                 logging.info(
                     f"Model loaded on fallback device: {model_name} on {device}"

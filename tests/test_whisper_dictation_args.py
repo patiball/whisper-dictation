@@ -71,3 +71,33 @@ def test_parse_args_tray_mode_rejected_on_unsupported_platform(monkeypatch):
     monkeypatch.setattr(module.platform, "system", lambda: "Linux")
     with pytest.raises(ValueError):
         module.parse_args(["--runtime-mode", "tray"])
+
+
+def test_console_print_falls_back_on_limited_stdout_encoding(monkeypatch):
+    module = load_module()
+
+    class Cp1250Stdout:
+        encoding = "cp1250"
+
+        def __init__(self):
+            self._parts = []
+
+        def write(self, text):
+            text.encode(self.encoding)
+            self._parts.append(text)
+            return len(text)
+
+        def flush(self):
+            return None
+
+        def value(self):
+            return "".join(self._parts)
+
+    fake_stdout = Cp1250Stdout()
+    monkeypatch.setattr(sys, "stdout", fake_stdout)
+
+    module.console_print("✅ model loaded")
+
+    rendered = fake_stdout.value()
+    assert "model loaded" in rendered
+    assert "?" in rendered
