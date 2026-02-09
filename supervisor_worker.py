@@ -13,6 +13,7 @@ from typing import Callable
 
 
 DEFAULT_WHISPERCPP_ARGS = "-otxt -l auto -oved GPU"
+WHISPERCPP_STATUS_PREFIX = "WHISPERCPP_STATUS"
 KNOWN_CPP_MODEL_FILES = {
     "base": "ggml-base.bin",
     "small": "ggml-small.bin",
@@ -67,6 +68,9 @@ class WorkerStatus:
     model: str
     restart_attempts: int
     max_restart_attempts: int
+    acceleration: str
+    reported_model: str | None
+    warning: str | None
 
 
 def default_cpp_models_dir() -> Path:
@@ -202,6 +206,11 @@ class WorkerProcessSupervisor:
         self._intentional_stop = False
         self._restart_attempts = 0
         self._worker_log_handle = None
+        self._worker_log_path: Path | None = None
+        self._worker_log_read_pos = 0
+        self._acceleration_state = "unknown"
+        self._reported_model: str | None = None
+        self._warning_message: str | None = None
 
     @property
     def profile(self) -> WorkerProfile:
@@ -224,6 +233,9 @@ class WorkerProcessSupervisor:
                 model=self._profile.model,
                 restart_attempts=self._restart_attempts,
                 max_restart_attempts=self.max_restart_attempts,
+                acceleration=self._acceleration_state,
+                reported_model=self._reported_model,
+                warning=self._warning_message,
             )
 
     def start_worker(self, reason: str = "manual-start") -> bool:
@@ -355,6 +367,7 @@ class WorkerProcessSupervisor:
     def _monitor_loop(self) -> None:
         while not self._monitor_stop_event.is_set():
             try:
+                self._consume_worker_status_events()
                 self.check_worker_health()
             except Exception:  # pragma: no cover - safety net
                 self._logger.exception("Supervisor monitor loop failed.")
@@ -365,12 +378,22 @@ class WorkerProcessSupervisor:
         if reset_restart_attempts:
             self._restart_attempts = 0
         self._intentional_stop = False
+        self._reported_model = (
+            Path(self._profile.model).name
+            if self._profile.backend == "whispercpp"
+            else self._profile.model
+        )
+        self._acceleration_state = "pending" if self._profile.backend == "whispercpp" else "n/a"
+        self._warning_message = self._preflight_warning_for_profile(self._profile)
+        if self._warning_message:
+            self._logger.warning("%s", self._warning_message)
         self._ensure_worker_log_handle_locked()
 
         assert self._worker_log_handle is not None
         self._worker_log_handle.write(f"[{time.strftime('%H:%M:%S')}] START {reason}\n")
         self._worker_log_handle.write(" ".join(command) + "\n")
         self._worker_log_handle.flush()
+        self._worker_log_read_pos = self._worker_log_handle.tell()
 
         popen_kwargs = {
             "cwd": self.settings.working_directory
@@ -399,7 +422,78 @@ class WorkerProcessSupervisor:
 
         path = Path(log_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
+        self._worker_log_path = path
         self._worker_log_handle = path.open("a", encoding="utf-8")
+        self._worker_log_read_pos = self._worker_log_handle.tell()
 
     def _is_running_locked(self) -> bool:
         return self._process is not None and self._process.poll() is None
+
+    def _preflight_warning_for_profile(self, profile: WorkerProfile) -> str | None:
+        if profile.backend != "whispercpp":
+            return None
+        if "-oved" not in self.settings.whispercpp_args.lower():
+            return None
+
+        model_path = Path(profile.model).expanduser()
+        base_stem = model_path.stem
+        xml_path = model_path.with_name(f"{base_stem}-encoder-openvino.xml")
+        bin_path = model_path.with_name(f"{base_stem}-encoder-openvino.bin")
+        missing = [str(path) for path in (xml_path, bin_path) if not path.exists()]
+        if not missing:
+            return None
+
+        return (
+            "OpenVINO encoder artifacts missing; whisper.cpp may run in CPU fallback. "
+            f"Missing: {', '.join(missing)}"
+        )
+
+    def _consume_worker_status_events(self) -> None:
+        path = self._worker_log_path
+        if path is None or not path.exists():
+            return
+
+        with path.open("r", encoding="utf-8", errors="ignore") as handle:
+            handle.seek(self._worker_log_read_pos)
+            new_lines = handle.readlines()
+            self._worker_log_read_pos = handle.tell()
+
+        for raw_line in new_lines:
+            line = raw_line.strip()
+            if not line.startswith(f"{WHISPERCPP_STATUS_PREFIX} "):
+                continue
+            fields = self._parse_status_fields(line)
+            loaded_model = fields.get("loaded_model")
+            acceleration = fields.get("acceleration")
+            model_match = fields.get("model_match")
+            reason = fields.get("reason", "unknown")
+
+            with self._lock:
+                if loaded_model:
+                    self._reported_model = loaded_model
+                if acceleration:
+                    self._acceleration_state = acceleration
+
+                if model_match == "false":
+                    self._warning_message = (
+                        "Worker loaded model differs from selected profile: "
+                        f"selected={Path(self._profile.model).name}, "
+                        f"loaded={self._reported_model or 'unknown'}"
+                    )
+                elif acceleration == "cpu_fallback":
+                    self._warning_message = (
+                        "whisper.cpp running in CPU fallback mode "
+                        f"(reason={reason}, model={self._reported_model or 'unknown'})"
+                    )
+                elif acceleration == "gpu_openvino":
+                    self._warning_message = None
+
+    @staticmethod
+    def _parse_status_fields(line: str) -> dict[str, str]:
+        fields: dict[str, str] = {}
+        for token in line.split()[1:]:
+            if "=" not in token:
+                continue
+            key, value = token.split("=", 1)
+            fields[key] = value
+        return fields

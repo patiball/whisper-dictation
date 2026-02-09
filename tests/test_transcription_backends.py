@@ -90,7 +90,50 @@ def test_whispercpp_transcriber_transcribe_contract(tmp_path):
     assert result["text"] == "hello world"
     assert result["language"] == "en"
     assert result["backend"] == "whispercpp"
+    assert result["model"] == "ggml-base.bin"
+    assert result["expected_model"] == "ggml-base.bin"
+    assert result["acceleration"] == "unknown"
     assert "".join(typer.typed).replace(" ", "") == "helloworld"
+
+
+def test_whispercpp_transcriber_reports_cpu_fallback_when_openvino_fails(tmp_path):
+    cli = tmp_path / "whisper-cli.exe"
+    model = tmp_path / "ggml-medium.bin"
+    cli.write_text("stub", encoding="utf-8")
+    model.write_text("stub", encoding="utf-8")
+
+    def fake_runner(cmd, capture_output, text, check, timeout):
+        output_prefix = Path(cmd[cmd.index("-of") + 1])
+        (Path(str(output_prefix) + ".txt")).write_text("fallback text", encoding="utf-8")
+        stderr = "\n".join(
+            [
+                "whisper_init_from_file_with_params_no_state: loading model from 'C:/fake/ggml-medium.bin'",
+                "whisper_ctx_init_openvino_encoder_with_state: failed to init OpenVINO encoder",
+                "FrontEnd API failed with GeneralFailure:",
+                "ir: Could not open the file: \"C:/fake/ggml-medium-encoder-openvino.xml\"",
+            ]
+        )
+        return subprocess.CompletedProcess(
+            cmd,
+            0,
+            stdout="",
+            stderr=stderr,
+        )
+
+    transcriber = WhisperCppTranscriber(
+        cli_path=str(cli),
+        model_path=str(model),
+        extra_args="-otxt -l auto -oved GPU",
+        timeout_sec=10,
+        runner=fake_runner,
+    )
+    result = transcriber.transcribe(audio_data=np.zeros(8000, dtype=np.float32))
+    assert result["text"] == "fallback text"
+    assert result["backend"] == "whispercpp"
+    assert result["model"] == "ggml-medium.bin"
+    assert result["expected_model"] == "ggml-medium.bin"
+    assert result["acceleration"] == "cpu_fallback"
+    assert result["acceleration_reason"] == "openvino_encoder_init_failed"
 
 
 def test_deterministic_fallback_startup_failure_activates_fallback():

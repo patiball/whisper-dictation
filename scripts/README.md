@@ -141,7 +141,7 @@ powershell -ExecutionPolicy Bypass -File scripts/run_whispercpp_openvino_benchma
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/run_supervisor.ps1 -Backend whispercpp -CppModel large-v3
 ```
-**Description**: Starts `whisper-dictation-supervisor.py` (tray control plane) which runs `whisper-dictation.py` as headless worker. Supports fast backend/model switching without rebuild.
+**Description**: Starts `whisper-dictation-supervisor.py` (tray control plane) which runs `whisper-dictation.py` as headless worker. Supports fast backend/model switching without rebuild and warns when OpenVINO encoder artifacts are missing for selected whisper.cpp model.
 
 ---
 

@@ -1,6 +1,6 @@
 # Active Context
 
-**Current Focus:** Epic 19 execution - post-19-06 quality/performance validation
+**Current Focus:** Epic 19 execution - post-19-07 quality/performance validation
 
 **Primary Epic:** `memory-bank/specs/[19-00-00]_cross_platform_unified_app_and_acceleration_strategy.md`
 
@@ -8,8 +8,9 @@
 
 1. Validate quality impact of larger whisper.cpp models (PL/EN, auto-detect) using benchmark gate workflow.
 2. Use new Supervisor+Worker runtime for operational profile switching without rebuild.
-3. Decide default backend/model policy based on combined latency + quality evidence.
-4. Close setup gap for automatic OpenVINO encoder artifact provisioning.
+3. Use supervisor warning/telemetry to detect CPU fallback quickly during model switches.
+4. Decide default backend/model policy based on combined latency + quality evidence.
+5. Close setup gap for automatic OpenVINO encoder artifact provisioning.
 
 ## What is intentionally deferred
 
@@ -28,6 +29,7 @@
   - `memory-bank/specs/[19-04-00]_safe_fallback_and_incremental_release_controls.md` (implemented)
   - `memory-bank/specs/[19-05-00]_benchmark_gate_and_windows_runbook_for_acceleration.md` (implemented)
   - `memory-bank/specs/[19-06-00]_supervisor_worker_runtime_for_model_switching.md` (implemented)
+  - `memory-bank/specs/[19-07-00]_supervisor_gpu_warning_and_model_confirmation.md` (implemented)
 - Previous Epic (stabilization): `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`
 - Backlog: `memory-bank/issues-backlog.md`
 - Tech context: `memory-bank/core/05_techContext.md`

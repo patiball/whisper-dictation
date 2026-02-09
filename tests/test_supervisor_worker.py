@@ -155,6 +155,79 @@ def test_supervisor_bounded_auto_restart(tmp_path):
     supervisor.shutdown()
 
 
+def test_supervisor_preflight_warns_when_openvino_encoder_artifacts_missing(tmp_path):
+    popen_factory = FakePopenFactory()
+    model_path = tmp_path / "ggml-medium.bin"
+    model_path.write_text("stub", encoding="utf-8")
+    settings = SupervisorSettings(
+        python_executable="python",
+        worker_script="whisper-dictation.py",
+        worker_log_file=str(tmp_path / "worker.log"),
+        runtime_mode="headless",
+        whispercpp_cli="C:/bin/whisper-cli.exe",
+    )
+    supervisor = WorkerProcessSupervisor(
+        settings=settings,
+        initial_profile=WorkerProfile("cpp-medium", "whispercpp", str(model_path)),
+        popen_factory=popen_factory,
+        sleep_fn=lambda _seconds: None,
+    )
+
+    supervisor.start_worker()
+    status = supervisor.status_snapshot()
+    assert status.acceleration == "pending"
+    assert status.warning is not None
+    assert "OpenVINO encoder artifacts missing" in status.warning
+    supervisor.shutdown()
+
+
+def test_supervisor_updates_warning_from_worker_status_line(tmp_path):
+    popen_factory = FakePopenFactory()
+    model_path = tmp_path / "ggml-medium.bin"
+    model_path.write_text("stub", encoding="utf-8")
+    settings = SupervisorSettings(
+        python_executable="python",
+        worker_script="whisper-dictation.py",
+        worker_log_file=str(tmp_path / "worker.log"),
+        runtime_mode="headless",
+        whispercpp_cli="C:/bin/whisper-cli.exe",
+    )
+    supervisor = WorkerProcessSupervisor(
+        settings=settings,
+        initial_profile=WorkerProfile("cpp-medium", "whispercpp", str(model_path)),
+        popen_factory=popen_factory,
+        sleep_fn=lambda _seconds: None,
+    )
+    supervisor.start_worker()
+
+    worker_log = Path(settings.worker_log_file)
+    with worker_log.open("a", encoding="utf-8") as handle:
+        handle.write(
+            "WHISPERCPP_STATUS expected_model=ggml-medium.bin "
+            "loaded_model=ggml-medium.bin model_match=true "
+            "acceleration=cpu_fallback reason=openvino_encoder_init_failed\n"
+        )
+        handle.flush()
+    supervisor._consume_worker_status_events()
+    status = supervisor.status_snapshot()
+    assert status.acceleration == "cpu_fallback"
+    assert status.warning is not None
+    assert "CPU fallback" in status.warning
+
+    with worker_log.open("a", encoding="utf-8") as handle:
+        handle.write(
+            "WHISPERCPP_STATUS expected_model=ggml-medium.bin "
+            "loaded_model=ggml-medium.bin model_match=true "
+            "acceleration=gpu_openvino reason=openvino_encoder_loaded\n"
+        )
+        handle.flush()
+    supervisor._consume_worker_status_events()
+    status2 = supervisor.status_snapshot()
+    assert status2.acceleration == "gpu_openvino"
+    assert status2.warning is None
+    supervisor.shutdown()
+
+
 def test_resolve_cpp_model_path_alias(tmp_path):
     model_path = tmp_path / "ggml-large-v3.bin"
     model_path.write_text("stub", encoding="utf-8")

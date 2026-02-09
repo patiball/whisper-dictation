@@ -242,10 +242,20 @@ class SupervisorTrayApp:
     def _status_text(self) -> str:
         status = self.supervisor.status_snapshot()
         state = "running" if status.running else "stopped"
+        model = status.reported_model or Path(status.model).name
+        warning_flag = " | WARN" if status.warning else ""
         return (
-            f"Worker: {state} | {status.profile_name} "
+            f"Worker: {state} | profile={status.profile_name} "
+            f"| model={model} | accel={status.acceleration} "
             f"| retries {status.restart_attempts}/{status.max_restart_attempts}"
+            f"{warning_flag}"
         )
+
+    def _warning_text(self) -> str:
+        status = self.supervisor.status_snapshot()
+        if status.warning:
+            return f"Warning: {status.warning}"
+        return "Warning: none"
 
     def _refresh_menu(self) -> None:
         if self.icon is not None:
@@ -270,6 +280,7 @@ class SupervisorTrayApp:
     def _build_menu(self):
         return pystray.Menu(
             pystray.MenuItem(lambda _item: self._status_text(), None, enabled=False),
+            pystray.MenuItem(lambda _item: self._warning_text(), None, enabled=False),
             pystray.MenuItem(
                 "Start Worker",
                 self._on_start_worker,

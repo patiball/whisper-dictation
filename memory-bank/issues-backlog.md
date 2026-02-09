@@ -64,6 +64,11 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 - Why: Long manual restart commands slowed iteration and mixed control plane with runtime process.
 - Done when: Dedicated tray supervisor manages headless worker with start/stop/restart/profile-switch and bounded crash autorestart.
 
+### 12. Supervisor warning + model confirmation for whispercpp runtime
+- Status: Implemented
+- Why: Without explicit acceleration/model telemetry, CPU fallback looked like profile-switch failure.
+- Done when: supervisor surfaces CPU fallback warnings and worker emits model+acceleration confirmation lines.
+
 ## Not Active Now
 
 - Full `whisper.cpp` Windows support

@@ -92,3 +92,9 @@ Or keep backend selection but disable fallback:
 - If `whispercpp` startup fails, app should log fallback activation and continue on `python`.
 - If runtime transcription fails on `whispercpp`, app should log runtime fallback reason and continue on `python`.
 - If fallback is disabled, failures are expected to abort transcribe path.
+- In Supervisor mode, check tray status for warnings:
+  - `OpenVINO encoder artifacts missing` means selected model lacks
+    `*-encoder-openvino.xml/.bin` and may run slowly on CPU fallback.
+- Worker log now emits structured status events:
+  - `WHISPERCPP_STATUS expected_model=... loaded_model=... acceleration=...`
+  - `acceleration=cpu_fallback` indicates degraded path.

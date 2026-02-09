@@ -10,6 +10,7 @@ import tempfile
 import threading
 import time
 import wave
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -21,6 +22,20 @@ from pynput import keyboard
 def _timestamp() -> str:
     """Return formatted timestamp consistent with main runtime prints."""
     return datetime.now().strftime("[%H:%M:%S.%f")[:-3] + "]"
+
+
+WHISPERCPP_STATUS_PREFIX = "WHISPERCPP_STATUS"
+
+
+@dataclass(frozen=True)
+class WhisperCppRuntimeDiagnostics:
+    """Runtime diagnostics inferred from whisper-cli stdout/stderr."""
+
+    expected_model: str
+    loaded_model: str
+    model_match: bool
+    acceleration: str
+    reason: str
 
 
 def create_transcription_backend(
@@ -249,6 +264,52 @@ class WhisperCppTranscriber:
             except Exception as exc:
                 logging.warning(f"Failed to type character '{element}': {exc}")
 
+    @staticmethod
+    def _loaded_model_from_output(output: str) -> str | None:
+        match = re.search(r"loading model from '([^']+)'", output, re.IGNORECASE)
+        if not match:
+            return None
+        return Path(match.group(1)).name
+
+    def _runtime_diagnostics(self, output: str) -> WhisperCppRuntimeDiagnostics:
+        expected_model = Path(self.model_path).name
+        loaded_model = self._loaded_model_from_output(output) or expected_model
+        model_match = loaded_model == expected_model
+
+        openvino_loaded = "OpenVINO model loaded" in output
+        openvino_failed = (
+            "failed to init OpenVINO encoder" in output
+            or "Could not open the file" in output and "encoder-openvino" in output
+        )
+
+        acceleration = "unknown"
+        reason = "unknown"
+        if openvino_loaded:
+            acceleration = "gpu_openvino"
+            reason = "openvino_encoder_loaded"
+        elif openvino_failed:
+            acceleration = "cpu_fallback"
+            reason = "openvino_encoder_init_failed"
+
+        return WhisperCppRuntimeDiagnostics(
+            expected_model=expected_model,
+            loaded_model=loaded_model,
+            model_match=model_match,
+            acceleration=acceleration,
+            reason=reason,
+        )
+
+    @staticmethod
+    def _print_runtime_status_line(diag: WhisperCppRuntimeDiagnostics) -> None:
+        print(
+            f"{WHISPERCPP_STATUS_PREFIX} "
+            f"expected_model={diag.expected_model} "
+            f"loaded_model={diag.loaded_model} "
+            f"model_match={'true' if diag.model_match else 'false'} "
+            f"acceleration={diag.acceleration} "
+            f"reason={diag.reason}"
+        )
+
     def transcribe(self, audio_data: Any, language: str | None = None) -> dict[str, Any]:
         started_at = time.time()
         with self._transcribe_lock:
@@ -286,15 +347,39 @@ class WhisperCppTranscriber:
                 elif result.stdout:
                     text = result.stdout.strip()
 
-                detected_language = self._detected_language(
-                    "\n".join([(result.stdout or ""), (result.stderr or "")])
-                )
+                combined_output = "\n".join([(result.stdout or ""), (result.stderr or "")])
+                detected_language = self._detected_language(combined_output)
+                runtime_diag = self._runtime_diagnostics(combined_output)
 
         duration = time.time() - started_at
         print(f"{_timestamp()} Transcription complete ({duration:.2f}s)")
+        print(
+            f"{_timestamp()} whispercpp runtime: "
+            f"model={runtime_diag.loaded_model} "
+            f"accel={runtime_diag.acceleration}"
+        )
+        self._print_runtime_status_line(runtime_diag)
+
+        if not runtime_diag.model_match:
+            logging.warning(
+                "whisper.cpp loaded model differs from configured model: "
+                "expected=%s loaded=%s",
+                runtime_diag.expected_model,
+                runtime_diag.loaded_model,
+            )
+        if runtime_diag.acceleration == "cpu_fallback":
+            logging.warning(
+                "whisper.cpp is running in CPU fallback mode. reason=%s",
+                runtime_diag.reason,
+            )
+
         self._type_text(text)
         return {
             "text": text,
             "language": detected_language or language or "auto",
             "backend": "whispercpp",
+            "model": runtime_diag.loaded_model,
+            "expected_model": runtime_diag.expected_model,
+            "acceleration": runtime_diag.acceleration,
+            "acceleration_reason": runtime_diag.reason,
         }

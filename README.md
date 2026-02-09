@@ -149,6 +149,9 @@ What supervisor mode adds:
 - Quick switching between python and whisper.cpp model profiles.
 - Controlled worker restart on profile switch (no rebuild step).
 - Bounded auto-restart when worker crashes unexpectedly.
+- Warning when whisper.cpp profile is likely in CPU fallback path
+  (e.g. missing `*-encoder-openvino.xml/.bin` for selected model).
+- Runtime confirmation lines in worker log with selected/loaded model and acceleration state.
 
 Benchmark gate workflow:
 

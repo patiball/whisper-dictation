@@ -49,6 +49,12 @@ Last Update: 2026-02-09
   - added short launcher script (`scripts/run_supervisor.ps1`)
   - added supervisor lifecycle tests (`tests/test_supervisor_worker.py`)
   - updated docs and runbook for supervisor operation
+- Implemented issue `[19-07-00]`:
+  - added whisper.cpp runtime diagnostics parser (loaded model + acceleration state)
+  - added structured worker status line (`WHISPERCPP_STATUS ...`) for supervisor ingestion
+  - added supervisor preflight warning for missing OpenVINO encoder artifacts
+  - extended supervisor status snapshot with warning/acceleration/reporting fields
+  - added tests for cpu-fallback diagnostics and supervisor warning updates
 
 ## Completed in this update
 
@@ -69,7 +75,8 @@ Last Update: 2026-02-09
 15. Closed issue `[19-04-00]` with deterministic fallback + release controls.
 16. Closed issue `[19-05-00]` with benchmark gate and operator runbook.
 17. Closed issue `[19-06-00]` with full Supervisor+Worker runtime and test coverage.
+18. Closed issue `[19-07-00]` with explicit CPU-fallback warnings and model confirmation UX.
 
 ## Next Execution Step
 
-Run quick follow-up task Q1: benchmark larger multilingual whisper.cpp model(s) to recover quality while keeping acceleration gains.
+Run quick follow-up task Q2: add auto-provision/self-heal for missing OpenVINO encoder artifacts to prevent CPU fallback on model switch.

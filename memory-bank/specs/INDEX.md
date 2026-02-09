@@ -1,6 +1,6 @@
 # Specs Index
 
-Last Updated: 2026-02-09 (19-02..19-06 implemented, quality follow-up pending)
+Last Updated: 2026-02-09 (19-02..19-07 implemented, quality follow-up pending)
 
 ## Active
 
@@ -24,6 +24,9 @@ Last Updated: 2026-02-09 (19-02..19-06 implemented, quality follow-up pending)
   Status: Implemented
 - `[19-06-00]` Supervisor + Worker Runtime for Fast Model/Backend Switching  
   File: `memory-bank/specs/[19-06-00]_supervisor_worker_runtime_for_model_switching.md`  
+  Status: Implemented
+- `[19-07-00]` Supervisor GPU Warning + whisper.cpp Model Confirmation  
+  File: `memory-bank/specs/[19-07-00]_supervisor_gpu_warning_and_model_confirmation.md`  
   Status: Implemented
 - `[18-00-00]` Windows 11 Minimal Runtime (Hotkey + Tray + Sound Cues + Auto Model Download)  
   File: `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`  
@@ -54,5 +57,7 @@ Last Updated: 2026-02-09 (19-02..19-06 implemented, quality follow-up pending)
   `scripts/windows_acceleration_benchmark.py --skip-python`.
 - Supervisor+Worker runtime is available via `whisper-dictation-supervisor.py`
   and `scripts/run_supervisor.ps1` for faster profile switching without rebuild.
+- Supervisor now surfaces CPU fallback risk and worker-reported model/acceleration
+  state for easier debugging of slow whisper.cpp runs.
 - Detailed historical analysis artifacts were moved to:
   `memory-bank/archive/2026-02-09-windows11-focus/`
