@@ -55,6 +55,12 @@ Last Update: 2026-02-09
   - added supervisor preflight warning for missing OpenVINO encoder artifacts
   - extended supervisor status snapshot with warning/acceleration/reporting fields
   - added tests for cpu-fallback diagnostics and supervisor warning updates
+- Follow-up operational status update:
+  - downloaded multilingual `ggml-small.bin` to `%LOCALAPPDATA%\\whispercpp\\models`
+  - generated and copied OpenVINO encoder artifacts for `base`, `medium`, and `small`
+    (`ggml-<model>-encoder-openvino.xml/.bin`)
+  - verified OpenVINO encoder load for `medium` and `small` via `whisper-cli -oved GPU`
+  - set supervisor default whisper.cpp startup model to `medium`
 
 ## Completed in this update
 
@@ -76,6 +82,8 @@ Last Update: 2026-02-09
 16. Closed issue `[19-05-00]` with benchmark gate and operator runbook.
 17. Closed issue `[19-06-00]` with full Supervisor+Worker runtime and test coverage.
 18. Closed issue `[19-07-00]` with explicit CPU-fallback warnings and model confirmation UX.
+19. Provisioned OpenVINO encoder artifacts for `base`/`medium`/`small` and validated GPU path for `medium` and `small`.
+20. Updated supervisor defaults so no-arg startup uses whisper.cpp `medium` profile.
 
 ## Next Execution Step
 

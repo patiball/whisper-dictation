@@ -59,5 +59,6 @@ Last Updated: 2026-02-09 (19-02..19-07 implemented, quality follow-up pending)
   and `scripts/run_supervisor.ps1` for faster profile switching without rebuild.
 - Supervisor now surfaces CPU fallback risk and worker-reported model/acceleration
   state for easier debugging of slow whisper.cpp runs.
+- Supervisor defaults now start whisper.cpp on `medium` for better startup ergonomics.
 - Detailed historical analysis artifacts were moved to:
   `memory-bank/archive/2026-02-09-windows11-focus/`

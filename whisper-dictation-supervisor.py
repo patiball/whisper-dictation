@@ -59,7 +59,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--cpp-model",
-        default="large-v3",
+        default="medium",
         help="Initial whisper.cpp model alias (e.g. base, medium, large-v3) or full path.",
     )
     parser.add_argument(

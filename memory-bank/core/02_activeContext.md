@@ -10,7 +10,7 @@
 2. Use new Supervisor+Worker runtime for operational profile switching without rebuild.
 3. Use supervisor warning/telemetry to detect CPU fallback quickly during model switches.
 4. Decide default backend/model policy based on combined latency + quality evidence.
-5. Close setup gap for automatic OpenVINO encoder artifact provisioning.
+5. Close remaining automation gap for OpenVINO encoder artifact provisioning.
 
 ## What is intentionally deferred
 
@@ -36,7 +36,7 @@
 
 ## Immediate Execution Plan (2026-02-09)
 
-1. Run A/B benchmark for larger whisper.cpp model(s) against python baseline on PL/EN quality set.
+1. Run A/B benchmark for `small` and `medium` whisper.cpp models against python baseline on PL/EN quality set.
 2. Keep using `scripts/run_supervisor.ps1` for rapid model switching during manual checks.
-3. Add auto-provision/self-heal path for missing OpenVINO encoder artifacts.
+3. Implement auto-provision/self-heal path for missing OpenVINO encoder artifacts (manual provisioning now verified).
 4. Update rollout recommendation and benchmark gate thresholds only if evidence requires it.

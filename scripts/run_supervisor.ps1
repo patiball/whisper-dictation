@@ -3,7 +3,7 @@ param(
     [string]$Backend = "whispercpp",
     [ValidateSet("tiny", "base", "small", "medium", "large")]
     [string]$PythonModel = "medium",
-    [string]$CppModel = "large-v3",
+    [string]$CppModel = "medium",
     [string]$KeyCombination = "ctrl_l+alt_l",
     [string]$WhisperCppCli = $env:WHISPER_CLI_BIN,
     [switch]$NoTray

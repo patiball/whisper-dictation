@@ -78,9 +78,10 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 ## Quick Todos
 
 ### Q1. Evaluate larger whisper.cpp model for quality recovery
-- Status: Planned
+- Status: In Progress
 - Why: `whispercpp` is much faster but manual E2E shows lower transcription quality versus python backend.
 - Done when: A/B benchmark and manual spot-check are completed for a larger multilingual model (e.g. `small`), with updated recommendation for default backend policy.
+  Prereq update: `ggml-small.bin` plus OpenVINO encoder artifacts for `base`/`medium`/`small` are now provisioned locally.
 
 ### Q2. Auto-provision OpenVINO encoder artifacts for selected whisper.cpp model
 - Status: Planned
