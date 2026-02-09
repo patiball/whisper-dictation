@@ -1,0 +1,68 @@
+{
+  "polish_5s": {
+    "filepath": "tests/audio/test_polish_5s_20250630_094037.wav",
+    "metadata": {
+      "test_key": "polish_5s",
+      "expected_text": "To jest test polskiego języka. Liczby jeden, dwa, trzy, cztery, pięć.",
+      "filename": "test_polish_5s_20250630_094037.wav",
+      "duration": 5,
+      "sample_rate": 16000,
+      "recorded_at": "2025-06-30T09:40:45.562282"
+    }
+  },
+  "english_5s": {
+    "filepath": "tests/audio/test_english_5s_20250630_094048.wav",
+    "metadata": {
+      "test_key": "english_5s",
+      "expected_text": "This is an English language test. Numbers one, two, three, four, five.",
+      "filename": "test_english_5s_20250630_094048.wav",
+      "duration": 5,
+      "sample_rate": 16000,
+      "recorded_at": "2025-06-30T09:40:56.804009"
+    }
+  },
+  "mixed_5s": {
+    "filepath": "tests/audio/test_mixed_5s_20250630_094059.wav",
+    "metadata": {
+      "test_key": "mixed_5s",
+      "expected_text": "Hello, jak się masz? I am testing mixed language recognition.",
+      "filename": "test_mixed_5s_20250630_094059.wav",
+      "duration": 5,
+      "sample_rate": 16000,
+      "recorded_at": "2025-06-30T09:41:08.071811"
+    }
+  },
+  "immediate_start": {
+    "filepath": "tests/audio/test_immediate_start_20250630_094111.wav",
+    "metadata": {
+      "test_key": "immediate_start",
+      "expected_text": "Start immediately with these exact words",
+      "filename": "test_immediate_start_20250630_094111.wav",
+      "duration": 3,
+      "sample_rate": 16000,
+      "recorded_at": "2025-06-30T09:41:17.298109"
+    }
+  },
+  "polish_10s": {
+    "filepath": "tests/audio/test_polish_10s_20250630_094120.wav",
+    "metadata": {
+      "test_key": "polish_10s",
+      "expected_text": "To jest dłuższy test polskiego języka. Będę mówić przez około dziesięć sekund. Liczby: jeden, dwa, trzy, cztery, pięć, sześć, siedem, osiem, dziewięć, dziesięć.",
+      "filename": "test_polish_10s_20250630_094120.wav",
+      "duration": 10,
+      "sample_rate": 16000,
+      "recorded_at": "2025-06-30T09:41:33.568226"
+    }
+  },
+  "english_10s": {
+    "filepath": "tests/audio/test_english_10s_20250630_094136.wav",
+    "metadata": {
+      "test_key": "english_10s",
+      "expected_text": "This is a longer English language test. I will speak for approximately ten seconds. Numbers: one, two, three, four, five, six, seven, eight, nine, ten.",
+      "filename": "test_english_10s_20250630_094136.wav",
+      "duration": 10,
+      "sample_rate": 16000,
+      "recorded_at": "2025-06-30T09:41:49.829383"
+    }
+  }
+}

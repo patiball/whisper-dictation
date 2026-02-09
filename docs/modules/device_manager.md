@@ -1,0 +1,368 @@
+# Moduł: Device Manager
+
+## Odpowiedzialność
+
+Moduł `device_manager` zapewnia scentralizowane zarządzanie urządzeniami (CPU, MPS, CUDA) z inteligentnym wyborem urządzenia, testowaniem zdolności, obsługą błędów i optymalizacją dla chipów Apple M1/M2. Jest kluczowy dla stabilności i wydajności aplikacji na różnych platformach.
+
+## Struktura Klas
+
+```mermaid
+classDiagram
+    class DeviceManager {
+        +get_device_for_operation(operation, model_size)
+        +handle_device_error(error, operation, device)
+        +register_operation_success(device, operation)
+        +should_retry_with_fallback(error)
+        +get_device_status_report()
+    }
+    
+    class EnhancedDeviceManager {
+        +handle_device_error_enhanced(error, operation, device)
+        +get_optimized_settings(device, model_size)
+        +optimize_model(model, device)
+        +get_comprehensive_status()
+    }
+    
+    class MPSErrorHandler {
+        +categorize_error(error)
+        +should_retry_with_cpu(error)
+        +get_user_friendly_message(error)
+        +get_error_statistics()
+    }
+    
+    class MPSOptimizer {
+        +get_optimal_whisper_settings(device, model_size)
+        +optimize_model_for_m1(model, device)
+        +get_memory_usage_info(device)
+    }
+    
+    EnhancedDeviceManager --> DeviceManager
+    EnhancedDeviceManager --> MPSErrorHandler
+    EnhancedDeviceManager --> MPSOptimizer
+```
+
+## Publiczne API
+
+### Klasa: `DeviceManager`
+
+Podstawowy manager urządzeń z testowaniem zdolności i fallbackiem.
+
+#### Konstruktor
+
+```python
+def __init__(self, enable_logging: bool = True)
+```
+
+**Parametry:**
+- `enable_logging` (bool): Włącz/wyłącz logowanie operacji
+
+**Inicjalizacja:**
+- Wykrywa kolejność preferencji urządzeń (MPS → CUDA → CPU)
+- Testuje podstawowe operacje tensorowe
+- Testuje operacje podobne do ładowania modelu
+- Zapisuje wyniki testów w `capabilities`
+
+#### Główne Metody
+
+##### `get_device_for_operation(operation: OperationType, model_size: str | None = None) -> str`
+
+Wybiera najlepsze urządzenie dla danej operacji.
+
+**Parametry:**
+- `operation`: Typ operacji (`MODEL_LOADING`, `TRANSCRIPTION`, `BASIC_TENSOR`)
+- `model_size`: Rozmiar modelu (dla rozważań pamięciowych)
+
+**Zwraca:** Nazwa urządzenia (np. `'mps'`, `'cpu'`)
+
+**Logika:**
+- Sprawdza historię sukcesu operacji na każdym urządzeniu
+- Jeśli wskaźnik sukcesu > 80%, wybiera to urządzenie
+- Fallback na kolejne urządzenia w razie problemów
+- Ostateczny fallback: CPU
+
+```mermaid
+flowchart TD
+    A[get_device_for_operation] --> B{Sprawdź historię}
+    B -->|Sukces > 80%| C[Wybierz urządzenie]
+    B -->|Brak historii| D[Użyj preferencji]
+    C --> E[Zwróć urządzenie]
+    D --> E
+    B -->|Błędy| F[Fallback: kolejne urządzenie]
+    F --> G{Dostępne inne?}
+    G -->|Tak| B
+    G -->|Nie| H[Fallback: CPU]
+    H --> E
+```
+
+##### `handle_device_error(error: Exception, operation: OperationType, current_device: str) -> str`
+
+Obsługuje błędy urządzenia i zwraca urządzenie zastępcze.
+
+**Parametry:**
+- `error`: Wyjątek, który wystąpił
+- `operation`: Operacja, która się nie powiodła
+- `current_device`: Urządzenie, na którym wystąpił błąd
+
+**Zwraca:** Urządzenie fallback
+
+**Zachowanie:**
+- Loguje błąd i rejestruje porażkę w historii
+- Rozpoznaje znane problemy MPS (SparseMPS, memory_format)
+- Wyłącza problematyczne urządzenie dla danej operacji
+- Wybiera następne dostępne urządzenie
+
+```mermaid
+flowchart TD
+    A[handle_device_error] --> B[Zarejestruj błąd]
+    B --> C{Znany błąd MPS?}
+    C -->|Tak| D[Wyłącz MPS dla operacji]
+    C -->|Nie| E[Zarejestruj w historii]
+    D --> F[Wybierz fallback device]
+    E --> F
+    F --> G[Zwróć fallback]
+```
+
+##### `register_operation_success(device: str, operation: OperationType)`
+
+Rejestruje sukces operacji dla przyszłych decyzji.
+
+##### `should_retry_with_fallback(error: Exception) -> bool`
+
+Określa, czy błąd uzasadnia automatyczny retry z fallbackiem.
+
+**Zwraca:** `True` dla znanych błędów MPS (SparseMPS, aten::empty.memory_format, itp.)
+
+##### `get_device_status_report() -> Dict`
+
+Zwraca raport o statusie urządzeń (do debugowania).
+
+### Enum: `DeviceType`
+
+- `CPU = "cpu"`
+- `MPS = "mps"`
+- `CUDA = "cuda"`
+
+### Enum: `OperationType`
+
+- `MODEL_LOADING`: Ładowanie modelu
+- `TRANSCRIPTION`: Transkrypcja audio
+- `BASIC_TENSOR`: Podstawowe operacje tensorowe
+
+### Klasa: `DeviceCapability`
+
+Reprezentuje wynik oceny zdolności urządzenia.
+
+**Atrybuty:**
+- `device` (str): Nazwa urządzenia
+- `available` (bool): Czy urządzenie działa
+- `tested` (bool): Czy zostało przetestowane
+- `error` (str | None): Komunikat błędu (jeśli wystąpił)
+- `performance_score` (float): Wynik wydajności
+- `last_test_time` (float): Timestamp ostatniego testu
+
+## Moduł Rozszerzony: `mps_optimizer.py`
+
+### Klasa: `EnhancedDeviceManager`
+
+Rozszerzona wersja `DeviceManager` z dedykowaną obsługą błędów MPS i optymalizacjami M1/M2.
+
+#### Konstruktor
+
+```python
+def __init__(self, enable_logging: bool = True)
+```
+
+Tworzy instancję `DeviceManager`, `MPSErrorHandler`, `MPSOptimizer`.
+
+#### Metody
+
+##### `handle_device_error_enhanced(error: Exception, operation: OperationType, current_device: str) -> tuple[str, str]`
+
+Rozszerzona obsługa błędów z przyjaznymi komunikatami po polsku.
+
+**Zwraca:** `(fallback_device, user_friendly_message)`
+
+##### `get_optimized_settings(device: str, model_size: str) -> Dict[str, Any]`
+
+Zwraca optymalne ustawienia Whisper dla urządzenia i modelu:
+- MPS: fp16, beam_size=1, condition_on_previous_text=False
+- CPU: fp16=False, adaptive beam_size
+
+##### `optimize_model(model, device: str)`
+
+Stosuje optymalizacje specyficzne dla urządzenia (np. włącza MPS fallback, ustawia eval mode).
+
+##### `get_comprehensive_status() -> Dict[str, Any]`
+
+Raport obejmujący status urządzeń, statystyki błędów, informacje o pamięci.
+
+### Klasa: `MPSErrorHandler`
+
+Kategoryzuje błędy MPS i dostarcza przyjazne komunikaty.
+
+#### Metody:
+- `categorize_error(error: Exception) -> MPSErrorType`
+- `should_retry_with_cpu(error: Exception) -> bool`
+- `get_user_friendly_message(error: Exception) -> str` (po polsku)
+- `get_error_statistics() -> Dict[str, int]`
+
+### Enum: `MPSErrorType`
+
+- `SPARSE_BACKEND`
+- `MEMORY_FORMAT`
+- `OUT_OF_MEMORY`
+- `UNSUPPORTED_OP`
+- `UNKNOWN`
+
+### Klasa: `MPSOptimizer`
+
+Optymalizacje M1/M2 dla Whisper.
+
+#### Metody:
+- `get_optimal_whisper_settings(device: str, model_size: str) -> Dict[str, Any]`
+- `optimize_model_for_m1(model, device: str)`
+- `get_memory_usage_info(device: str) -> Dict[str, Any]`
+
+## Zależności
+
+### Zależy od:
+- `torch`: Backend PyTorch, wykrywanie urządzeń (MPS, CUDA)
+- `logging`: Logowanie operacji i błędów
+- `psutil` (opcjonalnie): Informacje o pamięci systemowej
+
+### Używany przez:
+- `transcriber.SpeechTranscriber`: Wybór urządzenia, optymalizacja, fallback
+- `mps_optimizer.EnhancedDeviceManager`: Rozszerzenie funkcjonalności
+
+## Przykład Użycia
+
+### Podstawowe użycie DeviceManager
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant DM as DeviceManager
+    
+    App->>DM: manager = DeviceManager()
+    App->>DM: device = manager.get_device_for_operation(MODEL_LOADING, "base")
+    DM-->>App: "mps" or "cpu"
+    App->>App: print(f"Using device: {device}")
+    App->>DM: manager.register_operation_success(device, MODEL_LOADING)
+```
+
+### Obsługa błędów z fallbackiem
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant DM as DeviceManager
+    
+    App->>DM: manager = DeviceManager()
+    App->>App: device = "mps"
+    App->>App: try operation on MPS
+    App-->>DM: Exception e
+    DM->>DM: should_retry_with_fallback(e)
+    DM-->>App: True
+    App->>DM: fallback_device = manager.handle_device_error(e, TRANSCRIPTION, device)
+    DM-->>App: "cpu"
+    App->>App: print(f"Falling back to: {fallback_device}")
+    App->>App: retry operation on CPU
+```
+
+### Użycie EnhancedDeviceManager
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant EDM as EnhancedDeviceManager
+    participant WM as WhisperModel
+    
+    App->>EDM: enhanced = EnhancedDeviceManager()
+    App->>EDM: device = enhanced.get_device_for_operation(TRANSCRIPTION)
+    EDM-->>App: "mps"
+    App->>EDM: settings = enhanced.get_optimized_settings(device, "base")
+    EDM-->>App: {fp16: True, ...}
+    App->>WM: model = whisper.load_model("base", device=device)
+    App->>EDM: enhanced.optimize_model(model, device)
+    App->>App: try model.transcribe(audio, **settings)
+    App-->>EDM: Exception e
+    EDM->>EDM: handle_device_error_enhanced(e, TRANSCRIPTION, device)
+    EDM-->>App: (fallback_device, message)
+    App->>App: print(f"🔄 {message}")
+    App->>App: retry with fallback
+```
+
+### Raport statusu urządzeń
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant EDM as EnhancedDeviceManager
+    
+    App->>EDM: enhanced = EnhancedDeviceManager()
+    App->>EDM: status = enhanced.get_comprehensive_status()
+    EDM-->>App: {preferred_devices: [...], capabilities: {...}, error_statistics: {...}}
+    App->>App: print("Preferred devices:", status["preferred_devices"])
+    App->>App: print("Capabilities:", status["capabilities"])
+    App->>App: print("Error statistics:", status["error_statistics"])
+```
+
+## Szczegóły Implementacji
+
+### Testowanie Zdolności
+
+Przy inicjalizacji `DeviceManager` testuje:
+1. **Podstawowe operacje**: Proste operacje tensorowe (add, sum)
+2. **Operacje podobne do modelu**: Conv1d, linear na kształtach używanych przez Whisper
+
+Wyniki są cache'owane w `capabilities`.
+
+### Historia Operacji
+
+`operation_history` śledzi ostatnie 10 wyników dla każdej kombinacji (device, operation). Wskaźnik sukcesu > 80% preferuje to urządzenie.
+
+### Znane Problemy MPS
+
+DeviceManager rozpoznaje i obsługuje:
+- `SparseMPS backend errors`
+- `aten::empty.memory_format` errors
+- `MPS out of memory`
+- `Unsupported operations`
+
+### Optymalizacje M1/M2
+
+- **fp16**: Half-precision dla szybszej inferencji na GPU
+- **beam_size=1**: Szybsze dekodowanie
+- **condition_on_previous_text=False**: Mniejsze zużycie pamięci
+- **MPS fallback**: Automatyczne przejście na CPU dla nieobsługiwanych operacji
+
+## TODO/FIXME
+
+Brak znanych TODO/FIXME w kodzie device_manager.
+
+## Znane Ograniczenia
+
+1. **Lightweight Tests**: Testy zdolności są uproszczone; nie ładują rzeczywistych modeli Whisper
+2. **History Size**: Historia operacji ograniczona do 10 ostatnich wyników
+3. **MPS Pattern Matching**: Rozpoznawanie błędów opiera się na wzorcach tekstowych
+
+## Powiązane Dokumenty
+
+- [MODULES.md](../MODULES.md) - Przegląd wszystkich modułów
+- [transcriber.md](./transcriber.md) - Moduł transkrypcji (główny konsument)
+- [ARCHITECTURE.md](../ARCHITECTURE.md) - Architektura systemu
+- [DATA_FLOW.md](../DATA_FLOW.md) - Przepływ danych
+
+---
+
+## Metadata
+
+**Wersja dokumentu**: 1.1  
+**Data utworzenia**: 2025-10-10  
+**Ostatnia aktualizacja**: 2025-10-19  
+**Autor**: AI Agent  
+**Status**: ✅ Ukończone  
+
+**Changelog**:
+- 2025-10-19: Konwersja bloków kodu Python na diagramy Mermaid, poprawa czytelności i spójności.
+- 2025-10-10: Utworzenie dokumentu na podstawie kodu.

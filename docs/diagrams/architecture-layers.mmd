@@ -1,0 +1,85 @@
+graph TB
+    subgraph Presentation["Warstwa Prezentacji"]
+        MenuBar[Menu Bar / Rumps]
+        Icons[Ikony systemowe]
+        StatusIndicator[Wskaźnik statusu nagrywania]
+    end
+    
+    subgraph Control["Warstwa Kontroli"]
+        MainLoop[Główna pętla aplikacji]
+        KeyboardListener[Obsługa skrótów klawiszowych]
+        DoubleCmd[Double Command Key Handler]
+        StatusApp[StatusBarApp - zarządzanie stanem]
+    end
+    
+    subgraph Business["Warstwa Biznesowa"]
+        Recorder[Recorder - nagrywanie audio]
+        Transcriber[SpeechTranscriber - transkrypcja]
+        DevMgr[DeviceManager - zarządzanie urządzeniami]
+        MPSOptimizer[MPSOptimizer - optymalizacja M1/M2]
+        SoundPlayer[SoundPlayer - dźwięki systemowe]
+    end
+    
+    subgraph Data["Warstwa Danych"]
+        AudioBuffer[Bufor audio - numpy arrays]
+        ModelCache[Cache modeli Whisper]
+        HistoryTracking[Historia operacji urządzeń]
+        ConfigState[Stan konfiguracji języka/modelu]
+    end
+    
+    subgraph Integration["Warstwa Integracji"]
+        PyAudio[PyAudio - capture audio]
+        PyTorch[PyTorch - framework ML]
+        Whisper[OpenAI Whisper API]
+        Pynput[Pynput - globalne skróty]
+        MacOS[macOS APIs - dźwięki/dostęp]
+    end
+    
+    %% Połączenia warstwy prezentacji
+    MenuBar --> StatusApp
+    Icons --> StatusApp
+    StatusIndicator --> StatusApp
+    
+    %% Połączenia warstwy kontroli
+    StatusApp --> Recorder
+    StatusApp --> Transcriber
+    KeyboardListener --> StatusApp
+    DoubleCmd --> StatusApp
+    MainLoop --> StatusApp
+    
+    %% Połączenia warstwy biznesowej
+    Recorder --> AudioBuffer
+    Recorder --> SoundPlayer
+    Transcriber --> ModelCache
+    Transcriber --> DevMgr
+    DevMgr --> MPSOptimizer
+    DevMgr --> HistoryTracking
+    
+    %% Połączenia warstwy danych
+    AudioBuffer --> Transcriber
+    ModelCache --> Whisper
+    ConfigState --> Transcriber
+    HistoryTracking --> DevMgr
+    
+    %% Połączenia z warstwą integracji
+    Recorder --> PyAudio
+    Transcriber --> Whisper
+    Transcriber --> PyTorch
+    DevMgr --> PyTorch
+    KeyboardListener --> Pynput
+    DoubleCmd --> Pynput
+    SoundPlayer --> MacOS
+    Whisper --> PyTorch
+    
+    %% Style dla warstw
+    classDef presentationStyle fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef controlStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef businessStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef dataStyle fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef integrationStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class MenuBar,Icons,StatusIndicator presentationStyle
+    class MainLoop,KeyboardListener,DoubleCmd,StatusApp controlStyle
+    class Recorder,Transcriber,DevMgr,MPSOptimizer,SoundPlayer businessStyle
+    class AudioBuffer,ModelCache,HistoryTracking,ConfigState dataStyle
+    class PyAudio,PyTorch,Whisper,Pynput,MacOS integrationStyle

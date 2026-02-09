@@ -1,0 +1,30 @@
+@startuml plugin-system-classes
+
+interface PluginInterface {
+  +process(transcript: str): str
+}
+
+abstract class BasePlugin {
+  {abstract} +process(transcript: str): str
+}
+
+class PluginManager {
+  -plugins: List[PluginInterface]
+  +load_plugins(): void
+  +process_transcript(text: str): str
+}
+
+class TimestampPlugin {
+  +process(transcript: str): str
+}
+
+class CustomVocabularyPlugin {
+  +process(transcript: str): str
+}
+
+PluginInterface <|.. BasePlugin
+BasePlugin <|-- TimestampPlugin
+BasePlugin <|-- CustomVocabularyPlugin
+PluginManager o-- PluginInterface
+
+@enduml

@@ -1,0 +1,222 @@
+sequenceDiagram
+    autonumber
+    
+    participant User as 👤 Użytkownik
+    participant App as 📱 StatusBarApp
+    participant Rec as 🎙️ Recorder
+    participant PyA as 🔊 PyAudio
+    participant Trans as 🤖 Transcriber
+    participant DM as ⚙️ DeviceManager
+    participant Whisper as 🧠 Whisper Model
+    participant EH as ⚠️ Error Handler
+    
+    rect rgb(255, 220, 220)
+        Note over User,EH: SCENARIUSZ 1: Błąd inicjalizacji - Model nie może być załadowany na MPS
+        
+        App->>DM: get_device_for_operation(MODEL_LOADING)
+        activate DM
+        DM-->>App: "mps"
+        deactivate DM
+        
+        App->>Whisper: load_model("base", device="mps")
+        activate Whisper
+        Whisper-->>App: ❌ Exception (OOM / MPS error)
+        deactivate Whisper
+        
+        App->>DM: should_retry_with_fallback(exception)
+        activate DM
+        DM-->>App: True (powinien spróbować fallback)
+        deactivate DM
+        
+        App->>DM: handle_device_error_enhanced(e, MODEL_LOADING, "mps")
+        activate DM
+        DM->>DM: Wybiera fallback device = "cpu"
+        DM-->>App: ("cpu", "🔄 Wykryto problem z MPS. Przełączam na CPU...")
+        deactivate DM
+        
+        App->>EH: Print user_message
+        activate EH
+        EH-->>User: 🔄 Komunikat: "Przełączam na CPU dla stabilności"
+        deactivate EH
+        
+        App->>Whisper: load_model("base", device="cpu")
+        activate Whisper
+        Note right of Whisper: Retry na CPU
+        Whisper-->>App: ✅ model loaded
+        deactivate Whisper
+        
+        App->>DM: optimize_model(model, "cpu")
+        App->>DM: register_operation_success("cpu", MODEL_LOADING)
+        
+        Note over App: ✅ Aplikacja działa na CPU
+    end
+    
+    rect rgb(255, 240, 200)
+        Note over User,EH: SCENARIUSZ 2: Błąd nagrywania - Brak mikrofonu
+        
+        User->>App: Naciśnięcie skrótu (Cmd+Option)
+        App->>Rec: start(language="pl")
+        activate Rec
+        
+        Rec->>PyA: open stream (16kHz, mono, paInt16)
+        activate PyA
+        PyA-->>Rec: ❌ Exception: "No input device available"
+        deactivate PyA
+        
+        Rec->>EH: Catch Exception
+        activate EH
+        EH->>EH: print(f"Failed to start recording: {e}")
+        EH-->>User: ⚠️ Błąd: "Nie można rozpocząć nagrywania"
+        deactivate EH
+        
+        Rec->>App: recording = False (nie udało się)
+        deactivate Rec
+        
+        App->>App: title = "⏯" (powrót do idle)
+        Note right of App: Użytkownik może:<br/>1. Podłączyć mikrofon<br/>2. Sprawdzić uprawnienia<br/>3. Spróbować ponownie
+    end
+    
+    rect rgb(240, 220, 255)
+        Note over User,EH: SCENARIUSZ 3: Stream overflow (bufor przepełniony)
+        
+        User->>App: Start nagrywania
+        App->>Rec: start()
+        activate Rec
+        Rec->>PyA: open stream + read loop
+        activate PyA
+        
+        loop Nagrywanie
+            PyA->>Rec: read(1024, exception_on_overflow=False)
+            Note right of PyA: Overflow ignorowany<br/>(exception_on_overflow=False)
+        end
+        
+        PyA->>Rec: ⚠️ Warning: Input overflow (data)
+        Note right of Rec: Zwraca dane mimo overflow<br/>Aplikacja kontynuuje
+        
+        Rec->>Rec: frames.append(data)
+        Note right of Rec: Dane mogą zawierać<br/>artefakty, ale nagranie<br/>działa dalej
+        
+        deactivate PyA
+        deactivate Rec
+        Note over Rec: ✓ Nagranie kontynuowane<br/>(graceful degradation)
+    end
+    
+    rect rgb(220, 240, 255)
+        Note over User,EH: SCENARIUSZ 4: Błąd transkrypcji (OOM podczas inference)
+        
+        Rec->>Trans: transcribe(audio_data_fp32, language="pl")
+        activate Trans
+        
+        Trans->>DM: get_device_for_operation(TRANSCRIPTION)
+        activate DM
+        DM-->>Trans: "mps"
+        deactivate DM
+        
+        Trans->>Whisper: model.transcribe(audio_data, **options)
+        activate Whisper
+        Note right of Whisper: Próba transkrypcji<br/>długiego audio na MPS
+        Whisper-->>Trans: ❌ RuntimeError: Out of memory (MPS)
+        deactivate Whisper
+        
+        Trans->>DM: should_retry_with_fallback(e)
+        activate DM
+        DM-->>Trans: True
+        deactivate DM
+        
+        Trans->>DM: handle_device_error_enhanced(e, TRANSCRIPTION, "mps")
+        activate DM
+        DM->>DM: Fallback decision: "mps" → "cpu"
+        DM-->>Trans: ("cpu", "🔄 Wykryto problem z transkrypcją. Ponawiam na CPU...")
+        deactivate DM
+        
+        Trans->>EH: Print user_message
+        activate EH
+        EH-->>User: 🔄 "Ponawiam transkrypcję na CPU"
+        deactivate EH
+        
+        Trans->>Whisper: model.to("cpu")
+        activate Whisper
+        Note right of Whisper: Przeniesienie modelu<br/>do pamięci CPU
+        Whisper-->>Trans: model moved
+        deactivate Whisper
+        
+        Trans->>DM: optimize_model(model, "cpu")
+        Trans->>DM: get_optimized_settings("cpu", model_size)
+        activate DM
+        DM-->>Trans: fallback_options {fp16: False, ...}
+        deactivate DM
+        
+        Trans->>Whisper: model.transcribe(audio_data, **fallback_options)
+        activate Whisper
+        Note right of Whisper: Retry na CPU<br/>(bez FP16)
+        Whisper-->>Trans: ✅ result {"text": "...", "language": "pl"}
+        deactivate Whisper
+        
+        Trans->>DM: register_operation_success("cpu", TRANSCRIPTION)
+        
+        Trans->>User: Wpisywanie tekstu (keyboard output)
+        deactivate Trans
+        
+        Note over Trans: ✅ Transkrypcja zakończona<br/>pomyślnie na CPU
+    end
+    
+    rect rgb(250, 230, 230)
+        Note over User,EH: SCENARIUSZ 5: Język poza allowed_languages
+        
+        User->>App: Start nagrywania (mówi po niemiecku)
+        Note right of User: allowed_languages = ["en", "pl"]
+        
+        Rec->>Trans: transcribe(audio_data, language=None)
+        activate Trans
+        
+        Trans->>Whisper: model.transcribe(audio_data, language=None)
+        activate Whisper
+        Note right of Whisper: Auto-detect języka
+        Whisper-->>Trans: result {"text": "Guten Tag", "language": "de"}
+        deactivate Whisper
+        
+        Trans->>Trans: detected_lang = "de"
+        Trans->>Trans: Check: "de" in ["en", "pl"]?
+        Note right of Trans: ❌ Język nie dozwolony
+        
+        Trans->>Trans: Override: language = allowed_languages[0] = "en"
+        Note right of Trans: Wymuszenie języka<br/>z listy dozwolonych
+        
+        Trans->>Whisper: model.transcribe(audio_data, language="en")
+        activate Whisper
+        Note right of Whisper: Re-transcribe<br/>z wymuszonym językiem
+        Whisper-->>Trans: result {"text": "Good day", "language": "en"}
+        deactivate Whisper
+        
+        Trans->>User: Wpisywanie tekstu (może być niedokładny)
+        deactivate Trans
+        
+        Note over Trans: ⚠️ Transkrypcja z wymuszonym językiem<br/>(może być mniej dokładna)
+    end
+    
+    rect rgb(255, 245, 230)
+        Note over User,EH: SCENARIUSZ 6: Błąd wpisywania tekstu (brak uprawnień accessibility)
+        
+        Trans->>Trans: Iteracja przez result["text"]
+        activate Trans
+        
+        loop Każdy znak
+            Trans->>EH: try: pykeyboard.type(char)
+            activate EH
+            EH-->>Trans: ❌ Exception: "Accessibility permissions denied"
+            deactivate EH
+            
+            Trans->>Trans: except: pass (cicho ignoruj)
+            Note right of Trans: Znak pominięty<br/>bez komunikatu błędu
+            
+            Trans->>Trans: time.sleep(0.0025)
+        end
+        
+        deactivate Trans
+        
+        Note over User: ⚠️ Tekst nie został wklejony<br/>Użytkownik musi:<br/>1. Nadać uprawnienia Accessibility<br/>2. Zrestartować aplikację<br/>3. Spróbować ponownie
+        
+        Note over EH: Design decision:<br/>Silent failure dla wpisywania<br/>(lepsze UX niż crash)
+    end
+    
+    Note over User,EH: Wszystkie scenariusze błędów obsłużone z graceful degradation

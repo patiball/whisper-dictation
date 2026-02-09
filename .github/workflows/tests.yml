@@ -1,0 +1,193 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install PortAudio
+      run: |
+        brew install portaudio
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Select Python for Poetry
+      run: |
+        poetry env use $(python -c 'import sys; print(sys.executable)')
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+
+    - name: Run unit tests
+      run: |
+        poetry run pytest -m 'unit and not slow and not manual' --cov --cov-report=xml --cov-report=term
+      continue-on-error: true
+
+    - name: Run integration tests
+      run: |
+        poetry run pytest -m 'integration and not slow and not manual' --cov --cov-append --cov-report=xml --cov-report=html
+      continue-on-error: true
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Archive coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report-${{ matrix.python-version }}
+        path: htmlcov/
+
+  lint:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install PortAudio
+      run: |
+        brew install portaudio
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+
+    - name: Select Python for Poetry
+      run: |
+        poetry env use $(python -c 'import sys; print(sys.executable)')
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+
+    - name: Run flake8
+      run: |
+        poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      continue-on-error: true
+
+    - name: Run black check
+      run: |
+        poetry run black --check .
+      continue-on-error: true
+
+    - name: Run isort check
+      run: |
+        poetry run isort --check-only .
+      continue-on-error: true
+
+  security:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install PortAudio
+      run: |
+        brew install portaudio
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+
+    - name: Select Python for Poetry
+      run: |
+        poetry env use $(python -c 'import sys; print(sys.executable)')
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+
+    - name: Run bandit security scan
+      run: |
+        poetry run bandit -r . -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan
+        path: bandit-report.json
+        if-no-files-found: warn
+
+  smoke:
+    name: CLI smoke tests
+    runs-on: macos-latest
+    needs: [test, lint]
+    if: always()
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install PortAudio
+      run: |
+        brew install portaudio
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+
+    - name: Install dependencies
+      run: |
+        poetry install
+
+    - name: Syntax check (no packaging)
+      run: |
+        poetry run python -m py_compile whisper-dictation.py whisper-dictation-fast.py
+
+    - name: Test CLI help
+      run: |
+        poetry run python whisper-dictation.py --help
+      continue-on-error: true
+
+    - name: Test fast version CLI help
+      run: |
+        poetry run python whisper-dictation-fast.py --help
+      continue-on-error: true

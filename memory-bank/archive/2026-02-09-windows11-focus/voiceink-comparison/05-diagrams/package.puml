@@ -1,0 +1,25 @@
+@startuml whisper-dictation-packages
+
+package "whisper_dictation" {
+  package "core" {
+    class TranscriptionEngine
+    class ConfigManager
+    class PlatformAdapter
+  }
+  
+  package "plugins" {
+    interface PluginInterface
+    class PluginManager
+  }
+  
+  package "ui" {
+    class SettingsGUI
+    class StatusBar
+  }
+}
+
+core ..> plugins : uses
+ui ..> core : uses
+plugins ..> core : extends
+
+@enduml

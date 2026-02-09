@@ -1,0 +1,30 @@
+venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+.coverage
+WhisperDictation.app/
+dist/
+build/
+*.egg-info/docs/.temp/
+docs/*_log_*.md
+.warp-cli.profile_id
+tests/audio/*.txttmp_rovodev_*
+.vscode/
+test_results.log
+
+# Local AI/editor metadata
+.claude/
+.windsurf/
+.warp-cli.config
+CLAUDE.md
+GEMINI.md
+CONFLUENCE_HELPERS.md
+
+# Local build workspace and scratch area
+temp/
+
+# Generated benchmark outputs
+memory-bank/docs/benchmarks/windows_acceleration_benchmark_*.json
+memory-bank/docs/benchmarks/windows_acceleration_benchmark_*.md

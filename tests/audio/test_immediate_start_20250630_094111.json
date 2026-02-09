@@ -1,0 +1,8 @@
+{
+  "test_key": "immediate_start",
+  "expected_text": "Start immediately with these exact words",
+  "filename": "test_immediate_start_20250630_094111.wav",
+  "duration": 3,
+  "sample_rate": 16000,
+  "recorded_at": "2025-06-30T09:41:17.298109"
+}

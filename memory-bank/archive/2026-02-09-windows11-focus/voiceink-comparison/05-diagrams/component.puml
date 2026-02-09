@@ -1,0 +1,28 @@
+@startuml whisper-dictation-components
+
+package "Core Components" {
+  component [Audio I/O] as AC
+  component [Transcription Engine] as TE
+  component [Configuration Manager] as CM
+  component [Platform Adapter] as PA
+}
+
+package "Plugin System" {
+  component [Plugin Manager] as PM
+  interface "Plugin API" as PAPI
+}
+
+package "UI Layer" {
+  component [Settings GUI] as UI
+}
+
+AC --> TE : audio stream
+TE --> PM : raw transcript
+PM --> PAPI
+CM --> TE : config
+CM --> AC : config
+UI --> CM : user settings
+PA --> AC
+PA --> UI
+
+@enduml
