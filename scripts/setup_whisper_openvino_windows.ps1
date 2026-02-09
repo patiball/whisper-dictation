@@ -1,9 +1,15 @@
 param(
     [string]$RepoDir = "temp/third_party/whisper.cpp",
-    [string]$ModelName = "base.en"
+    [string]$ModelName = "base"
 )
 
 $ErrorActionPreference = "Stop"
+$isEnglishOnlyModel = $ModelName -match "\.en$"
+$smokeLanguage = if ($isEnglishOnlyModel) { "en" } else { "auto" }
+
+if ($isEnglishOnlyModel) {
+    Write-Warning "Using English-only model '$ModelName'. This is not suitable for Polish dictation quality benchmarks."
+}
 
 function Require-Command([string]$Name, [string]$Hint) {
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
@@ -138,4 +144,4 @@ Write-Host "WHISPER_CLI_BIN=$newCli"
 Write-Host "WHISPER_CLI_MODEL=$newModel"
 Write-Host ""
 Write-Host "Smoke test command:"
-Write-Host "`"$newCli`" -m `"$newModel`" -f tests/audio/test_english_5s_20250630_094048.wav -l en -otxt -of `"$env:TEMP\whisper_cli_openvino_smoke\sample`" -oved GPU"
+Write-Host "`"$newCli`" -m `"$newModel`" -f tests/audio/test_english_5s_20250630_094048.wav -l $smokeLanguage -otxt -of `"$env:TEMP\whisper_cli_openvino_smoke\sample`" -oved GPU"

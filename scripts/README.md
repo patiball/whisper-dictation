@@ -67,8 +67,10 @@ poetry run python scripts/check-links.py
 **Usage**:
 ```bash
 python scripts/windows_acceleration_benchmark.py --python-model medium --runs 3 --audio-pattern "test_*.wav"
+python scripts/windows_acceleration_benchmark.py --skip-python --runs 3 --whispercpp-cli "$WHISPER_CLI_BIN" --whispercpp-model "$WHISPER_CLI_MODEL" --whispercpp-candidate "whispercpp-openvino-gpu=-otxt -l auto -oved GPU"
 ```
 **Description**: Generates JSON and Markdown benchmark reports under `memory-bank/docs/benchmarks/`.
+Supports `--skip-python` for whisper.cpp-only runs.
 
 ---
 
@@ -112,8 +114,18 @@ poetry run python scripts/tmp_rovodev_measure_start_silence.py
 **Usage**:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/setup_whisper_openvino_windows.ps1
+powershell -ExecutionPolicy Bypass -File scripts/setup_whisper_openvino_windows.ps1 -ModelName base
 ```
 **Description**: Installs prerequisites, builds `whisper-cli` with OpenVINO, converts encoder model, and sets `WHISPER_CLI_BIN` / `WHISPER_CLI_MODEL`.
+Default model is multilingual `base` (recommended for Polish+English usage).
+
+### `run_whispercpp_openvino_benchmark.ps1`
+**Purpose**: Run whisper.cpp OpenVINO GPU benchmark only (no Python baseline, no build)
+**Usage**:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_whispercpp_openvino_benchmark.ps1 -Runs 3
+```
+**Description**: Thin runner around `windows_acceleration_benchmark.py --skip-python` for repeated cpp-only measurements.
 
 ---
 
@@ -130,6 +142,7 @@ scripts/
 ├── run_tdd_red_phase.py                   # TDD red phase runner
 ├── check-links.py                         # Documentation link checker
 ├── windows_acceleration_benchmark.py      # Windows backend benchmark harness
+├── run_whispercpp_openvino_benchmark.ps1  # cpp-only benchmark runner (no build)
 ├── tmp_rovodev_measure_start_silence.py   # Audio clipping diagnostic
 ├── setup-docs-mvp.sh                      # Docs setup
 ├── setup_whisper_openvino_windows.ps1     # OpenVINO setup for whisper.cpp

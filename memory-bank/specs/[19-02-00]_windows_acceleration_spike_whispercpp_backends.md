@@ -47,12 +47,24 @@ Run hardware-aware spike for whisper.cpp acceleration options on Windows and cho
   - generated `ggml-base.en-encoder-openvino.xml/.bin`
   - validated runtime with `-oved GPU` and `OPENVINO = 1` in logs
 - Reproducible setup script added: `scripts/setup_whisper_openvino_windows.ps1`
+- Setup default now uses multilingual model (`base`) to avoid PL quality regression from `base.en`.
+- Benchmark harness now supports cpp-only execution (`--skip-python`).
+- Dedicated no-build runner added: `scripts/run_whispercpp_openvino_benchmark.ps1`.
+- Additional benchmark artifacts captured:
+  - `memory-bank/docs/benchmarks/windows_acceleration_benchmark_20260209_182542.json/.md`
+  - `memory-bank/docs/benchmarks/windows_acceleration_benchmark_20260209_182952.json/.md`
+  - `memory-bank/docs/benchmarks/windows_acceleration_benchmark_20260209_184015.json/.md`
+- Constraint observed: using `ggml-base.en.bin` with PL/EN corpus produces strong latency but quality below threshold.
 
 ## 17) Benchmark Run Command (Current)
 - Baseline + optional whisper.cpp candidates:
   - `.\.venv\Scripts\python.exe scripts/windows_acceleration_benchmark.py --python-model medium --runs 3`
 - Example with explicit whisper.cpp candidate and model:
   - `.\.venv\Scripts\python.exe scripts/windows_acceleration_benchmark.py --python-model medium --runs 3 --whispercpp-cli whisper-cli --whispercpp-model "<PATH_TO_GGML_MODEL_BIN>" --whispercpp-candidate "default=-l en -otxt"`
+- cpp-only rerun (no Python baseline):
+  - `.\.venv\Scripts\python.exe scripts/windows_acceleration_benchmark.py --skip-python --runs 3 --whispercpp-cli "$env:WHISPER_CLI_BIN" --whispercpp-model "$env:WHISPER_CLI_MODEL" --whispercpp-candidate "whispercpp-openvino-gpu=-otxt -l auto -oved GPU"`
+- convenience runner (no build):
+  - `powershell -ExecutionPolicy Bypass -File scripts/run_whispercpp_openvino_benchmark.ps1 -Runs 3`
 
 ## 20) Brittleness Analysis (MANDATORY before Status = Ready)
 **BRITTLENESS ANALYSIS:**

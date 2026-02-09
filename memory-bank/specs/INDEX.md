@@ -1,6 +1,6 @@
 # Specs Index
 
-Last Updated: 2026-02-09 (19-01 implemented, 19-02 spike started)
+Last Updated: 2026-02-09 (19-01 implemented, 19-02 spike in progress with cpp-only benchmark path)
 
 ## Active
 
@@ -46,5 +46,8 @@ Last Updated: 2026-02-09 (19-01 implemented, 19-02 spike started)
 ## Notes
 
 - Current execution focus is `[19-02-00]` acceleration spike and benchmark evidence gathering.
+- Benchmark workflow now supports no-build cpp-only reruns via
+  `scripts/run_whispercpp_openvino_benchmark.ps1` and
+  `scripts/windows_acceleration_benchmark.py --skip-python`.
 - Detailed historical analysis artifacts were moved to:
   `memory-bank/archive/2026-02-09-windows11-focus/`

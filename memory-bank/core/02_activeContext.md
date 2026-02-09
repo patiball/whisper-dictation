@@ -6,16 +6,14 @@
 
 ## What is actively in scope
 
-1. Run baseline benchmark for Python backend on fixed WAV corpus.
-2. Validate whisper.cpp presence and candidate backend modes on Windows.
+1. Run cpp-only benchmark loops for OpenVINO GPU candidate without re-running full setup/build.
+2. Validate quality and latency on English + Polish corpus with multilingual model path.
 3. Capture median and p95 latency for repeated runs.
 4. Produce benchmark report with recommendation for next issue `[19-03-00]`.
 5. Keep current UX unchanged while gathering acceleration evidence.
-6. Execute Windows OpenVINO enablement plan for Intel Arc GPU:
-   - install required Windows build toolchain
-   - build whisper.cpp with OpenVINO backend enabled
-   - generate OpenVINO encoder artifacts for selected model
-   - validate GPU path and capture run command in project scripts
+6. Keep setup/build separate from benchmark execution:
+   - setup script for install/build/conversion only
+   - dedicated benchmark runner for no-build test reruns
 
 ## What is intentionally deferred
 
@@ -39,9 +37,7 @@
 
 ## Immediate Execution Plan (2026-02-09)
 
-1. Add project script `scripts/setup_whisper_openvino_windows.ps1` (idempotent installer/build helper).
-2. Install prerequisites (`cmake`, Visual C++ Build Tools if missing, Python deps for conversion).
-3. Clone/update `whisper.cpp` source under local tooling directory.
-4. Build Release with `WHISPER_OPENVINO=1`.
-5. Generate OpenVINO model artifacts and run `whisper-cli` smoke test with `-oved GPU`.
-6. Persist resolved binary/model paths for benchmark and next Epic 19 steps.
+1. Ensure benchmark uses multilingual model (`ggml-base.bin`) for PL/EN corpus quality checks.
+2. Run `scripts/run_whispercpp_openvino_benchmark.ps1` for cpp-only measurements.
+3. Compare repeated benchmark reports and confirm stable median/p95.
+4. Finalize `[19-02-00]` recommendation with explicit quality caveats and next actions.

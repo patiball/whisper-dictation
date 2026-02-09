@@ -17,6 +17,10 @@ Last Update: 2026-02-09
 - Reproducible setup script added: `scripts/setup_whisper_openvino_windows.ps1`.
 - `WHISPER_CLI_BIN` now points to stable OpenVINO build location:
   `C:\Users\mprzybyszewski1\AppData\Local\whispercpp\openvino\bin\whisper-cli.exe`.
+- Benchmark harness extended with `--skip-python` for cpp-only reruns.
+- Added no-build benchmark runner: `scripts/run_whispercpp_openvino_benchmark.ps1`.
+- Setup script default model changed to multilingual `base` (instead of `base.en`) to match PL/EN usage.
+- Added warning in setup script when English-only model (`*.en`) is selected.
 
 ## Completed in this update
 
@@ -30,7 +34,9 @@ Last Update: 2026-02-09
 8. Added shared runtime/backend contracts and factory wiring for issue `[19-01-00]`.
 9. Added contract tests (`tests/test_runtime_contracts.py`) and verified passing locally.
 10. Added benchmark harness for `[19-02-00]` with JSON+Markdown report output.
+11. Added cpp-only execution path and runner script to avoid rebuild loop between benchmark runs.
+12. Added unit tests for benchmark candidate parsing and `--skip-python` behavior.
 
 ## Next Execution Step
 
-Execute issue `[19-02-00]`: run benchmark harness on Windows hardware, capture median/p95, and finalize backend recommendation for `[19-03-00]`.
+Execute issue `[19-02-00]` with multilingual model (`ggml-base.bin`): run cpp-only benchmark harness on Windows hardware, capture median/p95 + quality, and finalize backend recommendation for `[19-03-00]`.

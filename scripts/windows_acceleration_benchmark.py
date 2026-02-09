@@ -62,6 +62,11 @@ def parse_args() -> argparse.Namespace:
         help="Optional language code for Python baseline.",
     )
     parser.add_argument(
+        "--skip-python",
+        action="store_true",
+        help="Skip Python Whisper baseline and run only whisper.cpp candidates.",
+    )
+    parser.add_argument(
         "--whispercpp-cli",
         type=str,
         default=None,
@@ -490,11 +495,12 @@ def main() -> int:
     expected_texts = load_expected_texts(files, quality_subset)
 
     results: list[dict[str, Any]] = []
-    python_result = (
-        benchmark_python(files, args.runs, args.python_model, args.python_language)
-    )
-    python_result["quality"] = compute_quality_summary(python_result, expected_texts)
-    results.append(python_result)
+    if not args.skip_python:
+        python_result = (
+            benchmark_python(files, args.runs, args.python_model, args.python_language)
+        )
+        python_result["quality"] = compute_quality_summary(python_result, expected_texts)
+        results.append(python_result)
 
     whisper_cli = detect_whisper_cli(args.whispercpp_cli)
     whisper_model = args.whispercpp_model or os.environ.get("WHISPER_CLI_MODEL")
