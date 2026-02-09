@@ -1,8 +1,8 @@
 # Active Context
 
-**Current Focus:** Windows 11 MVP verification and stabilization
+**Current Focus:** Windows 11 MVP stabilization + next epic planning (cross-platform acceleration)
 
-**Primary Epic:** `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`
+**Primary Epic:** `memory-bank/specs/[19-00-00]_cross_platform_unified_app_and_acceleration_strategy.md`
 
 ## What is actively in scope
 
@@ -10,7 +10,7 @@
 2. Manually verify global hotkey stability (`ctrl+alt` default).
 3. Manually verify start/stop sound cues on Windows audio stack.
 4. Confirm first-run `-m medium` download and second-run cache reuse.
-5. Apply any small fixes discovered during manual verification.
+5. Prepare test-gated incremental implementation plan from epic `[19-00-00]`.
 
 ## What is intentionally deferred
 
@@ -21,11 +21,13 @@
 
 ## Working set
 
-- Spec: `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`
-- Stories:
-  - `memory-bank/specs/[18-01-00]_windows_runtime_bootstrap_without_macos_ui_dependency.md`
-  - `memory-bank/specs/[18-02-00]_windows_tray_icon_and_basic_controls.md`
-  - `memory-bank/specs/[18-03-00]_windows_start_stop_sound_cues.md`
-  - `memory-bank/specs/[18-04-00]_first_run_medium_model_bootstrap_and_windows_runbook.md`
+- Epic: `memory-bank/specs/[19-00-00]_cross_platform_unified_app_and_acceleration_strategy.md`
+- Issues:
+  - `memory-bank/specs/[19-01-00]_shared_runtime_contract_and_test_gate.md`
+  - `memory-bank/specs/[19-02-00]_windows_acceleration_spike_whispercpp_backends.md`
+  - `memory-bank/specs/[19-03-00]_pluggable_transcription_backend_integration.md`
+  - `memory-bank/specs/[19-04-00]_safe_fallback_and_incremental_release_controls.md`
+  - `memory-bank/specs/[19-05-00]_benchmark_gate_and_windows_runbook_for_acceleration.md`
+- Previous Epic (stabilization): `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`
 - Backlog: `memory-bank/issues-backlog.md`
 - Tech context: `memory-bank/core/05_techContext.md`

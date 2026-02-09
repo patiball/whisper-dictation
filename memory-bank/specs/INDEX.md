@@ -1,9 +1,27 @@
 # Specs Index
 
-Last Updated: 2026-02-09 (implementation pass)
+Last Updated: 2026-02-09 (implementation pass + new epic planning)
 
 ## Active
 
+- `[19-00-00]` Cross-Platform Unified App and Acceleration Strategy  
+  File: `memory-bank/specs/[19-00-00]_cross_platform_unified_app_and_acceleration_strategy.md`  
+  Status: Draft
+- `[19-01-00]` Shared Runtime Contract and Test Gate  
+  File: `memory-bank/specs/[19-01-00]_shared_runtime_contract_and_test_gate.md`  
+  Status: Draft
+- `[19-02-00]` Windows Acceleration Spike (whisper.cpp Backends)  
+  File: `memory-bank/specs/[19-02-00]_windows_acceleration_spike_whispercpp_backends.md`  
+  Status: Draft
+- `[19-03-00]` Pluggable Transcription Backend Integration  
+  File: `memory-bank/specs/[19-03-00]_pluggable_transcription_backend_integration.md`  
+  Status: Draft
+- `[19-04-00]` Safe Fallback and Incremental Release Controls  
+  File: `memory-bank/specs/[19-04-00]_safe_fallback_and_incremental_release_controls.md`  
+  Status: Draft
+- `[19-05-00]` Benchmark Gate and Windows Runbook for Acceleration  
+  File: `memory-bank/specs/[19-05-00]_benchmark_gate_and_windows_runbook_for_acceleration.md`  
+  Status: Draft
 - `[18-00-00]` Windows 11 Minimal Runtime (Hotkey + Tray + Sound Cues + Auto Model Download)  
   File: `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`  
   Status: Implemented (pending manual Windows verification)
