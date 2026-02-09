@@ -1,6 +1,6 @@
 # Issue: Windows Acceleration Spike (whisper.cpp Backends)
 
-**Status**: Draft  
+**Status**: In Progress  
 **Priority**: High  
 **Estimated Complexity**: Medium  
 **Created**: 2026-02-09  
@@ -34,6 +34,26 @@ Run hardware-aware spike for whisper.cpp acceleration options on Windows and cho
 - repeated runs for median and p95 latency
 - manual quality spot-check
 
+## 16) Implementation Notes
+- Benchmark harness added: `scripts/windows_acceleration_benchmark.py`
+- Default corpus path: `tests/audio/test_*.wav`
+- Report output path: `memory-bank/docs/benchmarks/`
+- Report formats: JSON + Markdown (includes recommendation stub)
+- First smoke benchmark generated:
+  - `memory-bank/docs/benchmarks/windows_acceleration_benchmark_20260209_145330.json`
+  - `memory-bank/docs/benchmarks/windows_acceleration_benchmark_20260209_145330.md`
+- OpenVINO setup completed for Windows:
+  - built `whisper.cpp` with `WHISPER_OPENVINO=1`
+  - generated `ggml-base.en-encoder-openvino.xml/.bin`
+  - validated runtime with `-oved GPU` and `OPENVINO = 1` in logs
+- Reproducible setup script added: `scripts/setup_whisper_openvino_windows.ps1`
+
+## 17) Benchmark Run Command (Current)
+- Baseline + optional whisper.cpp candidates:
+  - `.\.venv\Scripts\python.exe scripts/windows_acceleration_benchmark.py --python-model medium --runs 3`
+- Example with explicit whisper.cpp candidate and model:
+  - `.\.venv\Scripts\python.exe scripts/windows_acceleration_benchmark.py --python-model medium --runs 3 --whispercpp-cli whisper-cli --whispercpp-model "<PATH_TO_GGML_MODEL_BIN>" --whispercpp-candidate "default=-l en -otxt"`
+
 ## 20) Brittleness Analysis (MANDATORY before Status = Ready)
 **BRITTLENESS ANALYSIS:**
 - Over-specified elements: none (no hard lock to a single backend before data)
@@ -41,4 +61,3 @@ Run hardware-aware spike for whisper.cpp acceleration options on Windows and cho
 - Flexibility score: Medium
 - Fixes applied: benchmark-driven decision explicitly required
 - Recommendation: Add detail (fixed benchmark corpus) before Ready
-

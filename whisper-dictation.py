@@ -17,6 +17,11 @@ import psutil
 import pyaudio
 import torch
 from pynput import keyboard
+from runtime_contracts import (
+    create_key_listener,
+    create_runtime_app,
+    validate_transcription_backend,
+)
 from whisper import load_model
 
 try:
@@ -591,7 +596,7 @@ class Recorder:
         self, transcriber, frames_per_buffer=512, warmup_buffers=2, debug=False
     ):
         self.recording = False
-        self.transcriber = transcriber
+        self.transcriber = validate_transcription_backend(transcriber)
         self.sound_player = SoundPlayer()
         self.frames_per_buffer = frames_per_buffer
         self.warmup_buffers = warmup_buffers
@@ -1204,14 +1209,20 @@ if __name__ == "__main__":
     )
 
     system = platform.system()
+    app = create_runtime_app(
+        system,
+        recorder,
+        args.language,
+        args.max_time,
+        status_bar_app_cls=StatusBarApp,
+        windows_tray_app_cls=WindowsTrayApp,
+        headless_runtime_app_cls=HeadlessRuntimeApp,
+    )
     if system == "Darwin":
-        app = StatusBarApp(recorder, args.language, args.max_time)
         logging.info("macOS status bar app initialized")
     elif system == "Windows":
-        app = WindowsTrayApp(recorder, args.language, args.max_time)
         logging.info("Windows tray app initialized")
     else:
-        app = HeadlessRuntimeApp(recorder, args.language, args.max_time)
         logging.info("Headless runtime app initialized")
 
     if args.k_double_cmd and system != "Darwin":
@@ -1220,11 +1231,17 @@ if __name__ == "__main__":
         )
         args.k_double_cmd = False
 
-    if args.k_double_cmd:
-        key_listener = DoubleCommandKeyListener(app)
+    key_listener = create_key_listener(
+        args.k_double_cmd,
+        system,
+        app,
+        args.key_combination,
+        double_command_key_listener_cls=DoubleCommandKeyListener,
+        global_key_listener_cls=GlobalKeyListener,
+    )
+    if args.k_double_cmd and system == "Darwin":
         logging.info("Using double command key listener")
     else:
-        key_listener = GlobalKeyListener(app, args.key_combination)
         logging.info(
             f"Using global key listener with combination: {args.key_combination}"
         )

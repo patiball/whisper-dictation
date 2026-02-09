@@ -1,6 +1,6 @@
 # Issue: Shared Runtime Contract and Test Gate
 
-**Status**: Draft  
+**Status**: Implemented (pending manual Windows verification)  
 **Priority**: High  
 **Estimated Complexity**: Medium  
 **Created**: 2026-02-09  
@@ -21,10 +21,10 @@ Define shared runtime interfaces and add test gate so each next step is safe and
 - No major behavior changes for end users.
 
 ## 5) Acceptance Criteria (MANDATORY, Testable)
-- [ ] AC1: Contracts are documented and reflected in code-level abstractions.
-- [ ] AC2: Contract tests exist and pass.
-- [ ] AC3: Existing MVP flow works unchanged with default backend.
-- [ ] AC4: Small rollback instructions are captured.
+- [x] AC1: Contracts are documented and reflected in code-level abstractions.
+- [x] AC2: Contract tests exist and pass.
+- [x] AC3: Existing MVP flow works unchanged with default backend.
+- [x] AC4: Small rollback instructions are captured.
 
 ## 15) Test Plan (MANDATORY)
 ### Minimal verification (fast)
@@ -34,6 +34,18 @@ Define shared runtime interfaces and add test gate so each next step is safe and
 ### Full verification (slower)
 - manual start/stop/tray smoke test on Windows
 
+## 16) Implementation Notes
+- Added shared contract module: `runtime_contracts.py`
+- Integrated runtime and listener factories into main flow in `whisper-dictation.py`
+- Added backend contract validation in `Recorder` initialization
+- Added contract-focused unit tests: `tests/test_runtime_contracts.py`
+
+## 17) Rollback Notes
+- Revert `whisper-dictation.py` usage of `create_runtime_app` / `create_key_listener`
+- Remove `validate_transcription_backend(...)` call in `Recorder.__init__`
+- Remove `runtime_contracts.py` and `tests/test_runtime_contracts.py`
+- Restore direct runtime/listener instantiation paths
+
 ## 20) Brittleness Analysis (MANDATORY before Status = Ready)
 **BRITTLENESS ANALYSIS:**
 - Over-specified elements: none
@@ -41,4 +53,3 @@ Define shared runtime interfaces and add test gate so each next step is safe and
 - Flexibility score: High
 - Fixes applied: requirements defined by behavior, not file layout
 - Recommendation: Good balance
-

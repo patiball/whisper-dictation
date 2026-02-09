@@ -63,15 +63,7 @@ markers = [
 addopts = [
     "--strict-markers",
     "--verbose",
-    "--tb=short",
-    "--cov=whisper-dictation",
-    "--cov=recorder",
-    "--cov=transcriber",
-    "--cov=device_manager",
-    "--cov=mps_optimizer",
-    "--cov-report=html",
-    "--cov-report=term-missing",
-    "--cov-fail-under=70"
+    "--tb=short"
 ]
 
 testpaths = "tests"

@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-02-09T16:44:42",
+  "platform": "win32",
+  "runs": 1,
+  "python_model": "tiny",
+  "corpus": [
+    {
+      "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+      "duration_s": 4.992
+    }
+  ],
+  "results": [
+    {
+      "backend": "python-whisper",
+      "runs": 1,
+      "sample_count": 1,
+      "success_count": 1,
+      "failure_count": 0,
+      "latency_median_s": 0.4033,
+      "latency_p95_s": 0.4033,
+      "samples": [
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 1,
+          "latency_s": 0.4033,
+          "text": "This is an English language test. Numbers 1 2 3 4 5",
+          "text_preview": "This is an English language test. Numbers 1 2 3 4 5",
+          "language": "en",
+          "returncode": 0
+        }
+      ],
+      "failures": [],
+      "quality": {
+        "evaluated_samples": 1,
+        "similarity_median": 0.4118,
+        "similarity_p10": 0.4118,
+        "below_0_6_count": 1
+      }
+    }
+  ],
+  "quality_subset": [
+    "tests\\audio\\test_english_5s_20250630_094048.wav"
+  ],
+  "quality_threshold": 0.6,
+  "recommendation": "No backend meets quality threshold (median similarity >= 0.6). Keep python-whisper as default and improve whisper.cpp language/task configuration."
+}

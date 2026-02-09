@@ -1,0 +1,915 @@
+{
+  "generated_at": "2026-02-09T16:54:23",
+  "platform": "win32",
+  "runs": 3,
+  "python_model": "medium",
+  "corpus": [
+    {
+      "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+      "duration_s": 9.984
+    },
+    {
+      "file": "tests\\audio\\test_english_20250630_085152.wav",
+      "duration_s": 4.992
+    },
+    {
+      "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+      "duration_s": 4.992
+    },
+    {
+      "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+      "duration_s": 2.944
+    },
+    {
+      "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+      "duration_s": 4.992
+    },
+    {
+      "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+      "duration_s": 9.984
+    },
+    {
+      "file": "tests\\audio\\test_polish_20250630_083944.wav",
+      "duration_s": 9.984
+    },
+    {
+      "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+      "duration_s": 4.992
+    }
+  ],
+  "results": [
+    {
+      "backend": "python-whisper",
+      "runs": 3,
+      "sample_count": 24,
+      "success_count": 24,
+      "failure_count": 0,
+      "latency_median_s": 7.821,
+      "latency_p95_s": 9.714,
+      "samples": [
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 1,
+          "latency_s": 7.1875,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds. Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds. Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 2,
+          "latency_s": 7.0701,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds. Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds. Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 3,
+          "latency_s": 9.2118,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds. Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds. Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 1,
+          "latency_s": 7.7243,
+          "text": "Hello, this is a test recording for Whisper Dictation application.",
+          "text_preview": "Hello, this is a test recording for Whisper Dictation application.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 2,
+          "latency_s": 7.9705,
+          "text": "Hello, this is a test recording for Whisper Dictation application.",
+          "text_preview": "Hello, this is a test recording for Whisper Dictation application.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 3,
+          "latency_s": 8.0027,
+          "text": "Hello, this is a test recording for Whisper Dictation application.",
+          "text_preview": "Hello, this is a test recording for Whisper Dictation application.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 1,
+          "latency_s": 7.9317,
+          "text": "This is an English language test. Numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test. Numbers 1, 2, 3, 4, 5.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 2,
+          "latency_s": 7.6687,
+          "text": "This is an English language test. Numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test. Numbers 1, 2, 3, 4, 5.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 3,
+          "latency_s": 7.7317,
+          "text": "This is an English language test. Numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test. Numbers 1, 2, 3, 4, 5.",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 1,
+          "latency_s": 7.3574,
+          "text": "Start immediately with this exact",
+          "text_preview": "Start immediately with this exact",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 2,
+          "latency_s": 7.5894,
+          "text": "Start immediately with this exact",
+          "text_preview": "Start immediately with this exact",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 3,
+          "latency_s": 7.175,
+          "text": "Start immediately with this exact",
+          "text_preview": "Start immediately with this exact",
+          "language": "en",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 1,
+          "latency_s": 7.6991,
+          "text": "Hello, jak si\u0119 masz? I am testing mixed language recognition.",
+          "text_preview": "Hello, jak si\u0119 masz? I am testing mixed language recognition.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 2,
+          "latency_s": 7.7331,
+          "text": "Hello, jak si\u0119 masz? I am testing mixed language recognition.",
+          "text_preview": "Hello, jak si\u0119 masz? I am testing mixed language recognition.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 3,
+          "latency_s": 7.4676,
+          "text": "Hello, jak si\u0119 masz? I am testing mixed language recognition.",
+          "text_preview": "Hello, jak si\u0119 masz? I am testing mixed language recognition.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 1,
+          "latency_s": 9.6623,
+          "text": "To jest d\u0142u\u017cszy test j\u0119zyka polskiego. Mam nam m\u00f3wi\u0107 przez oko\u0142o 10 sekund. Liczby 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "To jest d\u0142u\u017cszy test j\u0119zyka polskiego. Mam nam m\u00f3wi\u0107 przez oko\u0142o 10 sekund. Liczby 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 2,
+          "latency_s": 9.7231,
+          "text": "To jest d\u0142u\u017cszy test j\u0119zyka polskiego. Mam nam m\u00f3wi\u0107 przez oko\u0142o 10 sekund. Liczby 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "To jest d\u0142u\u017cszy test j\u0119zyka polskiego. Mam nam m\u00f3wi\u0107 przez oko\u0142o 10 sekund. Liczby 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 3,
+          "latency_s": 9.9298,
+          "text": "To jest d\u0142u\u017cszy test j\u0119zyka polskiego. Mam nam m\u00f3wi\u0107 przez oko\u0142o 10 sekund. Liczby 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "To jest d\u0142u\u017cszy test j\u0119zyka polskiego. Mam nam m\u00f3wi\u0107 przez oko\u0142o 10 sekund. Liczby 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 1,
+          "latency_s": 7.9445,
+          "text": "1, 2, 3, 4, 5. To jest test aplikacji Whisper z j\u0119zykiem polskim.",
+          "text_preview": "1, 2, 3, 4, 5. To jest test aplikacji Whisper z j\u0119zykiem polskim.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 2,
+          "latency_s": 8.4055,
+          "text": "1, 2, 3, 4, 5. To jest test aplikacji Whisper z j\u0119zykiem polskim.",
+          "text_preview": "1, 2, 3, 4, 5. To jest test aplikacji Whisper z j\u0119zykiem polskim.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 3,
+          "latency_s": 8.2927,
+          "text": "1, 2, 3, 4, 5. To jest test aplikacji Whisper z j\u0119zykiem polskim.",
+          "text_preview": "1, 2, 3, 4, 5. To jest test aplikacji Whisper z j\u0119zykiem polskim.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 1,
+          "latency_s": 7.7223,
+          "text": "To jest test polskiego j\u0119zyka. Liczby 1, 2, 3, 4, 5.",
+          "text_preview": "To jest test polskiego j\u0119zyka. Liczby 1, 2, 3, 4, 5.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 2,
+          "latency_s": 7.909,
+          "text": "To jest test polskiego j\u0119zyka. Liczby 1, 2, 3, 4, 5.",
+          "text_preview": "To jest test polskiego j\u0119zyka. Liczby 1, 2, 3, 4, 5.",
+          "language": "pl",
+          "returncode": 0
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 3,
+          "latency_s": 7.9727,
+          "text": "To jest test polskiego j\u0119zyka. Liczby 1, 2, 3, 4, 5.",
+          "text_preview": "To jest test polskiego j\u0119zyka. Liczby 1, 2, 3, 4, 5.",
+          "language": "pl",
+          "returncode": 0
+        }
+      ],
+      "failures": [],
+      "quality": {
+        "evaluated_samples": 12,
+        "similarity_median": 1.0,
+        "similarity_p10": 0.875,
+        "below_0_6_count": 0
+      }
+    },
+    {
+      "backend": "whispercpp-auto",
+      "runs": 3,
+      "sample_count": 24,
+      "success_count": 24,
+      "failure_count": 0,
+      "latency_median_s": 1.7583,
+      "latency_p95_s": 8.6286,
+      "samples": [
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 1,
+          "latency_s": 1.8468,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 2,
+          "latency_s": 1.975,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 3,
+          "latency_s": 1.8878,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 1,
+          "latency_s": 1.5188,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 2,
+          "latency_s": 1.5324,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 3,
+          "latency_s": 1.5291,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 1,
+          "latency_s": 1.4808,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 2,
+          "latency_s": 1.5087,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 3,
+          "latency_s": 1.5545,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 1,
+          "latency_s": 1.4936,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 2,
+          "latency_s": 1.4112,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 3,
+          "latency_s": 1.493,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 1,
+          "latency_s": 1.5267,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 2,
+          "latency_s": 1.6462,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 3,
+          "latency_s": 1.6699,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 1,
+          "latency_s": 9.5791,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 2,
+          "latency_s": 8.6632,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 3,
+          "latency_s": 8.4322,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 1,
+          "latency_s": 1.9854,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 2,
+          "latency_s": 1.9218,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 3,
+          "latency_s": 1.9148,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 1,
+          "latency_s": 1.9051,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 2,
+          "latency_s": 1.911,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 3,
+          "latency_s": 1.9261,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        }
+      ],
+      "failures": [],
+      "quality": {
+        "evaluated_samples": 12,
+        "similarity_median": 0.527,
+        "similarity_p10": 0.0,
+        "below_0_6_count": 6
+      }
+    },
+    {
+      "backend": "whispercpp-en",
+      "runs": 3,
+      "sample_count": 24,
+      "success_count": 24,
+      "failure_count": 0,
+      "latency_median_s": 1.7482,
+      "latency_p95_s": 8.0948,
+      "samples": [
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 1,
+          "latency_s": 1.9412,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 2,
+          "latency_s": 1.8434,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 3,
+          "latency_s": 1.8365,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 1,
+          "latency_s": 1.5201,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 2,
+          "latency_s": 1.6197,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 3,
+          "latency_s": 1.5135,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 1,
+          "latency_s": 1.6481,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 2,
+          "latency_s": 1.6599,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 3,
+          "latency_s": 1.6168,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 1,
+          "latency_s": 1.4833,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 2,
+          "latency_s": 1.4866,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 3,
+          "latency_s": 1.4533,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 1,
+          "latency_s": 1.5433,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 2,
+          "latency_s": 1.4939,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 3,
+          "latency_s": 1.5113,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 1,
+          "latency_s": 8.0916,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 2,
+          "latency_s": 8.0954,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 3,
+          "latency_s": 8.9894,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 1,
+          "latency_s": 2.2484,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 2,
+          "latency_s": 2.8988,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 3,
+          "latency_s": 2.2915,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 1,
+          "latency_s": 2.2569,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 2,
+          "latency_s": 2.5944,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 3,
+          "latency_s": 2.3638,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        }
+      ],
+      "failures": [],
+      "quality": {
+        "evaluated_samples": 12,
+        "similarity_median": 0.527,
+        "similarity_p10": 0.0,
+        "below_0_6_count": 6
+      }
+    },
+    {
+      "backend": "whispercpp-pl",
+      "runs": 3,
+      "sample_count": 24,
+      "success_count": 24,
+      "failure_count": 0,
+      "latency_median_s": 1.878,
+      "latency_p95_s": 8.1614,
+      "samples": [
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 1,
+          "latency_s": 2.1614,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 2,
+          "latency_s": 2.2299,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_10s_20250630_094136.wav",
+          "run": 3,
+          "latency_s": 2.1489,
+          "returncode": 0,
+          "text": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+          "text_preview": "This is a longer English language test. I will speak for approximately 10 seconds.\n Numbers 1, 2, 3, 4, 5, 6, 7, 8, 9, 10."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 1,
+          "latency_s": 1.8756,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 2,
+          "latency_s": 1.8056,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_20250630_085152.wav",
+          "run": 3,
+          "latency_s": 1.8595,
+          "returncode": 0,
+          "text": "Hello, this is a test recording for whisper dictation application.",
+          "text_preview": "Hello, this is a test recording for whisper dictation application."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 1,
+          "latency_s": 1.9283,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 2,
+          "latency_s": 1.651,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 3,
+          "latency_s": 1.6304,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 1,
+          "latency_s": 1.4251,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 2,
+          "latency_s": 1.4406,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_immediate_start_20250630_094111.wav",
+          "run": 3,
+          "latency_s": 1.4449,
+          "returncode": 0,
+          "text": "Start immediately with this exact one.",
+          "text_preview": "Start immediately with this exact one."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 1,
+          "latency_s": 1.4923,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 2,
+          "latency_s": 1.4742,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_mixed_5s_20250630_094059.wav",
+          "run": 3,
+          "latency_s": 1.6293,
+          "returncode": 0,
+          "text": "Hello Yakio Mosh, I am testing mixed language recognition.",
+          "text_preview": "Hello Yakio Mosh, I am testing mixed language recognition."
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 1,
+          "latency_s": 8.1927,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 2,
+          "latency_s": 8.1101,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_10s_20250630_094120.wav",
+          "run": 3,
+          "latency_s": 8.1704,
+          "returncode": 0,
+          "text": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr",
+          "text_preview": "There are two tests in the car, but now I'm going to press the co-ordation second.\n I'm going to press the co-ordation second, and I'm going to press the co-ordation second, and pr"
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 1,
+          "latency_s": 1.918,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 2,
+          "latency_s": 1.9255,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_20250630_083944.wav",
+          "run": 3,
+          "latency_s": 2.0133,
+          "returncode": 0,
+          "text": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme.",
+          "text_preview": "Hidden that should turn a pinch. Toys test applications with spurtium the gimbal scheme."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 1,
+          "latency_s": 1.9585,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 2,
+          "latency_s": 1.8803,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        },
+        {
+          "file": "tests\\audio\\test_polish_5s_20250630_094037.wav",
+          "run": 3,
+          "latency_s": 1.8425,
+          "returncode": 0,
+          "text": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci.",
+          "text_preview": "Toi estes por skiguen zika, y jubi yden dwech chich teripunci."
+        }
+      ],
+      "failures": [],
+      "quality": {
+        "evaluated_samples": 12,
+        "similarity_median": 0.527,
+        "similarity_p10": 0.0,
+        "below_0_6_count": 6
+      }
+    }
+  ],
+  "quality_subset": [
+    "tests\\audio\\test_english_10s_20250630_094136.wav",
+    "tests\\audio\\test_english_20250630_085152.wav",
+    "tests\\audio\\test_english_5s_20250630_094048.wav",
+    "tests\\audio\\test_polish_10s_20250630_094120.wav",
+    "tests\\audio\\test_polish_5s_20250630_094037.wav"
+  ],
+  "quality_threshold": 0.6,
+  "recommendation": "Python baseline remains fastest/reliable on this profile; keep it as default for now."
+}

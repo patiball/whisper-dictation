@@ -35,12 +35,12 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 ## New High Priority (Planned Epic [19])
 
 ### 6. Shared runtime contract + test gate
-- Status: Planned
+- Status: Implemented
 - Why: Need safe, incremental delivery without five-hour breakage loops.
 - Done when: Contract tests and minimal verification gate exist before deeper changes.
 
 ### 7. Windows acceleration spike (`whisper.cpp` backend options)
-- Status: Planned
+- Status: In Progress
 - Why: Current Python path on Windows is too slow.
 - Done when: Benchmark-backed recommendation selects acceleration path.
 

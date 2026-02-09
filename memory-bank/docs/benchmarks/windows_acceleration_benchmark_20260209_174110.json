@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-02-09T17:41:10",
+  "platform": "win32",
+  "runs": 1,
+  "python_model": "tiny",
+  "corpus": [
+    {
+      "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+      "duration_s": 4.992
+    }
+  ],
+  "results": [
+    {
+      "backend": "python-whisper",
+      "runs": 1,
+      "sample_count": 1,
+      "success_count": 1,
+      "failure_count": 0,
+      "latency_median_s": 0.4001,
+      "latency_p95_s": 0.4001,
+      "samples": [
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 1,
+          "latency_s": 0.4001,
+          "text": "This is an English language test. Numbers 1 2 3 4 5",
+          "text_preview": "This is an English language test. Numbers 1 2 3 4 5",
+          "language": "en",
+          "returncode": 0
+        }
+      ],
+      "failures": [],
+      "quality": {
+        "evaluated_samples": 1,
+        "similarity_median": 1.0,
+        "similarity_p10": 1.0,
+        "below_0_6_count": 0
+      }
+    },
+    {
+      "backend": "whispercpp-openvino-gpu",
+      "runs": 1,
+      "sample_count": 1,
+      "success_count": 1,
+      "failure_count": 0,
+      "latency_median_s": 0.9851,
+      "latency_p95_s": 0.9851,
+      "samples": [
+        {
+          "file": "tests\\audio\\test_english_5s_20250630_094048.wav",
+          "run": 1,
+          "latency_s": 0.9851,
+          "returncode": 0,
+          "text": "This is an English language test, numbers 1, 2, 3, 4, 5.",
+          "text_preview": "This is an English language test, numbers 1, 2, 3, 4, 5."
+        }
+      ],
+      "failures": [],
+      "quality": {
+        "evaluated_samples": 1,
+        "similarity_median": 1.0,
+        "similarity_p10": 1.0,
+        "below_0_6_count": 0
+      }
+    }
+  ],
+  "quality_subset": [
+    "tests\\audio\\test_english_5s_20250630_094048.wav"
+  ],
+  "quality_threshold": 0.6,
+  "recommendation": "Python baseline remains fastest/reliable on this profile; keep it as default for now."
+}

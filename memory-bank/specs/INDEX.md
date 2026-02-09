@@ -1,6 +1,6 @@
 # Specs Index
 
-Last Updated: 2026-02-09 (implementation pass + new epic planning)
+Last Updated: 2026-02-09 (19-01 implemented, 19-02 spike started)
 
 ## Active
 
@@ -9,10 +9,10 @@ Last Updated: 2026-02-09 (implementation pass + new epic planning)
   Status: Draft
 - `[19-01-00]` Shared Runtime Contract and Test Gate  
   File: `memory-bank/specs/[19-01-00]_shared_runtime_contract_and_test_gate.md`  
-  Status: Draft
+  Status: Implemented
 - `[19-02-00]` Windows Acceleration Spike (whisper.cpp Backends)  
   File: `memory-bank/specs/[19-02-00]_windows_acceleration_spike_whispercpp_backends.md`  
-  Status: Draft
+  Status: In Progress
 - `[19-03-00]` Pluggable Transcription Backend Integration  
   File: `memory-bank/specs/[19-03-00]_pluggable_transcription_backend_integration.md`  
   Status: Draft
@@ -24,19 +24,19 @@ Last Updated: 2026-02-09 (implementation pass + new epic planning)
   Status: Draft
 - `[18-00-00]` Windows 11 Minimal Runtime (Hotkey + Tray + Sound Cues + Auto Model Download)  
   File: `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`  
-  Status: Implemented (pending manual Windows verification)
+  Status: Implemented (verified on Windows)
 - `[18-01-00]` Windows Runtime Bootstrap Without macOS UI Dependency  
   File: `memory-bank/specs/[18-01-00]_windows_runtime_bootstrap_without_macos_ui_dependency.md`  
-  Status: Implemented (pending manual Windows verification)
+  Status: Implemented (verified on Windows)
 - `[18-02-00]` Windows Tray Icon and Basic Controls  
   File: `memory-bank/specs/[18-02-00]_windows_tray_icon_and_basic_controls.md`  
-  Status: Implemented (pending manual Windows verification)
+  Status: Implemented (verified on Windows)
 - `[18-03-00]` Windows Start/Stop Sound Cues  
   File: `memory-bank/specs/[18-03-00]_windows_start_stop_sound_cues.md`  
-  Status: Implemented (pending manual Windows verification)
+  Status: Implemented (verified on Windows)
 - `[18-04-00]` First-Run Medium Model Bootstrap and Windows Runbook  
   File: `memory-bank/specs/[18-04-00]_first_run_medium_model_bootstrap_and_windows_runbook.md`  
-  Status: Implemented (pending manual Windows verification)
+  Status: Implemented (verified on Windows)
 
 ## Legacy / Historical
 
@@ -45,6 +45,6 @@ Last Updated: 2026-02-09 (implementation pass + new epic planning)
 
 ## Notes
 
-- For current execution, treat `[18-00-00]` as the primary spec.
+- Current execution focus is `[19-02-00]` acceleration spike and benchmark evidence gathering.
 - Detailed historical analysis artifacts were moved to:
   `memory-bank/archive/2026-02-09-windows11-focus/`
