@@ -177,7 +177,7 @@ def test_supervisor_preflight_warns_when_openvino_encoder_artifacts_missing(tmp_
     status = supervisor.status_snapshot()
     assert status.acceleration == "pending"
     assert status.warning is not None
-    assert "OpenVINO encoder artifacts missing" in status.warning
+    assert "OpenVINO artifacts missing" in status.warning
     supervisor.shutdown()
 
 

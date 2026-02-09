@@ -30,6 +30,14 @@ except Exception:
 PYTHON_MODEL_PRESETS = ("tiny", "base", "small", "medium", "large")
 
 
+def shorten_menu_text(text: str, max_len: int = 110) -> str:
+    """Keep tray menu status lines compact and readable."""
+    compact = " ".join(text.split())
+    if len(compact) <= max_len:
+        return compact
+    return compact[: max_len - 3].rstrip() + "..."
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -244,7 +252,7 @@ class SupervisorTrayApp:
         state = "running" if status.running else "stopped"
         model = status.reported_model or Path(status.model).name
         warning_flag = " | WARN" if status.warning else ""
-        return (
+        return shorten_menu_text(
             f"Worker: {state} | profile={status.profile_name} "
             f"| model={model} | accel={status.acceleration} "
             f"| retries {status.restart_attempts}/{status.max_restart_attempts}"
@@ -254,7 +262,7 @@ class SupervisorTrayApp:
     def _warning_text(self) -> str:
         status = self.supervisor.status_snapshot()
         if status.warning:
-            return f"Warning: {status.warning}"
+            return shorten_menu_text(f"Warning: {status.warning}")
         return "Warning: none"
 
     def _refresh_menu(self) -> None:

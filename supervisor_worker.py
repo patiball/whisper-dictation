@@ -439,13 +439,20 @@ class WorkerProcessSupervisor:
         base_stem = model_path.stem
         xml_path = model_path.with_name(f"{base_stem}-encoder-openvino.xml")
         bin_path = model_path.with_name(f"{base_stem}-encoder-openvino.bin")
-        missing = [str(path) for path in (xml_path, bin_path) if not path.exists()]
+        missing_paths = [path for path in (xml_path, bin_path) if not path.exists()]
+        missing_names = [path.name for path in missing_paths]
+        missing = [str(path) for path in missing_paths]
         if not missing:
             return None
 
+        self._logger.warning(
+            "OpenVINO artifacts missing for model %s: %s",
+            model_path.name,
+            ", ".join(missing),
+        )
         return (
-            "OpenVINO encoder artifacts missing; whisper.cpp may run in CPU fallback. "
-            f"Missing: {', '.join(missing)}"
+            f"OpenVINO artifacts missing for {model_path.name}; "
+            f"CPU fallback likely (missing: {', '.join(missing_names)})"
         )
 
     def _consume_worker_status_events(self) -> None:
