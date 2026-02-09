@@ -9,3 +9,4 @@ rumps; platform_system == "Darwin"
 pystray; platform_system == "Windows"
 pillow; platform_system == "Windows"
 numpy
+psutil

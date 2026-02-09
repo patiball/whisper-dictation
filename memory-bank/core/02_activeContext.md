@@ -15,6 +15,7 @@
 ## What is intentionally deferred
 
 - full `whisper.cpp` Windows optimization and packaging
+- performance optimization of Python transcription path on Windows (current latency around ~8-10s with `medium`)
 - broader backlog cleanups not impacting Windows MVP
 - large test-architecture epics unless blocking MVP
 

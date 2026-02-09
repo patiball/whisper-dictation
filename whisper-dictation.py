@@ -321,7 +321,14 @@ def restart_audio_stream():
         logging.info("Restarting audio stream...")
 
         # Stop and close current stream
-        if hasattr(app, "recorder") and hasattr(app.recorder, "stream"):
+        if (
+            app is not None
+            and hasattr(app, "recorder")
+            and hasattr(app.recorder, "stream")
+            and app.recorder.stream is not None
+            and hasattr(app.recorder, "p")
+            and app.recorder.p is not None
+        ):
             app.recorder.stream.stop_stream()
             app.recorder.stream.close()
 
@@ -373,6 +380,7 @@ class SpeechTranscriber:
         self.pykeyboard = keyboard.Controller()
         self.allowed_languages = allowed_languages
         self.device_manager = device_manager
+        self._transcribe_lock = threading.Lock()
 
         # Get device from model if device_manager not provided
         if hasattr(model, "device"):
@@ -387,50 +395,51 @@ class SpeechTranscriber:
         start_time = time.time()
         logging.debug(f"Starting transcription, language: {language or 'auto'}")
 
-        # Get optimized options from device manager if available
-        if self.device_manager:
-            options = self.device_manager.get_optimized_settings(
-                self.device, "base"
-            )  # Default to base model
-            if language:
-                options["language"] = language
-            logging.debug("Using device manager optimized settings")
-        else:
-            # Fallback to original options
-            options = {
-                "fp16": self.device == "mps",  # Use half precision on GPU
-                "language": language,
-                "task": "transcribe",
-                "no_speech_threshold": 0.6,  # Higher threshold for better performance
-                "logprob_threshold": -1.0,
-                "compression_ratio_threshold": 2.4,
-            }
-            logging.debug("Using fallback transcription options")
-
-        # If we have allowed languages and no specific language is set, detect and constrain
-        if self.allowed_languages and language is None:
-            logging.debug("Detecting language with allowed constraints")
-            # First, detect the language without constraining
-            result = self.model.transcribe(
-                audio_data, **{k: v for k, v in options.items() if k != "language"}
-            )
-            detected_lang = result.get("language", "en")
-            logging.debug(f"Detected language: {detected_lang}")
-
-            # If detected language is not in allowed list, use the first allowed language
-            if detected_lang not in self.allowed_languages:
-                options["language"] = self.allowed_languages[0]
-                logging.info(
-                    f"Constraining to allowed language: {self.allowed_languages[0]} (detected: {detected_lang})"
-                )
+        with self._transcribe_lock:
+            # Get optimized options from device manager if available
+            if self.device_manager:
+                options = self.device_manager.get_optimized_settings(
+                    self.device, "base"
+                )  # Default to base model
+                if language:
+                    options["language"] = language
+                logging.debug("Using device manager optimized settings")
             else:
-                options["language"] = detected_lang
-                logging.debug(f"Using detected language: {detected_lang}")
+                # Fallback to original options
+                options = {
+                    "fp16": self.device == "mps",  # Use half precision on GPU
+                    "language": language,
+                    "task": "transcribe",
+                    "no_speech_threshold": 0.6,  # Higher threshold for better performance
+                    "logprob_threshold": -1.0,
+                    "compression_ratio_threshold": 2.4,
+                }
+                logging.debug("Using fallback transcription options")
 
-            # Re-transcribe with the constrained language
-            result = self.model.transcribe(audio_data, **options)
-        else:
-            result = self.model.transcribe(audio_data, **options)
+            # If we have allowed languages and no specific language is set, detect and constrain
+            if self.allowed_languages and language is None:
+                logging.debug("Detecting language with allowed constraints")
+                # First, detect the language without constraining
+                result = self.model.transcribe(
+                    audio_data, **{k: v for k, v in options.items() if k != "language"}
+                )
+                detected_lang = result.get("language", "en")
+                logging.debug(f"Detected language: {detected_lang}")
+
+                # If detected language is not in allowed list, use the first allowed language
+                if detected_lang not in self.allowed_languages:
+                    options["language"] = self.allowed_languages[0]
+                    logging.info(
+                        f"Constraining to allowed language: {self.allowed_languages[0]} (detected: {detected_lang})"
+                    )
+                else:
+                    options["language"] = detected_lang
+                    logging.debug(f"Using detected language: {detected_lang}")
+
+                # Re-transcribe with the constrained language
+                result = self.model.transcribe(audio_data, **options)
+            else:
+                result = self.model.transcribe(audio_data, **options)
 
         duration = time.time() - start_time
         text = result.get("text", "").strip()
@@ -460,11 +469,93 @@ class SoundPlayer:
     """Class for playing platform-appropriate recording cues."""
 
     @staticmethod
+    def _generate_tone_wav(path, freqs, durations, volume=0.12, sample_rate=22050):
+        import math
+        import struct
+        import wave
+
+        samples = []
+        # short lead-in silence to avoid output-device transient click
+        samples.extend([0] * int(sample_rate * 0.012))
+        for freq, duration in zip(freqs, durations):
+            tone_samples = int(sample_rate * duration)
+            attack = max(1, int(sample_rate * 0.008))
+            release = max(1, int(sample_rate * 0.012))
+            for i in range(tone_samples):
+                envelope = 1.0
+                if i < attack:
+                    envelope = i / attack
+                elif i > tone_samples - release:
+                    envelope = max(0.0, (tone_samples - i) / release)
+
+                value = (
+                    volume
+                    * envelope
+                    * math.sin(2 * math.pi * freq * (i / sample_rate))
+                )
+                samples.append(int(max(-1.0, min(1.0, value)) * 32767))
+
+            # brief silence between tones
+            silence_samples = int(sample_rate * 0.03)
+            samples.extend([0] * silence_samples)
+
+        # tail silence to avoid hard stop click
+        samples.extend([0] * int(sample_rate * 0.02))
+
+        with wave.open(str(path), "w") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(sample_rate)
+            frames = b"".join(struct.pack("<h", sample) for sample in samples)
+            wav_file.writeframes(frames)
+
+    @staticmethod
+    def _ensure_windows_cue_file(pattern):
+        cues_dir = Path.home() / ".whisper-dictation-cues"
+        cues_dir.mkdir(parents=True, exist_ok=True)
+        cue_path = cues_dir / f"{pattern}.wav"
+        if pattern == "start":
+            # Soft ascending cue.
+            SoundPlayer._generate_tone_wav(
+                cue_path, freqs=[660, 880], durations=[0.06, 0.10], volume=0.10
+            )
+        else:
+            # Soft descending cue.
+            SoundPlayer._generate_tone_wav(
+                cue_path, freqs=[620, 440], durations=[0.06, 0.12], volume=0.10
+            )
+
+        return cue_path
+
+    @staticmethod
     def _play_sound(sound_path):
         try:
             subprocess.run(["afplay", sound_path], check=False, capture_output=True)
         except Exception as e:
             logging.warning(f"Failed to play sound: {e}")
+
+    @staticmethod
+    def _play_windows_sound(pattern):
+        try:
+            import winsound
+
+            cue_path = SoundPlayer._ensure_windows_cue_file(pattern)
+            winsound.PlaySound(
+                str(cue_path),
+                winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT,
+            )
+        except Exception:
+            try:
+                import winsound
+
+                tone = (
+                    winsound.MB_ICONASTERISK
+                    if pattern == "start"
+                    else winsound.MB_ICONEXCLAMATION
+                )
+                winsound.MessageBeep(tone)
+            except Exception as e:
+                logging.warning(f"Failed to play Windows {pattern} sound: {e}")
 
     @staticmethod
     def play_start_sound():
@@ -476,15 +567,9 @@ class SoundPlayer:
                 target=SoundPlayer._play_sound, args=(sound_path,), daemon=True
             ).start()
         elif system == "Windows":
-            try:
-                import winsound
-
-                threading.Thread(
-                    target=lambda: winsound.MessageBeep(winsound.MB_ICONASTERISK),
-                    daemon=True,
-                ).start()
-            except Exception as e:
-                logging.warning(f"Failed to play start sound: {e}")
+            threading.Thread(
+                target=SoundPlayer._play_windows_sound, args=("start",), daemon=True
+            ).start()
 
     @staticmethod
     def play_stop_sound():
@@ -496,15 +581,9 @@ class SoundPlayer:
                 target=SoundPlayer._play_sound, args=(sound_path,), daemon=True
             ).start()
         elif system == "Windows":
-            try:
-                import winsound
-
-                threading.Thread(
-                    target=lambda: winsound.MessageBeep(winsound.MB_ICONEXCLAMATION),
-                    daemon=True,
-                ).start()
-            except Exception as e:
-                logging.warning(f"Failed to play stop sound: {e}")
+            threading.Thread(
+                target=SoundPlayer._play_windows_sound, args=("stop",), daemon=True
+            ).start()
 
 
 class Recorder:
@@ -531,6 +610,7 @@ class Recorder:
         thread.start()
 
     def stop(self):
+        global recording
         self.recording = False
         recording = False  # Reset global flag immediately
 
@@ -555,6 +635,7 @@ class Recorder:
 
         self.recording = True
         recording = True  # Set global flag for watchdog
+        update_heartbeat()
 
         # Play recording start sound
         self.sound_player.play_start_sound()
@@ -652,7 +733,10 @@ class Recorder:
 
         audio_data = np.frombuffer(b"".join(frames), dtype=np.int16)
         audio_data_fp32 = audio_data.astype(np.float32) / 32768.0
-        self.transcriber.transcribe(audio_data_fp32, language)
+        try:
+            self.transcriber.transcribe(audio_data_fp32, language)
+        except Exception as e:
+            logging.error(f"Transcription failed: {e}", exc_info=True)
 
 
 class GlobalKeyListener:
