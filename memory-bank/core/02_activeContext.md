@@ -1,15 +1,15 @@
 # Active Context
 
-**Current Focus:** Epic 19 execution - post-19-05 quality follow-up
+**Current Focus:** Epic 19 execution - post-19-06 quality/performance validation
 
 **Primary Epic:** `memory-bank/specs/[19-00-00]_cross_platform_unified_app_and_acceleration_strategy.md`
 
 ## What is actively in scope
 
-1. Execute A/B quality validation for larger multilingual whisper.cpp model.
-2. Keep current rollout controls and benchmark gate as deployment guardrails.
-3. Use benchmark gate script for every backend quality/performance re-check.
-4. Decide default backend policy after larger-model quality evidence.
+1. Validate quality impact of larger whisper.cpp models (PL/EN, auto-detect) using benchmark gate workflow.
+2. Use new Supervisor+Worker runtime for operational profile switching without rebuild.
+3. Decide default backend/model policy based on combined latency + quality evidence.
+4. Close setup gap for automatic OpenVINO encoder artifact provisioning.
 
 ## What is intentionally deferred
 
@@ -27,13 +27,14 @@
   - `memory-bank/specs/[19-03-00]_pluggable_transcription_backend_integration.md` (implemented)
   - `memory-bank/specs/[19-04-00]_safe_fallback_and_incremental_release_controls.md` (implemented)
   - `memory-bank/specs/[19-05-00]_benchmark_gate_and_windows_runbook_for_acceleration.md` (implemented)
+  - `memory-bank/specs/[19-06-00]_supervisor_worker_runtime_for_model_switching.md` (implemented)
 - Previous Epic (stabilization): `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`
 - Backlog: `memory-bank/issues-backlog.md`
 - Tech context: `memory-bank/core/05_techContext.md`
 
 ## Immediate Execution Plan (2026-02-09)
 
-1. Run benchmark with larger multilingual whisper.cpp model candidate.
-2. Compare quality metrics against current `ggml-base.bin` and python baseline.
-3. Re-evaluate benchmark gate criteria if needed based on measured quality distribution.
-4. Update rollout recommendation and backlog quick todo status.
+1. Run A/B benchmark for larger whisper.cpp model(s) against python baseline on PL/EN quality set.
+2. Keep using `scripts/run_supervisor.ps1` for rapid model switching during manual checks.
+3. Add auto-provision/self-heal path for missing OpenVINO encoder artifacts.
+4. Update rollout recommendation and benchmark gate thresholds only if evidence requires it.

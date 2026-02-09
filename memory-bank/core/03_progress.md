@@ -42,6 +42,13 @@ Last Update: 2026-02-09
   - explicit go/no-go criteria for accelerated backend rollout
   - Windows acceleration runbook (`docs/windows_acceleration_runbook.md`)
   - README and scripts docs updated with benchmark gate workflow
+- Implemented issue `[19-06-00]`:
+  - added worker runtime mode switch (`--runtime-mode {auto,headless,tray}`)
+  - added Supervisor+Worker orchestration module (`supervisor_worker.py`)
+  - added tray supervisor entrypoint (`whisper-dictation-supervisor.py`)
+  - added short launcher script (`scripts/run_supervisor.ps1`)
+  - added supervisor lifecycle tests (`tests/test_supervisor_worker.py`)
+  - updated docs and runbook for supervisor operation
 
 ## Completed in this update
 
@@ -61,7 +68,8 @@ Last Update: 2026-02-09
 14. Closed issue `[19-03-00]` after successful manual E2E for both backend modes.
 15. Closed issue `[19-04-00]` with deterministic fallback + release controls.
 16. Closed issue `[19-05-00]` with benchmark gate and operator runbook.
+17. Closed issue `[19-06-00]` with full Supervisor+Worker runtime and test coverage.
 
 ## Next Execution Step
 
-Run quick follow-up task Q1: benchmark larger multilingual whisper.cpp model to recover quality while keeping acceleration gains.
+Run quick follow-up task Q1: benchmark larger multilingual whisper.cpp model(s) to recover quality while keeping acceleration gains.

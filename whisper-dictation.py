@@ -1086,6 +1086,18 @@ def parse_args(argv=None):
         help="Override default log file location. Default: ~/.whisper-dictation.log",
     )
     parser.add_argument(
+        "--runtime-mode",
+        type=str,
+        choices=["auto", "headless", "tray"],
+        default=os.environ.get("WHISPER_RUNTIME_MODE", "auto"),
+        help=(
+            "Runtime controller mode. "
+            "'auto' chooses by platform, "
+            "'headless' disables tray/status bar, "
+            "'tray' forces tray/status bar mode on supported platforms."
+        ),
+    )
+    parser.add_argument(
         "--backend",
         type=str,
         choices=["python", "whispercpp"],
@@ -1159,6 +1171,11 @@ def parse_args(argv=None):
     args.backend_fallback_enabled = (not args.disable_backend_fallback) and (
         env_disable_fallback.lower() not in ("1", "true", "yes")
     )
+
+    if args.runtime_mode == "tray" and platform.system() not in ("Darwin", "Windows"):
+        raise ValueError(
+            "--runtime-mode tray is only supported on macOS (Darwin) and Windows."
+        )
 
     return args
 
@@ -1300,8 +1317,11 @@ if __name__ == "__main__":
         status_bar_app_cls=StatusBarApp,
         windows_tray_app_cls=WindowsTrayApp,
         headless_runtime_app_cls=HeadlessRuntimeApp,
+        runtime_mode=args.runtime_mode,
     )
-    if system == "Darwin":
+    if args.runtime_mode == "headless":
+        logging.info("Headless runtime app initialized (runtime-mode=headless)")
+    elif system == "Darwin":
         logging.info("macOS status bar app initialized")
     elif system == "Windows":
         logging.info("Windows tray app initialized")

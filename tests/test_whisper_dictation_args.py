@@ -17,6 +17,7 @@ def test_parse_args_default_backend_python():
     module = load_module()
     args = module.parse_args([])
     assert args.backend == "python"
+    assert args.runtime_mode == "auto"
 
 
 def test_parse_args_accepts_whispercpp_with_explicit_paths():
@@ -57,3 +58,16 @@ def test_parse_args_fallback_controls():
     )
     assert args.fallback_backend == "python"
     assert args.backend_fallback_enabled is False
+
+
+def test_parse_args_accepts_runtime_mode_headless():
+    module = load_module()
+    args = module.parse_args(["--runtime-mode", "headless"])
+    assert args.runtime_mode == "headless"
+
+
+def test_parse_args_tray_mode_rejected_on_unsupported_platform(monkeypatch):
+    module = load_module()
+    monkeypatch.setattr(module.platform, "system", lambda: "Linux")
+    with pytest.raises(ValueError):
+        module.parse_args(["--runtime-mode", "tray"])

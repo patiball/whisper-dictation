@@ -63,6 +63,16 @@ Primary accelerated mode:
   -k "ctrl_l+alt_l"
 ```
 
+Supervisor + Worker mode (recommended for frequent model/backend switching):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_supervisor.ps1 `
+  -Backend whispercpp `
+  -CppModel large-v3
+```
+
+Worker is launched as headless runtime by supervisor (`--runtime-mode headless`), so switching profiles only restarts the worker process and does not trigger rebuild.
+
 Rollback without code changes:
 
 ```powershell

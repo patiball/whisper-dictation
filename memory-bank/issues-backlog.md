@@ -59,6 +59,11 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 - Why: Need objective go/no-go and repeatable deployment checklist.
 - Done when: Baseline vs accelerated metrics and operator docs are complete.
 
+### 11. Supervisor + Worker architecture for fast model/backend switching
+- Status: Implemented
+- Why: Long manual restart commands slowed iteration and mixed control plane with runtime process.
+- Done when: Dedicated tray supervisor manages headless worker with start/stop/restart/profile-switch and bounded crash autorestart.
+
 ## Not Active Now
 
 - Full `whisper.cpp` Windows support
@@ -76,6 +81,11 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 - Status: Planned
 - Why: Switching `WHISPER_CLI_MODEL` to a new model (e.g. `large-v3`) currently requires manual conversion/copy of `*-encoder-openvino.xml/.bin`; missing artifacts can silently degrade runtime performance.
 - Done when: runtime/setup path automatically verifies encoder artifacts for the selected model and generates them (or provides one-command self-heal) before first transcription run.
+
+### Q3. Persist last selected supervisor profile
+- Status: Planned
+- Why: Supervisor currently starts from CLI/default profile each run; preserving the last used profile would reduce setup friction.
+- Done when: supervisor stores and restores last successful profile selection across restarts.
 
 ## Archive Pointer
 

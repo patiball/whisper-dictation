@@ -106,6 +106,37 @@ def test_create_runtime_app_selects_headless_for_other_systems():
     assert isinstance(app, DummyRuntime)
 
 
+def test_create_runtime_app_runtime_mode_headless_overrides_platform():
+    app = create_runtime_app(
+        system="Windows",
+        recorder=object(),
+        languages=None,
+        max_time=None,
+        status_bar_app_cls=InvalidRuntime,
+        windows_tray_app_cls=InvalidRuntime,
+        headless_runtime_app_cls=DummyRuntime,
+        runtime_mode="headless",
+    )
+    assert isinstance(app, DummyRuntime)
+
+
+def test_create_runtime_app_tray_mode_rejects_unsupported_platform():
+    try:
+        create_runtime_app(
+            system="Linux",
+            recorder=object(),
+            languages=None,
+            max_time=None,
+            status_bar_app_cls=DummyRuntime,
+            windows_tray_app_cls=DummyRuntime,
+            headless_runtime_app_cls=DummyRuntime,
+            runtime_mode="tray",
+        )
+        assert False, "Expected ValueError"
+    except ValueError as exc:
+        assert "unsupported" in str(exc).lower()
+
+
 def test_create_key_listener_uses_double_cmd_only_on_macos():
     app = DummyRuntime(recorder=object())
     mac_listener = create_key_listener(
@@ -126,4 +157,3 @@ def test_create_key_listener_uses_double_cmd_only_on_macos():
     )
     assert mac_listener.kind == "double_cmd"
     assert win_listener.kind == "global"
-

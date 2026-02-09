@@ -135,6 +135,14 @@ powershell -ExecutionPolicy Bypass -File scripts/run_whispercpp_openvino_benchma
 ```
 **Description**: Thin runner around `windows_acceleration_benchmark.py --skip-python` for repeated cpp-only measurements.
 
+### `run_supervisor.ps1`
+**Purpose**: Launch Supervisor+Worker runtime with short command
+**Usage**:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_supervisor.ps1 -Backend whispercpp -CppModel large-v3
+```
+**Description**: Starts `whisper-dictation-supervisor.py` (tray control plane) which runs `whisper-dictation.py` as headless worker. Supports fast backend/model switching without rebuild.
+
 ---
 
 ## 📁 Directory Organization
@@ -152,6 +160,7 @@ scripts/
 ├── windows_acceleration_benchmark.py      # Windows backend benchmark harness
 ├── benchmark_gate_check.py                # Benchmark rollout gate evaluator
 ├── run_whispercpp_openvino_benchmark.ps1  # cpp-only benchmark runner (no build)
+├── run_supervisor.ps1                     # supervisor + worker launcher
 ├── tmp_rovodev_measure_start_silence.py   # Audio clipping diagnostic
 ├── setup-docs-mvp.sh                      # Docs setup
 ├── setup_whisper_openvino_windows.ps1     # OpenVINO setup for whisper.cpp

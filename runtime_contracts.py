@@ -66,8 +66,32 @@ def create_runtime_app(
     status_bar_app_cls: Any,
     windows_tray_app_cls: Any,
     headless_runtime_app_cls: Any,
+    runtime_mode: str = "auto",
 ) -> RuntimeController:
-    """Create runtime controller based on platform with explicit class injection."""
+    """Create runtime controller based on platform and explicit runtime mode."""
+    if runtime_mode not in ("auto", "headless", "tray"):
+        raise ValueError(
+            f"Unsupported runtime mode '{runtime_mode}'. Expected auto, headless, or tray."
+        )
+
+    if runtime_mode == "headless":
+        return validate_runtime_controller(
+            headless_runtime_app_cls(recorder, languages, max_time)
+        )
+
+    if runtime_mode == "tray":
+        if system == "Darwin":
+            return validate_runtime_controller(
+                status_bar_app_cls(recorder, languages, max_time)
+            )
+        if system == "Windows":
+            return validate_runtime_controller(
+                windows_tray_app_cls(recorder, languages, max_time)
+            )
+        raise ValueError(
+            f"Tray runtime mode is unsupported on platform '{system}'."
+        )
+
     if system == "Darwin":
         return validate_runtime_controller(
             status_bar_app_cls(recorder, languages, max_time)
@@ -91,4 +115,3 @@ def create_key_listener(
     if use_double_cmd and system == "Darwin":
         return double_command_key_listener_cls(app)
     return global_key_listener_cls(app, key_combination)
-

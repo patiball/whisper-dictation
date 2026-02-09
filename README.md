@@ -120,7 +120,35 @@ python whisper-dictation.py `
   --whispercpp-args "-otxt -l auto -oved GPU" `
   --fallback-backend python `
   -k "ctrl_l+alt_l"
+
+# Worker-only (no tray) - useful when managed by external supervisor
+python whisper-dictation.py `
+  --runtime-mode headless `
+  --backend whispercpp `
+  --whispercpp-cli "$env:WHISPER_CLI_BIN" `
+  --whispercpp-model "$env:WHISPER_CLI_MODEL" `
+  -k "ctrl_l+alt_l"
 ```
+
+Supervisor + Worker mode (Option D):
+
+```powershell
+# Recommended one-command launcher (tray supervisor + headless worker)
+powershell -ExecutionPolicy Bypass -File scripts/run_supervisor.ps1 -Backend whispercpp -CppModel large-v3
+
+# Direct supervisor command
+python whisper-dictation-supervisor.py `
+  --backend whispercpp `
+  --cpp-model large-v3 `
+  --whispercpp-cli "$env:WHISPER_CLI_BIN" `
+  --key-combination "ctrl_l+alt_l"
+```
+
+What supervisor mode adds:
+- Tray controls to start/stop/restart worker.
+- Quick switching between python and whisper.cpp model profiles.
+- Controlled worker restart on profile switch (no rebuild step).
+- Bounded auto-restart when worker crashes unexpectedly.
 
 Benchmark gate workflow:
 
