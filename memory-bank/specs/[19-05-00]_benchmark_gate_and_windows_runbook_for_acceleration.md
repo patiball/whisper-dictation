@@ -1,6 +1,6 @@
 # Issue: Benchmark Gate and Windows Runbook for Acceleration
 
-**Status**: Draft  
+**Status**: Implemented  
 **Priority**: Medium  
 **Estimated Complexity**: Medium  
 **Created**: 2026-02-09  
@@ -21,9 +21,25 @@ Define benchmark acceptance gate and operational runbook for accelerated backend
 - No backend code changes beyond measurement hooks.
 
 ## 5) Acceptance Criteria (MANDATORY, Testable)
-- [ ] AC1: Benchmark checklist includes baseline vs accelerated backend comparison.
-- [ ] AC2: README/runbook documents setup, fallback, and troubleshooting.
-- [ ] AC3: Deployment decision criteria are explicit.
+- [x] AC1: Benchmark checklist includes baseline vs accelerated backend comparison.
+- [x] AC2: README/runbook documents setup, fallback, and troubleshooting.
+- [x] AC3: Deployment decision criteria are explicit.
+
+## 16) Implementation Notes
+- Added benchmark gate script:
+  - `scripts/benchmark_gate_check.py`
+- Gate validates:
+  - candidate/python median ratio (`--max-median-ratio`, default `0.35`)
+  - candidate quality p10 (`--min-quality-p10`, default `0.60`)
+  - candidate low-quality sample count (`--max-below-threshold-count`, default `1`)
+  - candidate failure count (`failure_count == 0`)
+- Added tests:
+  - `tests/test_benchmark_gate_check.py`
+- Added Windows acceleration runbook:
+  - `docs/windows_acceleration_runbook.md`
+- Updated operator documentation:
+  - `README.md` (backend launch + benchmark gate usage)
+  - `scripts/README.md` (gate script usage)
 
 ## 15) Test Plan (MANDATORY)
 ### Minimal verification (fast)
@@ -39,4 +55,3 @@ Define benchmark acceptance gate and operational runbook for accelerated backend
 - Flexibility score: Medium
 - Fixes applied: thresholds deferred but benchmark structure fixed
 - Recommendation: Add detail after issue `[19-02-00]`
-

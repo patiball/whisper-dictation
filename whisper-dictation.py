@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import platform
+import shutil
 import signal
 import subprocess
 import threading
@@ -21,6 +22,10 @@ from runtime_contracts import (
     create_key_listener,
     create_runtime_app,
     validate_transcription_backend,
+)
+from transcription_backends import (
+    WhisperCppTranscriber,
+    create_backend_with_fallback,
 )
 from whisper import load_model
 
@@ -980,7 +985,7 @@ class HeadlessRuntimeApp(BaseRuntimeApp):
             time.sleep(1)
 
 
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Dictation app using the OpenAI whisper ASR model. By default the keyboard shortcut cmd+option "
         "starts and stops dictation"
@@ -1080,20 +1085,80 @@ def parse_args():
         default=None,
         help="Override default log file location. Default: ~/.whisper-dictation.log",
     )
+    parser.add_argument(
+        "--backend",
+        type=str,
+        choices=["python", "whispercpp"],
+        default="python",
+        help="Transcription backend selection. Default: python.",
+    )
+    parser.add_argument(
+        "--whispercpp-cli",
+        type=str,
+        default=os.environ.get("WHISPER_CLI_BIN"),
+        help="Path to whisper-cli binary (or set WHISPER_CLI_BIN).",
+    )
+    parser.add_argument(
+        "--whispercpp-model",
+        type=str,
+        default=os.environ.get("WHISPER_CLI_MODEL"),
+        help="Path to whisper.cpp model .bin file (or set WHISPER_CLI_MODEL).",
+    )
+    parser.add_argument(
+        "--whispercpp-args",
+        type=str,
+        default="-otxt -l auto -oved GPU",
+        help="Extra args passed to whisper-cli. Default: -otxt -l auto -oved GPU.",
+    )
+    parser.add_argument(
+        "--whispercpp-timeout-sec",
+        type=int,
+        default=int(os.environ.get("WHISPER_CLI_TIMEOUT_SEC", "120")),
+        help="Timeout for single whisper.cpp transcription call in seconds. Default: 120.",
+    )
+    parser.add_argument(
+        "--fallback-backend",
+        type=str,
+        choices=["python", "whispercpp", "none"],
+        default=os.environ.get("WHISPER_FALLBACK_BACKEND", "python"),
+        help="Fallback backend used when selected backend fails. Default: python.",
+    )
+    parser.add_argument(
+        "--disable-backend-fallback",
+        action="store_true",
+        help="Disable backend fallback and fail fast on backend init/runtime errors.",
+    )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.language is not None:
         args.language = args.language.split(",")
 
     if (
-        args.model_name.endswith(".en")
+        args.backend == "python"
+        and args.model_name.endswith(".en")
         and args.language is not None
         and any(lang != "en" for lang in args.language)
     ):
         raise ValueError(
             "If using a model ending in .en, you cannot specify a language other than English."
         )
+
+    if args.backend == "whispercpp":
+        args.whispercpp_cli = args.whispercpp_cli or shutil.which("whisper-cli")
+        if args.whispercpp_cli is None:
+            raise ValueError(
+                "whispercpp backend requires --whispercpp-cli (or WHISPER_CLI_BIN env var)."
+            )
+        if args.whispercpp_model is None:
+            raise ValueError(
+                "whispercpp backend requires --whispercpp-model (or WHISPER_CLI_MODEL env var)."
+            )
+
+    env_disable_fallback = os.environ.get("WHISPER_DISABLE_BACKEND_FALLBACK", "0")
+    args.backend_fallback_enabled = (not args.disable_backend_fallback) and (
+        env_disable_fallback.lower() not in ("1", "true", "yes")
+    )
 
     return args
 
@@ -1127,67 +1192,6 @@ if __name__ == "__main__":
     start_watchdog()
     logging.info("Audio watchdog started")
 
-    # Import DeviceManager for intelligent device handling
-    from device_manager import OperationType
-    from mps_optimizer import EnhancedDeviceManager
-
-    # Initialize Enhanced DeviceManager
-    device_manager = EnhancedDeviceManager()
-    logging.info("Device manager initialized")
-
-    # Get optimal device for model loading
-    device = device_manager.get_device_for_operation(
-        OperationType.MODEL_LOADING, args.model_name
-    )
-    logging.info(f"DeviceManager: Selected {device} for model {args.model_name}")
-
-    print(f"Loading model '{args.model_name}'...")
-    print(
-        "If this is the first run for this model, it will be downloaded and cached automatically."
-    )
-    model_name = args.model_name
-    logging.info(f"Loading model: {model_name} on device: {device}")
-
-    try:
-        model = load_model(model_name, device=device)
-        print(f"✅ {model_name} model loaded successfully on {device}")
-        logging.info(f"Model loaded successfully: {model_name} on {device}")
-
-        # Apply device optimizations
-        device_manager.optimize_model(model, device)
-        logging.debug("Model optimizations applied")
-
-        # Register successful loading
-        device_manager.base_manager.register_operation_success(
-            device, OperationType.MODEL_LOADING
-        )
-
-    except Exception as e:
-        logging.error(f"Model loading failed on {device}: {e}")
-        if device_manager.base_manager.should_retry_with_fallback(e):
-            fallback_device, user_message = device_manager.handle_device_error_enhanced(
-                e, OperationType.MODEL_LOADING, device
-            )
-            print(f"🔄 {user_message}")
-            print(f"Details: Switching from {device} to {fallback_device}")
-            logging.warning(f"Retrying with fallback device: {fallback_device}")
-
-            device = fallback_device
-            model = load_model(model_name, device=device)
-            device_manager.optimize_model(model, device)
-            print(
-                f"✅ {model_name} model loaded successfully on fallback device: {device}"
-            )
-            logging.info(f"Model loaded on fallback device: {model_name} on {device}")
-
-            # Register successful fallback
-            device_manager.base_manager.register_operation_success(
-                device, OperationType.MODEL_LOADING
-            )
-        else:
-            logging.error(f"Model loading failed completely: {e}")
-            raise e
-
     # Parse allowed languages if specified
     allowed_languages = None
     if args.allowed_languages:
@@ -1195,8 +1199,87 @@ if __name__ == "__main__":
         print(f"Language detection constrained to: {allowed_languages}")
         logging.info(f"Language detection constrained to: {allowed_languages}")
 
-    transcriber = SpeechTranscriber(model, allowed_languages, device_manager)
-    logging.info("Speech transcriber initialized")
+    def build_python_backend():
+        from device_manager import OperationType
+        from mps_optimizer import EnhancedDeviceManager
+
+        device_manager = EnhancedDeviceManager()
+        logging.info("Device manager initialized")
+
+        device = device_manager.get_device_for_operation(
+            OperationType.MODEL_LOADING, args.model_name
+        )
+        logging.info(f"DeviceManager: Selected {device} for model {args.model_name}")
+
+        print(f"Loading model '{args.model_name}'...")
+        print(
+            "If this is the first run for this model, it will be downloaded and cached automatically."
+        )
+        model_name = args.model_name
+        logging.info(f"Loading model: {model_name} on device: {device}")
+
+        try:
+            model = load_model(model_name, device=device)
+            print(f"✅ {model_name} model loaded successfully on {device}")
+            logging.info(f"Model loaded successfully: {model_name} on {device}")
+
+            device_manager.optimize_model(model, device)
+            logging.debug("Model optimizations applied")
+
+            device_manager.base_manager.register_operation_success(
+                device, OperationType.MODEL_LOADING
+            )
+            return SpeechTranscriber(model, allowed_languages, device_manager)
+
+        except Exception as e:
+            logging.error(f"Model loading failed on {device}: {e}")
+            if device_manager.base_manager.should_retry_with_fallback(e):
+                fallback_device, user_message = (
+                    device_manager.handle_device_error_enhanced(
+                        e, OperationType.MODEL_LOADING, device
+                    )
+                )
+                print(f"🔄 {user_message}")
+                print(f"Details: Switching from {device} to {fallback_device}")
+                logging.warning(f"Retrying with fallback device: {fallback_device}")
+
+                device = fallback_device
+                model = load_model(model_name, device=device)
+                device_manager.optimize_model(model, device)
+                print(
+                    f"✅ {model_name} model loaded successfully on fallback device: {device}"
+                )
+                logging.info(
+                    f"Model loaded on fallback device: {model_name} on {device}"
+                )
+                device_manager.base_manager.register_operation_success(
+                    device, OperationType.MODEL_LOADING
+                )
+                return SpeechTranscriber(model, allowed_languages, device_manager)
+
+            logging.error(f"Model loading failed completely: {e}")
+            raise
+
+    def build_whispercpp_backend():
+        return WhisperCppTranscriber(
+            cli_path=args.whispercpp_cli,
+            model_path=args.whispercpp_model,
+            extra_args=args.whispercpp_args,
+            timeout_sec=args.whispercpp_timeout_sec,
+        )
+
+    transcriber = create_backend_with_fallback(
+        selected_backend=args.backend,
+        python_backend_factory=build_python_backend,
+        whispercpp_backend_factory=build_whispercpp_backend,
+        fallback_backend=args.fallback_backend,
+        fallback_enabled=args.backend_fallback_enabled,
+    )
+    logging.info(
+        f"Transcription backend initialized: selected={args.backend}, "
+        f"fallback={args.fallback_backend}, "
+        f"fallback_enabled={args.backend_fallback_enabled}"
+    )
 
     recorder = Recorder(
         transcriber,

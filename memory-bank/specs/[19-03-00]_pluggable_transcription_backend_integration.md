@@ -1,6 +1,6 @@
 # Issue: Pluggable Transcription Backend Integration
 
-**Status**: Draft  
+**Status**: Implemented  
 **Priority**: High  
 **Estimated Complexity**: Complex  
 **Created**: 2026-02-09  
@@ -21,9 +21,31 @@ Integrate `python-whisper` and `whisper.cpp` behind one backend interface while 
 - No removal of existing Python backend.
 
 ## 5) Acceptance Criteria (MANDATORY, Testable)
-- [ ] AC1: Both backends implement shared interface and pass contract tests.
-- [ ] AC2: `--backend python` and `--backend whispercpp` both execute end-to-end flow.
-- [ ] AC3: Default path remains stable and reversible.
+- [x] AC1: Both backends implement shared interface and pass contract tests.
+- [x] AC2: `--backend python` and `--backend whispercpp` both execute end-to-end flow.
+- [x] AC3: Default path remains stable and reversible.
+
+## 16) Implementation Notes
+- Added pluggable backend helper module: `transcription_backends.py`
+  - `create_transcription_backend(...)`
+  - `WhisperCppTranscriber`
+  - `validate_whispercpp_paths(...)`
+- Added CLI selector and backend-specific options in `whisper-dictation.py`:
+  - `--backend {python,whispercpp}` (default `python`)
+  - `--whispercpp-cli`
+  - `--whispercpp-model`
+  - `--whispercpp-args`
+  - `--whispercpp-timeout-sec`
+- Main runtime now builds selected backend via explicit factory wiring while keeping existing recorder/hotkey/tray flow unchanged.
+- Added tests:
+  - `tests/test_transcription_backends.py`
+  - `tests/test_whisper_dictation_args.py`
+- Manual E2E smoke verified on Windows for both backends:
+  - `--backend python`: passed
+  - `--backend whispercpp`: passed
+- Observation from manual smoke:
+  - whisper.cpp path is significantly faster than python baseline
+  - quality is visibly worse for some utterances; requires model-quality follow-up
 
 ## 15) Test Plan (MANDATORY)
 ### Minimal verification (fast)
@@ -41,4 +63,3 @@ Integrate `python-whisper` and `whisper.cpp` behind one backend interface while 
 - Flexibility score: Medium
 - Fixes applied: constraints focus on behavior and reversibility
 - Recommendation: Add detail for operational defaults during implementation
-

@@ -21,6 +21,27 @@ Last Update: 2026-02-09
 - Added no-build benchmark runner: `scripts/run_whispercpp_openvino_benchmark.ps1`.
 - Setup script default model changed to multilingual `base` (instead of `base.en`) to match PL/EN usage.
 - Added warning in setup script when English-only model (`*.en`) is selected.
+- Issue `[19-02-00]` closed as implemented with benchmark-backed recommendation:
+  `whispercpp-openvino-gpu` as primary candidate with `python-whisper` fallback.
+- Started issue `[19-03-00]` implementation:
+  - added pluggable backend module `transcription_backends.py`
+  - added runtime backend selector (`--backend {python,whispercpp}`)
+  - added whisper.cpp backend options (`--whispercpp-cli`, `--whispercpp-model`, `--whispercpp-args`, `--whispercpp-timeout-sec`)
+  - wired backend factory into `whisper-dictation.py` without changing tray/hotkey recorder flow
+  - added parser and backend unit tests
+- Manual E2E validated for issue `[19-03-00]`:
+  - both backend modes passed (`python` and `whispercpp`)
+  - `whispercpp` path is much faster, but quality is lower on some utterances
+- Implemented issue `[19-04-00]`:
+  - deterministic fallback wrapper for startup/runtime backend failures
+  - fallback controls via CLI/env without code changes
+  - fallback reason logging for diagnostics
+  - added fallback-focused unit tests
+- Implemented issue `[19-05-00]`:
+  - benchmark gate script (`scripts/benchmark_gate_check.py`)
+  - explicit go/no-go criteria for accelerated backend rollout
+  - Windows acceleration runbook (`docs/windows_acceleration_runbook.md`)
+  - README and scripts docs updated with benchmark gate workflow
 
 ## Completed in this update
 
@@ -36,7 +57,11 @@ Last Update: 2026-02-09
 10. Added benchmark harness for `[19-02-00]` with JSON+Markdown report output.
 11. Added cpp-only execution path and runner script to avoid rebuild loop between benchmark runs.
 12. Added unit tests for benchmark candidate parsing and `--skip-python` behavior.
+13. Implemented backend selection infrastructure for issue `[19-03-00]` with passing tests.
+14. Closed issue `[19-03-00]` after successful manual E2E for both backend modes.
+15. Closed issue `[19-04-00]` with deterministic fallback + release controls.
+16. Closed issue `[19-05-00]` with benchmark gate and operator runbook.
 
 ## Next Execution Step
 
-Execute issue `[19-02-00]` with multilingual model (`ggml-base.bin`): run cpp-only benchmark harness on Windows hardware, capture median/p95 + quality, and finalize backend recommendation for `[19-03-00]`.
+Run quick follow-up task Q1: benchmark larger multilingual whisper.cpp model to recover quality while keeping acceleration gains.

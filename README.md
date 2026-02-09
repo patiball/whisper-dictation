@@ -104,6 +104,34 @@ What to expect on Windows 11:
 - Start/stop recording plays Windows sound cues.
 - First run with `-m medium` downloads and caches the model automatically.
 
+### Windows Acceleration (Epic 19)
+
+Backend selection and fallback controls:
+
+```powershell
+# Stable baseline
+python whisper-dictation.py --backend python -k "ctrl_l+alt_l"
+
+# Accelerated backend with deterministic fallback
+python whisper-dictation.py `
+  --backend whispercpp `
+  --whispercpp-cli "$env:WHISPER_CLI_BIN" `
+  --whispercpp-model "$env:LOCALAPPDATA\whispercpp\models\ggml-base.bin" `
+  --whispercpp-args "-otxt -l auto -oved GPU" `
+  --fallback-backend python `
+  -k "ctrl_l+alt_l"
+```
+
+Benchmark gate workflow:
+
+```powershell
+python scripts/windows_acceleration_benchmark.py --python-model medium --runs 3 --audio-pattern "test_*.wav" --quality-files "test_english*.wav" --quality-files "test_polish_10s*.wav" --quality-files "test_polish_5s*.wav" --whispercpp-cli "$env:WHISPER_CLI_BIN" --whispercpp-model "$env:LOCALAPPDATA\whispercpp\models\ggml-base.bin" --whispercpp-candidate "whispercpp-openvino-gpu=-otxt -l auto -oved GPU"
+python scripts/benchmark_gate_check.py --report "<PATH_TO_REPORT_JSON>"
+```
+
+Detailed runbook:
+- `docs/windows_acceleration_runbook.md`
+
 **💡 Tip: Replace macOS built-in dictation**
 1. Go to System Settings → Keyboard → Disable Dictation
 2. Use `--k_double_cmd` to trigger with double-tap Right Command

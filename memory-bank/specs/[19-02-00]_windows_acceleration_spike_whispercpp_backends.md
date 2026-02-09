@@ -1,6 +1,6 @@
 # Issue: Windows Acceleration Spike (whisper.cpp Backends)
 
-**Status**: In Progress  
+**Status**: Implemented  
 **Priority**: High  
 **Estimated Complexity**: Medium  
 **Created**: 2026-02-09  
@@ -21,9 +21,9 @@ Run hardware-aware spike for whisper.cpp acceleration options on Windows and cho
 - No final production rollout decision in this issue.
 
 ## 5) Acceptance Criteria (MANDATORY, Testable)
-- [ ] AC1: Benchmark report created (latency + qualitative output).
-- [ ] AC2: Clear recommended backend strategy for this hardware profile.
-- [ ] AC3: Known setup constraints are documented.
+- [x] AC1: Benchmark report created (latency + qualitative output).
+- [x] AC2: Clear recommended backend strategy for this hardware profile.
+- [x] AC3: Known setup constraints are documented.
 
 ## 15) Test Plan (MANDATORY)
 ### Minimal verification (fast)

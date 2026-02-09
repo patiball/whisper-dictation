@@ -72,6 +72,14 @@ python scripts/windows_acceleration_benchmark.py --skip-python --runs 3 --whispe
 **Description**: Generates JSON and Markdown benchmark reports under `memory-bank/docs/benchmarks/`.
 Supports `--skip-python` for whisper.cpp-only runs.
 
+### `benchmark_gate_check.py`
+**Purpose**: Evaluate benchmark report against rollout gate thresholds
+**Usage**:
+```bash
+python scripts/benchmark_gate_check.py --report memory-bank/docs/benchmarks/windows_acceleration_benchmark_YYYYMMDD_HHMMSS.json
+```
+**Description**: Enforces go/no-go criteria for accelerated backend rollout using latency and quality metrics.
+
 ---
 
 ## 📊 Diagnostic Scripts
@@ -142,6 +150,7 @@ scripts/
 ├── run_tdd_red_phase.py                   # TDD red phase runner
 ├── check-links.py                         # Documentation link checker
 ├── windows_acceleration_benchmark.py      # Windows backend benchmark harness
+├── benchmark_gate_check.py                # Benchmark rollout gate evaluator
 ├── run_whispercpp_openvino_benchmark.ps1  # cpp-only benchmark runner (no build)
 ├── tmp_rovodev_measure_start_silence.py   # Audio clipping diagnostic
 ├── setup-docs-mvp.sh                      # Docs setup

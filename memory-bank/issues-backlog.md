@@ -40,22 +40,22 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 - Done when: Contract tests and minimal verification gate exist before deeper changes.
 
 ### 7. Windows acceleration spike (`whisper.cpp` backend options)
-- Status: In Progress
+- Status: Implemented
 - Why: Current Python path on Windows is too slow.
 - Done when: Benchmark-backed recommendation selects acceleration path.
 
 ### 8. Pluggable backend integration (`python` + `whisper.cpp`)
-- Status: Planned
+- Status: Implemented
 - Why: One app should support multiple engines without UX split.
 - Done when: `--backend` path works end-to-end with current hotkey/tray flow.
 
 ### 9. Safe fallback and rollout controls
-- Status: Planned
+- Status: Implemented
 - Why: New backend must not break dictation workflow.
 - Done when: Automatic fallback and clear diagnostics are verified.
 
 ### 10. Benchmark gate + Windows acceleration runbook
-- Status: Planned
+- Status: Implemented
 - Why: Need objective go/no-go and repeatable deployment checklist.
 - Done when: Baseline vs accelerated metrics and operator docs are complete.
 
@@ -64,6 +64,13 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 - Full `whisper.cpp` Windows support
 - Full macOS/Windows UI parity
 - Historical test-infra epics unless they block Windows MVP
+
+## Quick Todos
+
+### Q1. Evaluate larger whisper.cpp model for quality recovery
+- Status: Planned
+- Why: `whispercpp` is much faster but manual E2E shows lower transcription quality versus python backend.
+- Done when: A/B benchmark and manual spot-check are completed for a larger multilingual model (e.g. `small`), with updated recommendation for default backend policy.
 
 ## Archive Pointer
 

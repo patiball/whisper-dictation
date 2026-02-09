@@ -1,6 +1,6 @@
 # Specs Index
 
-Last Updated: 2026-02-09 (19-01 implemented, 19-02 spike in progress with cpp-only benchmark path)
+Last Updated: 2026-02-09 (19-02..19-05 implemented, quality follow-up pending)
 
 ## Active
 
@@ -12,16 +12,16 @@ Last Updated: 2026-02-09 (19-01 implemented, 19-02 spike in progress with cpp-on
   Status: Implemented
 - `[19-02-00]` Windows Acceleration Spike (whisper.cpp Backends)  
   File: `memory-bank/specs/[19-02-00]_windows_acceleration_spike_whispercpp_backends.md`  
-  Status: In Progress
+  Status: Implemented
 - `[19-03-00]` Pluggable Transcription Backend Integration  
   File: `memory-bank/specs/[19-03-00]_pluggable_transcription_backend_integration.md`  
-  Status: Draft
+  Status: Implemented
 - `[19-04-00]` Safe Fallback and Incremental Release Controls  
   File: `memory-bank/specs/[19-04-00]_safe_fallback_and_incremental_release_controls.md`  
-  Status: Draft
+  Status: Implemented
 - `[19-05-00]` Benchmark Gate and Windows Runbook for Acceleration  
   File: `memory-bank/specs/[19-05-00]_benchmark_gate_and_windows_runbook_for_acceleration.md`  
-  Status: Draft
+  Status: Implemented
 - `[18-00-00]` Windows 11 Minimal Runtime (Hotkey + Tray + Sound Cues + Auto Model Download)  
   File: `memory-bank/specs/[18-00-00]_windows11_minimal_runtime.md`  
   Status: Implemented (verified on Windows)
@@ -45,7 +45,7 @@ Last Updated: 2026-02-09 (19-01 implemented, 19-02 spike in progress with cpp-on
 
 ## Notes
 
-- Current execution focus is `[19-02-00]` acceleration spike and benchmark evidence gathering.
+- Current execution focus is quality follow-up after acceleration rollout safeguards.
 - Benchmark workflow now supports no-build cpp-only reruns via
   `scripts/run_whispercpp_openvino_benchmark.ps1` and
   `scripts/windows_acceleration_benchmark.py --skip-python`.
