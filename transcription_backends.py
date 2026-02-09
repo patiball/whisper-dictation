@@ -10,11 +10,17 @@ import tempfile
 import threading
 import time
 import wave
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
 from pynput import keyboard
+
+
+def _timestamp() -> str:
+    """Return formatted timestamp consistent with main runtime prints."""
+    return datetime.now().strftime("[%H:%M:%S.%f")[:-3] + "]"
 
 
 def create_transcription_backend(
@@ -231,7 +237,7 @@ class WhisperCppTranscriber:
         return match.group(1).lower()
 
     def _type_text(self, text: str) -> None:
-        print("Typing text...")
+        print(f"{_timestamp()} Typing text...")
         is_first = True
         for element in text:
             if is_first and element == " ":
@@ -244,6 +250,7 @@ class WhisperCppTranscriber:
                 logging.warning(f"Failed to type character '{element}': {exc}")
 
     def transcribe(self, audio_data: Any, language: str | None = None) -> dict[str, Any]:
+        started_at = time.time()
         with self._transcribe_lock:
             pcm16 = self._to_pcm16(np.asarray(audio_data))
             with tempfile.TemporaryDirectory(prefix="wd-whispercpp-") as temp_dir:
@@ -283,7 +290,8 @@ class WhisperCppTranscriber:
                     "\n".join([(result.stdout or ""), (result.stderr or "")])
                 )
 
-        print("Transcription complete")
+        duration = time.time() - started_at
+        print(f"{_timestamp()} Transcription complete ({duration:.2f}s)")
         self._type_text(text)
         return {
             "text": text,

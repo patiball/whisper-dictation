@@ -72,6 +72,11 @@ Focus: Windows 11 MVP stabilization + Epic [19] planning
 - Why: `whispercpp` is much faster but manual E2E shows lower transcription quality versus python backend.
 - Done when: A/B benchmark and manual spot-check are completed for a larger multilingual model (e.g. `small`), with updated recommendation for default backend policy.
 
+### Q2. Auto-provision OpenVINO encoder artifacts for selected whisper.cpp model
+- Status: Planned
+- Why: Switching `WHISPER_CLI_MODEL` to a new model (e.g. `large-v3`) currently requires manual conversion/copy of `*-encoder-openvino.xml/.bin`; missing artifacts can silently degrade runtime performance.
+- Done when: runtime/setup path automatically verifies encoder artifacts for the selected model and generates them (or provides one-command self-heal) before first transcription run.
+
 ## Archive Pointer
 
 Previous broad backlog moved to:
