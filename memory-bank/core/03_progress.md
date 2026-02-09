@@ -61,6 +61,14 @@ Last Update: 2026-02-09
     (`ggml-<model>-encoder-openvino.xml/.bin`)
   - verified OpenVINO encoder load for `medium` and `small` via `whisper-cli -oved GPU`
   - set supervisor default whisper.cpp startup model to `medium`
+- Repository baseline hygiene update completed:
+  - tracked project docs/tests/spec sources that were present but not versioned
+  - extended `.gitignore` for local-only tooling/artifacts (`.claude/`, `.windsurf/`,
+    `.warp-cli.config`, `temp/`, generated benchmark report files)
+- Supervisor stability hotfix completed:
+  - fixed `python-*` worker crash loop on Windows `cp1250` consoles (`UnicodeEncodeError`
+    from non-ASCII startup print)
+  - added safe console print fallback and regression test
 
 ## Completed in this update
 
@@ -84,6 +92,8 @@ Last Update: 2026-02-09
 18. Closed issue `[19-07-00]` with explicit CPU-fallback warnings and model confirmation UX.
 19. Provisioned OpenVINO encoder artifacts for `base`/`medium`/`small` and validated GPU path for `medium` and `small`.
 20. Updated supervisor defaults so no-arg startup uses whisper.cpp `medium` profile.
+21. Committed repository baseline cleanup (tracked real project files, ignored local/generated artifacts).
+22. Fixed supervisor `whispercpp -> python-*` profile-switch crash on cp1250 console encoding and added regression test.
 
 ## Next Execution Step
 

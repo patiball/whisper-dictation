@@ -11,6 +11,7 @@
 3. Use supervisor warning/telemetry to detect CPU fallback quickly during model switches.
 4. Decide default backend/model policy based on combined latency + quality evidence.
 5. Close remaining automation gap for OpenVINO encoder artifact provisioning.
+6. Keep python-profile path stable under supervisor (cp1250-safe console output hotfix now applied and tested).
 
 ## What is intentionally deferred
 
